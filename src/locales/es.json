@@ -1,0 +1,125 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Algo salió mal",
+    "retry": "Intentar de nuevo",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "continue": "Continuar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "done": "Listo",
+    "or": "o"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "logout": "Cerrar sesión",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "noAccount": "¿No tienes cuenta?",
+    "hasAccount": "¿Ya tienes cuenta?",
+    "loginWithGoogle": "Continuar con Google",
+    "loginWithApple": "Continuar con Apple"
+  },
+  "profile": {
+    "setup": "Configura tu perfil",
+    "name": "Nombre",
+    "lastName": "Apellido",
+    "age": "Edad",
+    "country": "País",
+    "city": "Ciudad",
+    "position": "Posición preferida",
+    "foot": "Pie preferido",
+    "height": "Altura",
+    "skillLevel": "Nivel de habilidad",
+    "favoriteTeam": "Equipo favorito",
+    "profilePicture": "Foto de perfil",
+    "edit": "Editar perfil"
+  },
+  "positions": {
+    "goalkeeper": "Portero",
+    "defender": "Defensa",
+    "center_back": "Defensa central",
+    "right_back": "Lateral derecho",
+    "left_back": "Lateral izquierdo",
+    "sweeper": "Líbero",
+    "midfielder": "Centrocampista",
+    "central_midfielder": "Mediocampista central",
+    "defensive_midfielder": "Mediocampista defensivo",
+    "attacking_midfielder": "Mediocampista ofensivo",
+    "winger": "Extremo",
+    "right_winger": "Extremo derecho",
+    "left_winger": "Extremo izquierdo",
+    "forward": "Delantero",
+    "striker": "Goleador",
+    "second_striker": "Segundo delantero"
+  },
+  "foot": {
+    "left": "Izquierda",
+    "right": "Derecha",
+    "both": "Ambos"
+  },
+  "skillLevel": {
+    "beginner": "Principiante",
+    "intermediate": "Intermedio",
+    "advanced": "Avanzado"
+  },
+  "home": {
+    "welcome": "Bienvenido",
+    "myTeam": "Mi equipo",
+    "matchSchedule": "Calendario",
+    "inbox": "Mensajes",
+    "playSolo": "Jugar solo",
+    "joinTeam": "Unirse a un equipo",
+    "createTeam": "Crear equipo",
+    "profile": "Perfil",
+    "topScorers": "Goleadores",
+    "rankings": "Clasificación",
+    "recentResults": "Resultados recientes"
+  },
+  "team": {
+    "myTeam": "Mi equipo",
+    "squad": "Plantilla",
+    "createTeam": "Crear equipo",
+    "joinTeam": "Unirse a un equipo",
+    "teamName": "Nombre del equipo",
+    "badge": "Escudo del equipo",
+    "format": "Formato de juego",
+    "format5": "Fútbol 5",
+    "format11": "Fútbol 11",
+    "invitePlayers": "Invitar jugadores",
+    "captain": "Capitán",
+    "confirmed": "Confirmado",
+    "pending": "Pendiente"
+  },
+  "match": {
+    "schedule": "Calendario de partidos",
+    "upcoming": "Próximos partidos",
+    "location": "Lugar",
+    "opponent": "Rival",
+    "date": "Fecha",
+    "time": "Hora",
+    "noMatches": "No hay partidos próximos"
+  },
+  "inbox": {
+    "title": "Mensajes",
+    "noMessages": "No hay mensajes aún"
+  },
+  "guest": {
+    "tagline": "Organiza y únete a torneos de fútbol amateur",
+    "loginPrompt": "Inicia sesión para acceder a todas las funciones",
+    "explore": "Explorar",
+    "signIn": "Iniciar sesión"
+  },
+  "payment": {
+    "registerTeam": "Registrar equipo",
+    "registerPlayer": "Registrarse como jugador",
+    "price": "Precio",
+    "checkout": "Proceder al pago",
+    "success": "Pago exitoso",
+    "failed": "Pago fallido"
+  }
+}

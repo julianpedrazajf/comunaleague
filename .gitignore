@@ -1,0 +1,35 @@
+node_modules/
+.expo/
+dist/
+web-build/
+.DS_Store
+
+# Environment variables
+*.env
+*.env.local
+.env.*
+!.env.example
+
+# Native builds
+ios/
+android/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Expo
+.expo-shared/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Skills lock (Claude Code internal)
+skills-lock.json

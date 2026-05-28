@@ -1,0 +1,125 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try again",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "continue": "Continue",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "or": "or"
+  },
+  "auth": {
+    "login": "Log In",
+    "register": "Sign Up",
+    "logout": "Log Out",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginWithGoogle": "Continue with Google",
+    "loginWithApple": "Continue with Apple"
+  },
+  "profile": {
+    "setup": "Set Up Your Profile",
+    "name": "First Name",
+    "lastName": "Last Name",
+    "age": "Age",
+    "country": "Country",
+    "city": "City",
+    "position": "Preferred Position",
+    "foot": "Preferred Foot",
+    "height": "Height",
+    "skillLevel": "Skill Level",
+    "favoriteTeam": "Favorite Team",
+    "profilePicture": "Profile Picture",
+    "edit": "Edit Profile"
+  },
+  "positions": {
+    "goalkeeper": "Goalkeeper",
+    "defender": "Defender",
+    "center_back": "Center Back",
+    "right_back": "Right Back",
+    "left_back": "Left Back",
+    "sweeper": "Sweeper",
+    "midfielder": "Midfielder",
+    "central_midfielder": "Central Midfielder",
+    "defensive_midfielder": "Defensive Midfielder",
+    "attacking_midfielder": "Attacking Midfielder",
+    "winger": "Winger",
+    "right_winger": "Right Winger",
+    "left_winger": "Left Winger",
+    "forward": "Forward",
+    "striker": "Striker",
+    "second_striker": "Second Striker"
+  },
+  "foot": {
+    "left": "Left",
+    "right": "Right",
+    "both": "Both"
+  },
+  "skillLevel": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced"
+  },
+  "home": {
+    "welcome": "Welcome",
+    "myTeam": "My Team",
+    "matchSchedule": "Match Schedule",
+    "inbox": "Inbox",
+    "playSolo": "Play Solo",
+    "joinTeam": "Join a Team",
+    "createTeam": "Create a Team",
+    "profile": "Profile",
+    "topScorers": "Top Scorers",
+    "rankings": "Rankings",
+    "recentResults": "Recent Results"
+  },
+  "team": {
+    "myTeam": "My Team",
+    "squad": "Squad",
+    "createTeam": "Create a Team",
+    "joinTeam": "Join a Team",
+    "teamName": "Team Name",
+    "badge": "Team Badge",
+    "format": "Match Format",
+    "format5": "Fútbol 5",
+    "format11": "Fútbol 11",
+    "invitePlayers": "Invite Players",
+    "captain": "Captain",
+    "confirmed": "Confirmed",
+    "pending": "Pending"
+  },
+  "match": {
+    "schedule": "Match Schedule",
+    "upcoming": "Upcoming Matches",
+    "location": "Location",
+    "opponent": "Opponent",
+    "date": "Date",
+    "time": "Time",
+    "noMatches": "No upcoming matches"
+  },
+  "inbox": {
+    "title": "Inbox",
+    "noMessages": "No messages yet"
+  },
+  "guest": {
+    "tagline": "Organize and join amateur soccer tournaments",
+    "loginPrompt": "Sign in to access all features",
+    "explore": "Explore",
+    "signIn": "Sign In"
+  },
+  "payment": {
+    "registerTeam": "Register Team",
+    "registerPlayer": "Register as Player",
+    "price": "Price",
+    "checkout": "Proceed to Payment",
+    "success": "Payment Successful",
+    "failed": "Payment Failed"
+  }
+}

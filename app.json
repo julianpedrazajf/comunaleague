@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "ComunaLeague",
+    "slug": "comunaleague",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F21D2F"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.comunaleague.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F21D2F"
+      },
+      "package": "com.comunaleague.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
