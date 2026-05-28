@@ -7,18 +7,21 @@ interface AuthState {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  profileComplete: boolean;
 }
 
 type AuthAction =
   | { type: 'SET_SESSION'; payload: Session | null }
   | { type: 'SET_USER'; payload: User | null }
   | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_PROFILE_COMPLETE'; payload: boolean }
   | { type: 'SIGN_OUT' };
 
 const initialState: AuthState = {
   session: null,
   user: null,
   loading: true,
+  profileComplete: false,
 };
 
 function authReducer(state: AuthState, action: AuthAction): AuthState {
@@ -29,6 +32,8 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       return { ...state, user: action.payload };
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
+    case 'SET_PROFILE_COMPLETE':
+      return { ...state, profileComplete: action.payload };
     case 'SIGN_OUT':
       return { ...initialState, loading: false };
     default:
@@ -38,21 +43,35 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 
 interface AuthContextValue extends AuthState {
   signOut: () => Promise<void>;
+  setProfileComplete: (complete: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+async function checkProfileExists(userId: string): Promise<boolean> {
+  const { data } = await supabase.from('users').select('id').eq('id', userId).single();
+  return !!data;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      dispatch({ type: 'SET_SESSION', payload: session });
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      dispatch({ type: 'SET_SESSION', payload: session });
-    });
+    // INITIAL_SESSION fires on app start with any stored session.
+    // SIGNED_IN fires when the user explicitly signs in or registers.
+    // Both need a profile check. TOKEN_REFRESHED and USER_UPDATED do not.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
+          const complete = await checkProfileExists(session.user.id);
+          dispatch({ type: 'SET_PROFILE_COMPLETE', payload: complete });
+        }
+        if (!session) {
+          dispatch({ type: 'SET_PROFILE_COMPLETE', payload: false });
+        }
+        dispatch({ type: 'SET_SESSION', payload: session });
+      }
+    );
 
     return () => subscription.unsubscribe();
   }, []);
@@ -62,8 +81,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'SIGN_OUT' });
   }
 
+  function setProfileComplete(complete: boolean) {
+    dispatch({ type: 'SET_PROFILE_COMPLETE', payload: complete });
+  }
+
   return (
-    <AuthContext.Provider value={{ ...state, signOut }}>
+    <AuthContext.Provider value={{ ...state, signOut, setProfileComplete }}>
       {children}
     </AuthContext.Provider>
   );

@@ -10,7 +10,8 @@
     "back": "Back",
     "next": "Next",
     "done": "Done",
-    "or": "or"
+    "or": "or",
+    "optional": "optional"
   },
   "auth": {
     "login": "Log In",
@@ -18,11 +19,24 @@
     "logout": "Log Out",
     "email": "Email",
     "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "createAccount": "Create Account",
     "forgotPassword": "Forgot password?",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "loginWithGoogle": "Continue with Google",
     "loginWithApple": "Continue with Apple"
+  },
+  "errors": {
+    "required": "Field required",
+    "emailInvalid": "Invalid email",
+    "passwordTooShort": "Minimum 6 characters",
+    "passwordMismatch": "Passwords don't match",
+    "mustBeNumber": "Must be a number",
+    "ageMin": "Minimum age: 10",
+    "ageMax": "Maximum age: 80",
+    "heightMin": "Minimum height: 100 cm",
+    "heightMax": "Maximum height: 230 cm"
   },
   "profile": {
     "setup": "Set Up Your Profile",

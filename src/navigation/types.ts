@@ -7,7 +7,6 @@ export type AuthStackParamList = {
   GuestHome: undefined;
   Login: undefined;
   Register: undefined;
-  ProfileSetup: undefined;
 };
 
 // Authenticated tab bar
@@ -21,6 +20,8 @@ export type AppTabParamList = {
 
 // Modal / nested stacks reachable from tabs
 export type RootStackParamList = {
+  Auth: undefined;        // unauthenticated branch (AuthStack)
+  ProfileSetup: undefined;
   AppTabs: undefined;
   JoinTeam: undefined;
   CreateTeam: undefined;
