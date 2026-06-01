@@ -14,12 +14,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { ArrowLeft } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getConversation, sendMessage } from '../services/messages';
 import { supabase } from '../services/supabase';
 import { Message } from '../types';
 import { RootStackParamList } from '../navigation/types';
-import { colors, spacing, fontSizes } from '../utils/theme';
+import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -48,30 +49,19 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  // Real-time subscription: listen for incoming messages from the peer
   useEffect(() => {
     if (!session) return;
     const myId = session.user.id;
-
     const channel = supabase
       .channel(`chat_${myId}_${peerId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `toId=eq.${myId}`,
-        },
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `toId=eq.${myId}` },
         (payload) => {
           const incoming = payload.new as Message;
           if (incoming.fromId !== peerId) return;
           setMessages((prev) => [...prev, incoming]);
           setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
-        },
-      )
+        })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [session, peerId]);
 
@@ -110,11 +100,11 @@ export default function ChatScreen({ route, navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backBtnText}>←</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} hitSlop={8}>
+          <ArrowLeft size={22} color={colors.cream70} strokeWidth={2} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerName} numberOfLines={1}>{peerName}</Text>
@@ -129,16 +119,14 @@ export default function ChatScreen({ route, navigation }: Props) {
       >
         {loading ? (
           <View style={styles.centered}>
-            <ActivityIndicator size="large" color={colors.primary} />
+            <ActivityIndicator size="large" color={colors.cream45} />
           </View>
         ) : (
           <FlatList
             ref={listRef}
             data={messages}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={
-              messages.length === 0 ? styles.emptyContainer : styles.listContent
-            }
+            contentContainerStyle={messages.length === 0 ? styles.emptyContainer : styles.listContent}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
             ListEmptyComponent={
               <View style={styles.centered}>
@@ -156,7 +144,9 @@ export default function ChatScreen({ route, navigation }: Props) {
             value={text}
             onChangeText={setText}
             placeholder={t('chat.placeholder')}
-            placeholderTextColor={colors.gray}
+            placeholderTextColor={colors.cream45}
+            selectionColor={colors.cream}
+            keyboardAppearance="dark"
             multiline
             maxLength={500}
             returnKeyType="default"
@@ -167,7 +157,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             disabled={!text.trim() || sending}
           >
             {sending ? (
-              <ActivityIndicator size="small" color={colors.white} />
+              <ActivityIndicator size="small" color={colors.black} />
             ) : (
               <Text style={styles.sendBtnText}>{t('chat.send')}</Text>
             )}
@@ -179,87 +169,80 @@ export default function ChatScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1, backgroundColor: colors.black },
   flex: { flex: 1 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  emptyText: { fontSize: fontSizes.sm, color: colors.gray, textAlign: 'center' },
+  emptyText: { fontFamily: font.sans, fontSize: 14, color: colors.cream70, textAlign: 'center' },
 
-  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingHorizontal: 18,
+    paddingVertical: space.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    gap: spacing.sm,
+    borderBottomColor: colors.hairline,
+    gap: space.sm,
   },
-  backBtn: { padding: spacing.xs },
-  backBtnText: { fontSize: fontSizes.xl, color: colors.darkGray, fontWeight: '600' },
+  backBtn: { padding: 4 },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerName: { fontSize: fontSizes.md, fontWeight: '700', color: colors.darkGray },
-  headerSpacer: { width: 36 },
+  headerName: { fontFamily: font.sansBold, fontSize: 16, color: colors.cream },
+  headerSpacer: { width: 30 },
 
-  // Message list
-  listContent: { padding: spacing.md, gap: spacing.sm },
+  listContent: { padding: 18, gap: space.sm },
   bubbleWrapper: { flexDirection: 'row', marginVertical: 2 },
   bubbleLeft: { justifyContent: 'flex-start' },
   bubbleRight: { justifyContent: 'flex-end' },
   bubble: {
     maxWidth: '75%',
-    borderRadius: 16,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    borderRadius: 18,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
     gap: 2,
   },
-  bubbleMe: {
-    backgroundColor: colors.primary,
-    borderBottomRightRadius: 4,
-  },
-  bubbleThem: {
-    backgroundColor: colors.lightGray,
-    borderBottomLeftRadius: 4,
-  },
-  bubbleText: { fontSize: fontSizes.sm, lineHeight: 20 },
-  bubbleTextMe: { color: colors.white },
-  bubbleTextThem: { color: colors.darkGray },
-  bubbleTime: { fontSize: 10, alignSelf: 'flex-end' },
-  bubbleTimeMe: { color: 'rgba(255,255,255,0.65)' },
-  bubbleTimeThem: { color: colors.gray },
+  bubbleMe: { backgroundColor: colors.cream2, borderBottomRightRadius: 4 },
+  bubbleThem: { backgroundColor: colors.surface1, borderBottomLeftRadius: 4 },
+  bubbleText: { fontFamily: font.sans, fontSize: 14, lineHeight: 20 },
+  bubbleTextMe: { color: colors.black },
+  bubbleTextThem: { color: colors.cream },
+  bubbleTime: { fontFamily: font.sans, fontSize: 10, alignSelf: 'flex-end' },
+  bubbleTimeMe: { color: 'rgba(0,0,0,0.4)' },
+  bubbleTimeThem: { color: colors.cream45 },
 
-  // Input bar
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
+    paddingHorizontal: 18,
+    paddingTop: space.sm,
+    paddingBottom: space.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
-    gap: spacing.sm,
-    backgroundColor: colors.background,
+    borderTopColor: colors.hairline,
+    gap: space.sm,
+    backgroundColor: colors.black,
   },
   input: {
     flex: 1,
     minHeight: 40,
     maxHeight: 120,
-    backgroundColor: colors.lightGray,
+    backgroundColor: colors.surface1,
     borderRadius: 20,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: fontSizes.sm,
-    color: colors.darkGray,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
+    fontFamily: font.sans,
+    fontSize: 14,
+    color: colors.cream,
+    borderWidth: 1,
+    borderColor: colors.hairline,
   },
   sendBtn: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.cream2,
     borderRadius: 20,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: space.lg,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 64,
   },
-  sendBtnDisabled: { opacity: 0.45 },
-  sendBtnText: { color: colors.white, fontWeight: '700', fontSize: fontSizes.sm },
+  sendBtnDisabled: { opacity: 0.35 },
+  sendBtnText: { fontFamily: font.sansBold, color: colors.black, fontSize: 13 },
 });
