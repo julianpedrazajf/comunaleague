@@ -11,7 +11,8 @@
     "next": "Siguiente",
     "done": "Listo",
     "or": "o",
-    "optional": "opcional"
+    "optional": "opcional",
+    "hello": "Hola"
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -107,7 +108,14 @@
     "invitePlayers": "Invitar jugadores",
     "captain": "Capitán",
     "confirmed": "Confirmado",
-    "pending": "Pendiente"
+    "pending": "Pendiente",
+    "noTeam": "Aún no perteneces a ningún equipo",
+    "noTeamSub": "Crea el tuyo o únete a uno existente",
+    "noTeamsAvailable": "No hay equipos disponibles para unirse",
+    "join": "Unirse",
+    "joinConfirm": "¿Quieres unirte a",
+    "players": "jugadores",
+    "searchPlaceholder": "Buscar equipos..."
   },
   "match": {
     "schedule": "Calendario de partidos",
@@ -116,7 +124,10 @@
     "opponent": "Rival",
     "date": "Fecha",
     "time": "Hora",
-    "noMatches": "No hay partidos próximos"
+    "noMatches": "No hay partidos próximos",
+    "home": "Local",
+    "away": "Visitante",
+    "noTeamForSchedule": "Únete o crea un equipo para ver tu calendario"
   },
   "inbox": {
     "title": "Mensajes",

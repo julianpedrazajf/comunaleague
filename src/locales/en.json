@@ -11,7 +11,8 @@
     "next": "Next",
     "done": "Done",
     "or": "or",
-    "optional": "optional"
+    "optional": "optional",
+    "hello": "Hello"
   },
   "auth": {
     "login": "Log In",
@@ -107,7 +108,14 @@
     "invitePlayers": "Invite Players",
     "captain": "Captain",
     "confirmed": "Confirmed",
-    "pending": "Pending"
+    "pending": "Pending",
+    "noTeam": "You're not on a team yet",
+    "noTeamSub": "Create your own or join an existing one",
+    "noTeamsAvailable": "No teams available to join",
+    "join": "Join",
+    "joinConfirm": "Do you want to join",
+    "players": "players",
+    "searchPlaceholder": "Search teams..."
   },
   "match": {
     "schedule": "Match Schedule",
@@ -116,7 +124,10 @@
     "opponent": "Opponent",
     "date": "Date",
     "time": "Time",
-    "noMatches": "No upcoming matches"
+    "noMatches": "No upcoming matches",
+    "home": "Home",
+    "away": "Away",
+    "noTeamForSchedule": "Join or create a team to see your schedule"
   },
   "inbox": {
     "title": "Inbox",
