@@ -114,6 +114,9 @@ export default function MatchScheduleScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.pageHeader}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.navigate('Home')}>
+          <Text style={styles.backBtnText}>← {t('common.back')}</Text>
+        </TouchableOpacity>
         <Text style={styles.pageTitle}>{t('match.schedule')}</Text>
         {team && <Text style={styles.subtitle}>{team.name}</Text>}
       </View>
@@ -171,6 +174,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  backBtn: { marginBottom: spacing.xs },
+  backBtnText: { fontSize: fontSizes.sm, color: colors.gray, fontWeight: '500' },
   pageTitle: { fontSize: fontSizes.xxl, fontWeight: 'bold', color: colors.darkGray },
   subtitle: { fontSize: fontSizes.sm, color: colors.gray, marginTop: spacing.xs },
 

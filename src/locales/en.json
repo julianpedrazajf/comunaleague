@@ -93,7 +93,9 @@
     "profile": "Profile",
     "topScorers": "Top Scorers",
     "rankings": "Rankings",
-    "recentResults": "Recent Results"
+    "recentResults": "Recent Results",
+    "statistics": "Statistics",
+    "featuredPlayers": "Featured Players"
   },
   "team": {
     "myTeam": "My Team",
@@ -138,6 +140,18 @@
     "loginPrompt": "Sign in to access all features",
     "explore": "Explore",
     "signIn": "Sign In"
+  },
+  "onegame": {
+    "title": "Play Solo",
+    "subtitle": "Join a daily match as an individual player",
+    "noGames": "No daily matches available",
+    "register": "Register",
+    "registered": "Registered",
+    "deadline": "Deadline",
+    "starts": "Starts",
+    "free": "Free",
+    "confirmTitle": "Join this match?",
+    "confirmMsg": "You will be registered as a solo player."
   },
   "payment": {
     "registerTeam": "Register Team",

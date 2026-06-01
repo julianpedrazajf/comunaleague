@@ -93,7 +93,9 @@
     "profile": "Perfil",
     "topScorers": "Goleadores",
     "rankings": "Clasificación",
-    "recentResults": "Resultados recientes"
+    "recentResults": "Resultados recientes",
+    "statistics": "Estadísticas",
+    "featuredPlayers": "Jugadores Destacados"
   },
   "team": {
     "myTeam": "Mi equipo",
@@ -138,6 +140,18 @@
     "loginPrompt": "Inicia sesión para acceder a todas las funciones",
     "explore": "Explorar",
     "signIn": "Iniciar sesión"
+  },
+  "onegame": {
+    "title": "Jugar Solo",
+    "subtitle": "Únete a un partido diario como jugador individual",
+    "noGames": "No hay partidos diarios disponibles",
+    "register": "Inscribirse",
+    "registered": "Inscrito",
+    "deadline": "Límite",
+    "starts": "Inicio",
+    "free": "Gratis",
+    "confirmTitle": "¿Unirte a este partido?",
+    "confirmMsg": "Serás registrado como jugador individual."
   },
   "payment": {
     "registerTeam": "Registrar equipo",

@@ -89,6 +89,9 @@ export default function MyTeamScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.pageHeader}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.navigate('Home')}>
+            <Text style={styles.backBtnText}>← {t('common.back')}</Text>
+          </TouchableOpacity>
           <Text style={styles.pageTitle}>{t('team.myTeam')}</Text>
           {profile && (
             <Text style={styles.greeting}>{t('common.hello')}, {profile.name}</Text>
@@ -117,6 +120,9 @@ export default function MyTeamScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.pageHeader}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.navigate('Home')}>
+          <Text style={styles.backBtnText}>← {t('common.back')}</Text>
+        </TouchableOpacity>
         <Text style={styles.pageTitle}>{t('team.myTeam')}</Text>
         {profile && (
           <Text style={styles.greeting}>{t('common.hello')}, {profile.name}</Text>
@@ -177,6 +183,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  backBtn: { marginBottom: spacing.xs },
+  backBtnText: { fontSize: fontSizes.sm, color: colors.gray, fontWeight: '500' },
   pageTitle: { fontSize: fontSizes.xxl, fontWeight: 'bold', color: colors.darkGray },
   greeting: { fontSize: fontSizes.sm, color: colors.gray, marginTop: spacing.xs },
 

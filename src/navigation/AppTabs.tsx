@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AppTabParamList } from './types';
+import BottomActionBar from '../components/BottomActionBar';
 
 import HomeScreen from '../screens/HomeScreen';
 import MyTeamScreen from '../screens/MyTeamScreen';
@@ -10,19 +11,11 @@ import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
-// Brand colors
-const PRIMARY = '#F21D2F';
-const INACTIVE = '#9E9E9E';
-
 export default function AppTabs() {
   return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: PRIMARY,
-        tabBarInactiveTintColor: INACTIVE,
-        tabBarStyle: { backgroundColor: '#fff', borderTopWidth: 1 },
-      }}
+      tabBar={(props) => <BottomActionBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="MyTeam" component={MyTeamScreen} />
