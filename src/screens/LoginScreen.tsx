@@ -9,8 +9,13 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ImageBackground,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const loginBg = require('../../assets/textures/login-bg.png');
+const grain   = require('../../assets/textures/grain.png');
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { Formik } from 'formik';
@@ -34,6 +39,13 @@ export default function LoginScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <ImageBackground source={loginBg} style={styles.bg} resizeMode="cover">
+        <View style={styles.scrim} pointerEvents="none" />
+        <View style={styles.grainWrap} pointerEvents="none">
+          <Image source={grain} style={styles.grain} resizeMode="repeat" />
+        </View>
+      </ImageBackground>
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -135,6 +147,12 @@ export default function LoginScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
+
+  bg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.72)' },
+  grainWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  grain: { width: '100%', height: '100%', opacity: 0.07 },
+
   content: { flexGrow: 1, padding: 24, justifyContent: 'center' },
 
   header: { marginBottom: space.xl, gap: space.sm },

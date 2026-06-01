@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
@@ -7,20 +7,24 @@ import CreamButton from '../components/ui/CreamButton';
 import GhostButton from '../components/ui/GhostButton';
 import { colors, font, space } from '../theme/tokens';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'GuestHome'>;
+const loginBg = require('../../assets/textures/login-bg.png');
+const grain   = require('../../assets/textures/grain.png');
 
-const { width } = Dimensions.get('window');
+type Props = NativeStackScreenProps<AuthStackParamList, 'GuestHome'>;
 
 export default function GuestHomeScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Radial glow — painted as a circle behind the lockup */}
-      <View style={styles.glowContainer} pointerEvents="none">
-        <View style={styles.glow} />
-      </View>
+      {/* Full-bleed background + scrim + grain */}
+      <ImageBackground source={loginBg} style={styles.bg} resizeMode="cover">
+        <View style={styles.scrim} pointerEvents="none" />
+        <View style={styles.grainWrap} pointerEvents="none">
+          <Image source={grain} style={styles.grain} resizeMode="repeat" />
+        </View>
+      </ImageBackground>
 
+      {/* Content floats above */}
       <View style={styles.inner}>
-        {/* Lockup */}
         <View style={styles.lockup}>
           <Text style={styles.title}>
             Comuna{'\n'}League<Text style={styles.asterisk}>*</Text>
@@ -28,7 +32,6 @@ export default function GuestHomeScreen({ navigation }: Props) {
           <Text style={styles.tagline}>el barrio juega en serio.</Text>
         </View>
 
-        {/* Actions */}
         <View style={styles.actions}>
           <CreamButton
             label="Entrar"
@@ -49,23 +52,10 @@ export default function GuestHomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
 
-  glowContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: width * 0.8,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  glow: {
-    width: width * 1.2,
-    height: width * 1.2,
-    borderRadius: width * 0.6,
-    backgroundColor: 'rgba(34,197,94,0.04)',
-    position: 'absolute',
-    bottom: -width * 0.5,
-  },
+  bg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.55)' },
+  grainWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  grain: { width: '100%', height: '100%', opacity: 0.07 },
 
   inner: {
     flex: 1,
