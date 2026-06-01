@@ -9,14 +9,18 @@ import {
   Alert,
   TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
+import { X, Search } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getAvailableTeams, joinTeam } from '../services/teams';
 import { RootStackParamList } from '../navigation/types';
 import { Team } from '../types';
-import { colors, spacing, fontSizes } from '../utils/theme';
+import Monogram from '../components/ui/Monogram';
+import Chip from '../components/ui/Chip';
+import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'JoinTeam'>;
 
@@ -31,7 +35,7 @@ export default function JoinTeamScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const filtered = useMemo(
-    () => teams.filter((t) => t.name.toLowerCase().includes(query.toLowerCase())),
+    () => teams.filter((team) => team.name.toLowerCase().includes(query.toLowerCase())),
     [teams, query],
   );
 
@@ -74,153 +78,153 @@ export default function JoinTeamScreen({ navigation }: Props) {
     );
   };
 
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryBtn} onPress={load}>
-          <Text style={styles.retryText}>{t('common.retry')}</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.closeBtnText}>✕</Text>
+        <View style={styles.headerText}>
+          <Text style={styles.title}>{t('team.joinTeam')}</Text>
+          <Text style={styles.subtitle}>Encuentra tu equipo en Cali</Text>
+        </View>
+        <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()} hitSlop={12}>
+          <X size={20} color={colors.cream45} strokeWidth={2} />
         </TouchableOpacity>
-        <Text style={styles.title}>{t('team.joinTeam')}</Text>
       </View>
 
-      <TextInput
-        style={styles.searchBar}
-        value={query}
-        onChangeText={setQuery}
-        placeholder={t('team.searchPlaceholder')}
-        placeholderTextColor={colors.gray}
-        clearButtonMode="while-editing"
-        autoCapitalize="none"
-      />
+      {/* Search bar */}
+      <View style={styles.searchWrap}>
+        <Search size={15} color={colors.cream45} strokeWidth={2} />
+        <TextInput
+          style={styles.searchInput}
+          value={query}
+          onChangeText={setQuery}
+          placeholder={t('team.searchPlaceholder')}
+          placeholderTextColor={colors.cream45}
+          selectionColor={colors.cream}
+          autoCapitalize="none"
+          keyboardAppearance="dark"
+        />
+      </View>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={filtered.length === 0 ? styles.emptyContainer : styles.listContent}
-        ListEmptyComponent={
-          <View style={styles.centered}>
-            <Text style={styles.emptyText}>{t('team.noTeamsAvailable')}</Text>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <View style={styles.teamCard}>
-            <View style={styles.teamInfo}>
-              <Text style={styles.teamName}>{item.name}</Text>
-              <View style={styles.row}>
-                <View style={styles.formatBadge}>
-                  <Text style={styles.formatText}>
-                    {item.format === 5 ? t('team.format5') : t('team.format11')}
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.cream45} />
+        </View>
+      ) : error ? (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={load} style={{ marginTop: space.md }}>
+            <Text style={styles.retryText}>{t('common.retry')}</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={filtered.length === 0 ? styles.emptyContainer : styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.centered}>
+              <Text style={styles.emptyText}>{t('team.noTeamsAvailable')}</Text>
+            </View>
+          }
+          renderItem={({ item }) => (
+            <View style={styles.teamCard}>
+              <Monogram name={item.name} size={46} shape="square" />
+              <View style={styles.teamInfo}>
+                <Text style={styles.teamName} numberOfLines={1}>{item.name}</Text>
+                <View style={styles.metaRow}>
+                  <Chip label={item.format === 5 ? t('team.format5') : t('team.format11')} />
+                  <Text style={styles.playerCount}>
+                    {item.playerIds.length} {t('team.players')}
                   </Text>
                 </View>
-                <Text style={styles.playerCount}>
-                  {item.playerIds.length} {t('team.players')}
-                </Text>
               </View>
+              <TouchableOpacity
+                style={[styles.joinBtn, joiningId === item.id && styles.joinBtnDisabled]}
+                onPress={() => handleJoin(item)}
+                disabled={joiningId === item.id}
+              >
+                {joiningId === item.id ? (
+                  <ActivityIndicator size="small" color={colors.black} />
+                ) : (
+                  <Text style={styles.joinBtnText}>{t('team.join')}</Text>
+                )}
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={[styles.joinBtn, joiningId === item.id && styles.joinBtnDisabled]}
-              onPress={() => handleJoin(item)}
-              disabled={joiningId === item.id}
-            >
-              {joiningId === item.id ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <Text style={styles.joinBtnText}>{t('team.join')}</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
-      />
-    </View>
+          )}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
-  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  safe: { flex: 1, backgroundColor: colors.black },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center' },
+
   header: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 18,
+    paddingTop: space.md,
+    paddingBottom: space.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.hairline,
   },
-  closeBtn: { alignSelf: 'flex-end', padding: spacing.sm, marginBottom: spacing.sm },
-  closeBtnText: { fontSize: fontSizes.lg, color: colors.gray },
-  title: { fontSize: fontSizes.xxl, fontWeight: 'bold', color: colors.darkGray },
-  listContent: { padding: spacing.lg, gap: spacing.md },
-  searchBar: {
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
+  headerText: { gap: 4 },
+  title: { fontFamily: font.sansXBold, fontSize: 27, letterSpacing: -0.5, color: colors.cream },
+  subtitle: { fontFamily: font.sans, fontSize: 13, color: colors.cream70 },
+  closeBtn: { padding: 4, marginTop: 4 },
+
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface1,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: fontSizes.md,
-    color: colors.darkGray,
-    backgroundColor: colors.lightGray,
+    borderColor: colors.hairline,
+    marginHorizontal: 18,
+    marginVertical: space.md,
+    paddingHorizontal: 14,
+    gap: space.sm,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 13,
+    fontFamily: font.sans,
+    fontSize: 15,
+    color: colors.cream,
   },
 
-  // Error state
-  errorText: { color: colors.primary, fontSize: fontSizes.sm, textAlign: 'center', marginBottom: spacing.md },
-  retryBtn: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  retryText: { color: colors.primary, fontWeight: '600' },
+  errorText: { fontFamily: font.sans, fontSize: 13, color: '#EF4444', textAlign: 'center' },
+  retryText: { fontFamily: font.sansBold, fontSize: 13, color: colors.cream70 },
 
-  // Empty state
-  emptyText: { color: colors.gray, fontSize: fontSizes.md, textAlign: 'center' },
+  listContent: { paddingHorizontal: 18, paddingBottom: 40, gap: space.sm },
 
-  // Team card
   teamCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.lightGray,
-    borderRadius: 12,
-    padding: spacing.md,
+    backgroundColor: colors.surface1,
+    borderRadius: radius.cardSm,
+    padding: space.md,
+    gap: space.md,
   },
-  teamInfo: { flex: 1 },
-  teamName: { fontSize: fontSizes.md, fontWeight: '700', color: colors.darkGray, marginBottom: spacing.xs },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  formatBadge: {
-    backgroundColor: colors.teal,
-    borderRadius: 8,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-  },
-  formatText: { color: colors.white, fontSize: fontSizes.xs, fontWeight: '600' },
-  playerCount: { color: colors.gray, fontSize: fontSizes.xs },
+  teamInfo: { flex: 1, gap: 6 },
+  teamName: { fontFamily: font.sansBold, fontSize: 15, color: colors.cream },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  playerCount: { fontFamily: font.sans, fontSize: 11.5, color: colors.gray500 },
+
   joinBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    minWidth: 72,
+    backgroundColor: colors.cream2,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: space.md,
+    minWidth: 68,
     alignItems: 'center',
   },
-  joinBtnDisabled: { opacity: 0.7 },
-  joinBtnText: { color: colors.white, fontWeight: '700', fontSize: fontSizes.sm },
+  joinBtnDisabled: { opacity: 0.45 },
+  joinBtnText: { fontFamily: font.sansBold, fontSize: 13, color: colors.black },
 });

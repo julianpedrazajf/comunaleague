@@ -5,30 +5,28 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
+import { X } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { createTeam } from '../services/teams';
 import { RootStackParamList } from '../navigation/types';
 import { TeamFormat } from '../types';
-import { colors, spacing, fontSizes } from '../utils/theme';
+import CreamButton from '../components/ui/CreamButton';
+import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateTeam'>;
 
 const FORMATS: TeamFormat[] = [5, 11];
 
-type FormValues = {
-  name: string;
-  format: TeamFormat | null;
-};
-
+type FormValues = { name: string; format: TeamFormat | null };
 const initialValues: FormValues = { name: '', format: null };
 
 export default function CreateTeamScreen({ navigation }: Props) {
@@ -41,145 +39,135 @@ export default function CreateTeamScreen({ navigation }: Props) {
   });
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-      >
-        <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.closeBtnText}>✕</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.title}>{t('team.createTeam')}</Text>
-
-        <Formik
-          initialValues={initialValues}
-          validationSchema={schema}
-          onSubmit={async (values, { setSubmitting, setStatus }) => {
-            if (!session || !values.format) return;
-            try {
-              await createTeam(values.name.trim(), values.format, session.user.id);
-              navigation.goBack();
-            } catch (e: any) {
-              setStatus(e?.message ?? t('common.error'));
-              setSubmitting(false);
-            }
-          }}
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          {({ handleChange, handleBlur, handleSubmit, setFieldValue, values, errors, touched, isSubmitting, status }) => (
-            <View>
-              {status ? <Text style={styles.apiError}>{status}</Text> : null}
-
-              <Text style={styles.label}>{t('team.teamName')}</Text>
-              <TextInput
-                style={[styles.input, touched.name && errors.name ? styles.inputError : null]}
-                value={values.name}
-                onChangeText={handleChange('name')}
-                onBlur={handleBlur('name')}
-                placeholder="Los Caimanes FC"
-                placeholderTextColor={colors.gray}
-                autoCapitalize="words"
-              />
-              {touched.name && errors.name ? (
-                <Text style={styles.fieldError}>{errors.name}</Text>
-              ) : null}
-
-              <Text style={styles.label}>{t('team.format')}</Text>
-              <View style={styles.toggleRow}>
-                {FORMATS.map((f) => (
-                  <TouchableOpacity
-                    key={f}
-                    style={[styles.toggleBtn, values.format === f && styles.toggleBtnSelected]}
-                    onPress={() => setFieldValue('format', f)}
-                  >
-                    <Text style={[styles.toggleText, values.format === f && styles.toggleTextSelected]}>
-                      {f === 5 ? t('team.format5') : t('team.format11')}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              {touched.format && errors.format ? (
-                <Text style={styles.fieldError}>{errors.format as string}</Text>
-              ) : null}
-
-              <TouchableOpacity
-                style={[styles.button, isSubmitting && styles.buttonDisabled]}
-                onPress={() => handleSubmit()}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color={colors.white} />
-                ) : (
-                  <Text style={styles.buttonText}>{t('team.createTeam')}</Text>
-                )}
-              </TouchableOpacity>
+          <View style={styles.header}>
+            <View style={styles.headerText}>
+              <Text style={styles.title}>{t('team.createTeam')}</Text>
+              <Text style={styles.subtitle}>Dale identidad a tu equipo</Text>
             </View>
-          )}
-        </Formik>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()} hitSlop={12}>
+              <X size={20} color={colors.cream45} strokeWidth={2} />
+            </TouchableOpacity>
+          </View>
+
+          <Formik
+            initialValues={initialValues}
+            validationSchema={schema}
+            onSubmit={async (values, { setSubmitting, setStatus }) => {
+              if (!session || !values.format) return;
+              try {
+                await createTeam(values.name.trim(), values.format, session.user.id);
+                navigation.goBack();
+              } catch (e: any) {
+                setStatus(e?.message ?? t('common.error'));
+                setSubmitting(false);
+              }
+            }}
+          >
+            {({ handleChange, handleBlur, handleSubmit, setFieldValue, values, errors, touched, isSubmitting, status }) => (
+              <View style={styles.form}>
+                {status ? <Text style={styles.apiError}>{status}</Text> : null}
+
+                <View style={styles.field}>
+                  <Text style={styles.label}>{t('team.teamName')}</Text>
+                  <TextInput
+                    style={[styles.input, touched.name && errors.name && styles.inputError]}
+                    value={values.name}
+                    onChangeText={handleChange('name')}
+                    onBlur={handleBlur('name')}
+                    placeholder="Los Caimanes FC"
+                    placeholderTextColor={colors.cream45}
+                    selectionColor={colors.cream}
+                    autoCapitalize="words"
+                    keyboardAppearance="dark"
+                  />
+                  {touched.name && errors.name ? <Text style={styles.fieldError}>{errors.name}</Text> : null}
+                </View>
+
+                <View style={styles.field}>
+                  <Text style={styles.label}>{t('team.format')}</Text>
+                  <View style={styles.toggleRow}>
+                    {FORMATS.map((f) => (
+                      <TouchableOpacity
+                        key={f}
+                        style={[styles.toggleBtn, values.format === f && styles.toggleBtnSelected]}
+                        onPress={() => setFieldValue('format', f)}
+                      >
+                        <Text style={[styles.toggleText, values.format === f && styles.toggleTextSelected]}>
+                          {f === 5 ? t('team.format5') : t('team.format11')}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  {touched.format && errors.format ? <Text style={styles.fieldError}>{errors.format as string}</Text> : null}
+                </View>
+
+                <CreamButton
+                  label={t('team.createTeam')}
+                  full
+                  loading={isSubmitting}
+                  onPress={() => handleSubmit()}
+                />
+              </View>
+            )}
+          </Formik>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.xxl },
-  closeBtn: { alignSelf: 'flex-end', padding: spacing.sm, marginBottom: spacing.sm },
-  closeBtnText: { fontSize: fontSizes.lg, color: colors.gray },
-  title: {
-    fontSize: fontSizes.xxl,
-    fontWeight: 'bold',
-    color: colors.darkGray,
-    marginBottom: spacing.xl,
+  safe: { flex: 1, backgroundColor: colors.black },
+  content: { flexGrow: 1, padding: 24, paddingTop: 28 },
+
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: space.xl,
   },
-  label: {
-    fontSize: fontSizes.sm,
-    color: colors.darkGray,
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
-    fontWeight: '500',
-  },
+  headerText: { gap: 4 },
+  title: { fontFamily: font.sansXBold, fontSize: 27, letterSpacing: -0.5, color: colors.cream },
+  subtitle: { fontFamily: font.sans, fontSize: 13, color: colors.cream70 },
+  closeBtn: { padding: 4, marginTop: 4 },
+
+  form: { gap: space.lg },
+  field: { gap: space.xs },
+  label: { fontFamily: font.sansBold, fontSize: 10.5, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.cream70 },
+
   input: {
+    backgroundColor: colors.surface1,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: spacing.md,
-    fontSize: fontSizes.md,
-    color: colors.darkGray,
-    backgroundColor: colors.lightGray,
+    borderColor: colors.hairline,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontFamily: font.sans,
+    fontSize: 15,
+    color: colors.cream,
   },
-  inputError: { borderColor: colors.primary },
-  fieldError: { color: colors.primary, fontSize: fontSizes.xs, marginTop: spacing.xs },
-  apiError: {
-    color: colors.primary,
-    fontSize: fontSizes.sm,
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  },
-  toggleRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
+  inputError: { borderColor: 'rgba(239,68,68,0.6)' },
+  fieldError: { fontFamily: font.sans, fontSize: 11.5, color: '#EF4444' },
+  apiError: { fontFamily: font.sans, fontSize: 13, color: '#EF4444', textAlign: 'center' },
+
+  toggleRow: { flexDirection: 'row', gap: space.md },
   toggleBtn: {
     flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: 8,
+    paddingVertical: 13,
+    borderRadius: radius.chip,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.hairline,
     alignItems: 'center',
-    backgroundColor: colors.lightGray,
+    backgroundColor: colors.surface1,
   },
-  toggleBtnSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-  toggleText: { fontSize: fontSizes.sm, color: colors.darkGray, fontWeight: '500' },
-  toggleTextSelected: { color: colors.white, fontWeight: '600' },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    padding: spacing.md,
-    alignItems: 'center',
-    marginTop: spacing.xl,
-  },
-  buttonDisabled: { opacity: 0.7 },
-  buttonText: { color: colors.white, fontSize: fontSizes.md, fontWeight: 'bold' },
+  toggleBtnSelected: { backgroundColor: colors.cream2, borderColor: colors.cream2 },
+  toggleText: { fontFamily: font.sans, fontSize: 14, color: colors.cream70 },
+  toggleTextSelected: { fontFamily: font.sansBold, color: colors.black },
 });

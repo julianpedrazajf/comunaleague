@@ -12,21 +12,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import { X, MapPin, Calendar, Clock, Check } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getDailyTournaments, getUserRegistrations, registerForTournament } from '../services/tournaments';
 import { Tournament } from '../types';
-import { colors, spacing, fontSizes } from '../utils/theme';
 import { RootStackParamList } from '../navigation/types';
+import Chip from '../components/ui/Chip';
+import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OneGame'>;
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr + 'T00:00:00');
-  return date.toLocaleDateString('es-CO', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  });
+  return date.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 export default function OneGameScreen({ navigation }: Props) {
@@ -49,7 +47,7 @@ export default function OneGameScreen({ navigation }: Props) {
       setTournaments(data);
       setRegisteredIds(new Set(regs.map((r) => r.tournamentId)));
     } catch {
-      // silently fail — empty list shown
+      // silently fail
     } finally {
       setLoading(false);
     }
@@ -78,90 +76,87 @@ export default function OneGameScreen({ navigation }: Props) {
             }
           },
         },
-      ]
+      ],
     );
   }
 
   const renderItem = ({ item }: { item: Tournament }) => {
     const isRegistered = registeredIds.has(item.id);
     const isRegistering = registeringId === item.id;
+    const priceLabel = item.price === 0 ? t('onegame.free') : `$${item.price.toLocaleString('es-CO')}`;
 
     return (
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-          <View style={styles.formatBadge}>
-            <Text style={styles.formatBadgeText}>
-              {item.format === 5 ? t('team.format5') : t('team.format11')}
-            </Text>
-          </View>
+        <View style={styles.cardTop}>
+          <Text style={styles.cardName} numberOfLines={2}>{item.name}</Text>
+          <Chip label={item.format === 5 ? t('team.format5') : t('team.format11')} />
         </View>
 
-        <View style={styles.cardDetails}>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>{t('onegame.starts')}</Text>
-            <Text style={styles.detailValue}>{formatDate(item.startDate)}</Text>
+        <View style={styles.cardMeta}>
+          <View style={styles.metaRow}>
+            <Calendar size={11} color={colors.gray500} strokeWidth={2} />
+            <Text style={styles.metaText}>{t('onegame.starts')}: {formatDate(item.startDate)}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>{t('match.location')}</Text>
-            <Text style={styles.detailValue} numberOfLines={1}>{item.location}</Text>
+          <View style={styles.metaRow}>
+            <Clock size={11} color={colors.gray500} strokeWidth={2} />
+            <Text style={styles.metaText}>{t('onegame.deadline')}: {formatDate(item.registrationDeadline)}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>{t('onegame.deadline')}</Text>
-            <Text style={styles.detailValue}>{formatDate(item.registrationDeadline)}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>{t('payment.price')}</Text>
-            <Text style={styles.detailValue}>
-              {item.price === 0 ? t('onegame.free') : `$${item.price.toLocaleString('es-CO')}`}
-            </Text>
-          </View>
+          {item.location ? (
+            <View style={styles.metaRow}>
+              <MapPin size={11} color={colors.gray500} strokeWidth={2} />
+              <Text style={styles.metaText} numberOfLines={1}>{item.location}</Text>
+            </View>
+          ) : null}
         </View>
 
-        {isRegistered ? (
-          <View style={styles.registeredBadge}>
-            <Text style={styles.registeredText}>{t('onegame.registered')}</Text>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={[styles.registerBtn, isRegistering && styles.registerBtnDisabled]}
-            onPress={() => handleRegister(item)}
-            disabled={isRegistering}
-          >
-            {isRegistering ? (
-              <ActivityIndicator size="small" color={colors.white} />
-            ) : (
-              <Text style={styles.registerBtnText}>{t('onegame.register')}</Text>
-            )}
-          </TouchableOpacity>
-        )}
+        <View style={styles.hairline} />
+
+        <View style={styles.cardFooter}>
+          <Text style={styles.price}>{priceLabel}</Text>
+          {isRegistered ? (
+            <View style={styles.registeredBadge}>
+              <Check size={12} color={colors.green} strokeWidth={2.5} />
+              <Text style={styles.registeredText}>{t('onegame.registered')}</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.registerBtn, isRegistering && styles.registerBtnDisabled]}
+              onPress={() => handleRegister(item)}
+              disabled={isRegistering}
+            >
+              {isRegistering ? (
+                <ActivityIndicator size="small" color={colors.black} />
+              ) : (
+                <Text style={styles.registerBtnText}>{t('onegame.register')}</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     );
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerText}>
           <Text style={styles.title}>{t('onegame.title')}</Text>
           <Text style={styles.subtitle}>{t('onegame.subtitle')}</Text>
         </View>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.closeBtn}>✕</Text>
+        <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()} hitSlop={12}>
+          <X size={20} color={colors.cream45} strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.cream45} />
         </View>
       ) : (
         <FlatList
           data={tournaments}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={
-            tournaments.length === 0 ? styles.emptyContainer : styles.listContent
-          }
+          contentContainerStyle={tournaments.length === 0 ? styles.emptyContainer : styles.listContent}
           ListEmptyComponent={
             <View style={styles.centered}>
               <Text style={styles.emptyText}>{t('onegame.noGames')}</Text>
@@ -175,84 +170,63 @@ export default function OneGameScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  safe: { flex: 1, backgroundColor: colors.black },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center' },
 
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
+    paddingHorizontal: 18,
+    paddingTop: space.md,
+    paddingBottom: space.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.hairline,
   },
-  title: { fontSize: fontSizes.xxl, fontWeight: 'bold', color: colors.darkGray },
-  subtitle: { fontSize: fontSizes.sm, color: colors.gray, marginTop: spacing.xs },
-  closeBtn: { fontSize: fontSizes.lg, color: colors.gray, fontWeight: '600' },
+  headerText: { gap: 4 },
+  title: { fontFamily: font.sansXBold, fontSize: 27, letterSpacing: -0.5, color: colors.cream },
+  subtitle: { fontFamily: font.sans, fontSize: 13, color: colors.cream70 },
+  closeBtn: { padding: 4, marginTop: 4 },
 
-  listContent: { padding: spacing.lg, gap: spacing.md },
-  emptyText: { color: colors.gray, fontSize: fontSizes.md, textAlign: 'center' },
+  listContent: { padding: 18, gap: space.md, paddingBottom: 40 },
 
   card: {
-    backgroundColor: colors.lightGray,
-    borderRadius: 14,
-    padding: spacing.md,
-    gap: spacing.md,
+    backgroundColor: colors.surface1,
+    borderRadius: radius.card,
+    padding: space.lg,
+    gap: space.md,
   },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  cardName: {
-    fontSize: fontSizes.md,
-    fontWeight: '700',
-    color: colors.darkGray,
-    flex: 1,
-  },
-  formatBadge: {
-    backgroundColor: colors.teal,
-    borderRadius: 8,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  formatBadgeText: { fontSize: fontSizes.xs, color: colors.white, fontWeight: '700' },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space.sm },
+  cardName: { fontFamily: font.sansBold, fontSize: 16, color: colors.cream, flex: 1, lineHeight: 22 },
 
-  cardDetails: { gap: spacing.xs },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  detailLabel: { fontSize: fontSizes.sm, color: colors.gray },
-  detailValue: {
-    fontSize: fontSizes.sm,
-    fontWeight: '600',
-    color: colors.darkGray,
-    flex: 1,
-    textAlign: 'right',
-    marginLeft: spacing.md,
-  },
+  cardMeta: { gap: 6 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  metaText: { fontFamily: font.sans, fontSize: 12, color: colors.gray500 },
+
+  hairline: { height: 1, backgroundColor: colors.hairline },
+
+  cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  price: { fontFamily: font.serifItalic, fontSize: 22, color: colors.cream },
 
   registerBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
+    backgroundColor: colors.cream2,
+    borderRadius: 999,
+    paddingVertical: 9,
+    paddingHorizontal: space.lg,
   },
-  registerBtnDisabled: { opacity: 0.6 },
-  registerBtnText: { color: colors.white, fontWeight: '700', fontSize: fontSizes.sm },
+  registerBtnDisabled: { opacity: 0.45 },
+  registerBtnText: { fontFamily: font.sansBold, fontSize: 13, color: colors.black },
 
   registeredBadge: {
-    borderRadius: 8,
-    paddingVertical: spacing.sm,
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.teal,
+    gap: 5,
+    backgroundColor: 'rgba(34,197,94,0.12)',
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: space.md,
   },
-  registeredText: { color: colors.teal, fontWeight: '700', fontSize: fontSizes.sm },
+  registeredText: { fontFamily: font.sansBold, fontSize: 12, color: colors.green },
 });
