@@ -16,8 +16,15 @@ import { useAuth } from '../context/AuthContext';
 import { getMyTeam, getTeamMembers } from '../services/teams';
 import { getProfile } from '../services/users';
 import { Team, User } from '../types';
-import { colors, spacing, fontSizes } from '../utils/theme';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
+import SectionHeader from '../components/ui/SectionHeader';
+import StatTriple from '../components/ui/StatTriple';
+import PlayerRow from '../components/ui/PlayerRow';
+import Monogram from '../components/ui/Monogram';
+import Chip from '../components/ui/Chip';
+import CreamButton from '../components/ui/CreamButton';
+import GhostButton from '../components/ui/GhostButton';
+import { colors, font, space, radius } from '../theme/tokens';
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<AppTabParamList, 'MyTeam'>,
@@ -25,9 +32,6 @@ type NavProp = CompositeNavigationProp<
 >;
 
 type Member = Pick<User, 'id' | 'name' | 'lastName' | 'position' | 'skillLevel'>;
-type ProfileSummary = Pick<User, 'id' | 'name' | 'lastName'>;
-
-const AVATAR_COLORS = [colors.teal, colors.primary, colors.orange, colors.accent, '#7B68EE', '#20B2AA'];
 
 export default function MyTeamScreen() {
   const { t } = useTranslation();
@@ -36,7 +40,6 @@ export default function MyTeamScreen() {
 
   const [team, setTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
-  const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,12 +48,8 @@ export default function MyTeamScreen() {
     setLoading(true);
     setError(null);
     try {
-      const [found, prof] = await Promise.all([
-        getMyTeam(session.user.id),
-        getProfile(session.user.id),
-      ]);
+      const [found] = await Promise.all([getMyTeam(session.user.id)]);
       setTeam(found);
-      setProfile(prof);
       if (found) {
         const m = await getTeamMembers(found.playerIds);
         setMembers(m);
@@ -66,9 +65,9 @@ export default function MyTeamScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safe}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.cream45} />
         </View>
       </SafeAreaView>
     );
@@ -76,10 +75,10 @@ export default function MyTeamScreen() {
 
   if (error) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safe}>
         <View style={styles.centered}>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={load}>
+          <TouchableOpacity onPress={load}>
             <Text style={styles.retryText}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
@@ -89,217 +88,107 @@ export default function MyTeamScreen() {
 
   if (!team) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.pageHeader}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.navigate('Home')}>
-            <Text style={styles.backBtnText}>← {t('common.back')}</Text>
-          </TouchableOpacity>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.navBar}>
           <Text style={styles.pageTitle}>{t('team.myTeam')}</Text>
-          {profile && (
-            <Text style={styles.greeting}>{t('common.hello')}, {profile.name}</Text>
-          )}
         </View>
         <View style={styles.centered}>
-          <Text style={styles.noTeamTitle}>{t('team.noTeam')}</Text>
-          <Text style={styles.noTeamSub}>{t('team.noTeamSub')}</Text>
-          <TouchableOpacity
-            style={styles.ctaPrimary}
-            onPress={() => navigation.navigate('CreateTeam')}
-          >
-            <Text style={styles.ctaPrimaryText}>{t('team.createTeam')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.ctaSecondary}
-            onPress={() => navigation.navigate('JoinTeam')}
-          >
-            <Text style={styles.ctaSecondaryText}>{t('team.joinTeam')}</Text>
-          </TouchableOpacity>
+          <Text style={styles.emptyTitle}>{t('team.noTeam')}</Text>
+          <Text style={styles.emptySub}>{t('team.noTeamSub')}</Text>
+          <View style={styles.emptyActions}>
+            <CreamButton
+              label={t('team.createTeam')}
+              full
+              onPress={() => navigation.navigate('CreateTeam')}
+            />
+            <GhostButton
+              label={t('team.joinTeam')}
+              full
+              onPress={() => navigation.navigate('JoinTeam')}
+            />
+          </View>
         </View>
       </SafeAreaView>
     );
   }
 
+  const formatLabel = team.format === 5 ? t('team.format5') : t('team.format11');
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.pageHeader}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.navigate('Home')}>
-          <Text style={styles.backBtnText}>← {t('common.back')}</Text>
-        </TouchableOpacity>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <View style={styles.navBar}>
         <Text style={styles.pageTitle}>{t('team.myTeam')}</Text>
-        {profile && (
-          <Text style={styles.greeting}>{t('common.hello')}, {profile.name}</Text>
-        )}
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <View style={styles.teamCard}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {/* Team header */}
+        <View style={styles.teamHeader}>
+          <Monogram name={team.name} size={72} shape="square" />
           <Text style={styles.teamName}>{team.name}</Text>
-          <View style={styles.formatBadge}>
-            <Text style={styles.formatText}>
-              {team.format === 5 ? t('team.format5') : t('team.format11')}
-            </Text>
-          </View>
-          <Text style={styles.memberCount}>
-            {members.length} {t('team.squad').toLowerCase()}
-          </Text>
+          <Chip label={formatLabel} />
         </View>
 
-        <Text style={styles.sectionTitle}>{t('team.squad')}</Text>
+        {/* Stats */}
+        <StatTriple
+          stats={[
+            { value: '3°', label: 'Posición' },
+            { value: '4', label: 'Victorias' },
+            { value: '12', label: 'Puntos' },
+          ]}
+        />
 
-        {members.map((m, i) => (
-          <View key={m.id} style={styles.memberRow}>
-            <View style={[styles.avatar, { backgroundColor: AVATAR_COLORS[i % AVATAR_COLORS.length] }]}>
-              <Text style={styles.avatarInitials}>
-                {m.name[0]}{m.lastName[0]}
-              </Text>
-            </View>
-            <View style={styles.memberInfo}>
-              <View style={styles.nameRow}>
-                <Text style={styles.memberName} numberOfLines={1}>{m.name} {m.lastName}</Text>
-                {m.id === team.ownerId && (
-                  <View style={styles.captainBadge}>
-                    <Text style={styles.captainText}>{t('team.captain')}</Text>
-                  </View>
-                )}
+        {/* Squad */}
+        <View style={styles.section}>
+          <SectionHeader
+            label={t('team.squad')}
+            actionLabel="Invitar"
+            onAction={() => {}}
+          />
+          <View style={styles.playerList}>
+            {members.map((m) => (
+              <View key={m.id}>
+                <PlayerRow
+                  name={m.name}
+                  lastName={m.lastName}
+                  position={t(`positions.${m.position}`)}
+                  isCaptain={m.id === team.ownerId}
+                />
+                <View style={styles.divider} />
               </View>
-              <View style={styles.memberMeta}>
-                <Text style={styles.memberPosition}>{t(`positions.${m.position}`)}</Text>
-                <Text style={styles.memberDot}>·</Text>
-                <Text style={styles.memberSkill}>{t(`skillLevel.${m.skillLevel}`)}</Text>
-              </View>
-            </View>
+            ))}
           </View>
-        ))}
+        </View>
+
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
-  scrollView: { flex: 1 },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  safe: { flex: 1, backgroundColor: colors.black },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
 
-  // Page header
-  pageHeader: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backBtn: { marginBottom: spacing.xs },
-  backBtnText: { fontSize: fontSizes.sm, color: colors.gray, fontWeight: '500' },
-  pageTitle: { fontSize: fontSizes.xxl, fontWeight: 'bold', color: colors.darkGray },
-  greeting: { fontSize: fontSizes.sm, color: colors.gray, marginTop: spacing.xs },
+  navBar: { paddingHorizontal: 18, paddingVertical: space.md },
+  pageTitle: { fontFamily: font.sansXBold, fontSize: 27, letterSpacing: -0.5, color: colors.cream },
 
-  // Error state
-  errorText: { color: colors.primary, fontSize: fontSizes.sm, textAlign: 'center', marginBottom: spacing.md },
-  retryBtn: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  retryText: { color: colors.primary, fontWeight: '600' },
+  errorText: { fontFamily: font.sans, fontSize: 14, color: '#EF4444', textAlign: 'center', marginBottom: space.md },
+  retryText: { fontFamily: font.sansBold, fontSize: 13, color: colors.cream70 },
 
-  // No team state
-  noTeamTitle: {
-    fontSize: fontSizes.xl,
-    fontWeight: 'bold',
-    color: colors.darkGray,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  noTeamSub: {
-    fontSize: fontSizes.sm,
-    color: colors.gray,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-  },
-  ctaPrimary: {
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xxl,
-    marginBottom: spacing.md,
-    width: '100%',
-    alignItems: 'center',
-  },
-  ctaPrimaryText: { color: colors.white, fontWeight: 'bold', fontSize: fontSizes.md },
-  ctaSecondary: {
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xxl,
-    width: '100%',
-    alignItems: 'center',
-  },
-  ctaSecondaryText: { color: colors.primary, fontWeight: 'bold', fontSize: fontSizes.md },
+  emptyTitle: { fontFamily: font.sansBold, fontSize: 18, color: colors.cream, textAlign: 'center', marginBottom: space.sm },
+  emptySub: { fontFamily: font.sans, fontSize: 14, color: colors.cream70, textAlign: 'center', marginBottom: space.xl },
+  emptyActions: { width: '100%', gap: space.md },
 
-  // Team card
-  teamCard: {
-    backgroundColor: colors.teal,
-    borderRadius: 16,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
-  },
-  teamName: {
-    fontSize: fontSizes.xl,
-    fontWeight: 'bold',
-    color: colors.white,
-    marginBottom: spacing.sm,
-  },
-  formatBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 12,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  formatText: { color: colors.white, fontSize: fontSizes.xs, fontWeight: '600' },
-  memberCount: { color: 'rgba(255,255,255,0.7)', fontSize: fontSizes.sm },
+  content: { paddingHorizontal: 18, paddingTop: space.md, gap: space.xl },
 
-  // Squad
-  sectionTitle: {
-    fontSize: fontSizes.lg,
-    fontWeight: 'bold',
-    color: colors.darkGray,
-    marginBottom: spacing.md,
+  teamHeader: { alignItems: 'center', gap: space.md },
+  teamName: { fontFamily: font.sansXBold, fontSize: 22, color: colors.cream, textAlign: 'center' },
+
+  section: {},
+  playerList: {
+    backgroundColor: colors.surface1,
+    borderRadius: radius.card,
+    paddingHorizontal: space.lg,
   },
-  memberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
-  },
-  avatarInitials: { color: colors.white, fontWeight: 'bold', fontSize: fontSizes.sm },
-  memberInfo: { flex: 1 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  memberName: { fontSize: fontSizes.md, fontWeight: '600', color: colors.darkGray, flex: 1 },
-  captainBadge: {
-    backgroundColor: colors.accent,
-    borderRadius: 8,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-  },
-  captainText: { fontSize: fontSizes.xs, fontWeight: '700', color: colors.darkGray },
-  memberMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: 2 },
-  memberPosition: { fontSize: fontSizes.sm, color: colors.gray },
-  memberDot: { fontSize: fontSizes.xs, color: colors.gray },
-  memberSkill: { fontSize: fontSizes.sm, color: colors.gray },
+  divider: { height: 1, backgroundColor: colors.hairline },
 });

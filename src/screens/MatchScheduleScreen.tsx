@@ -16,8 +16,10 @@ import { useAuth } from '../context/AuthContext';
 import { getMyTeam } from '../services/teams';
 import { getTeamMatches, MatchWithTeams } from '../services/matches';
 import { Team } from '../types';
-import { colors, spacing, fontSizes } from '../utils/theme';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
+import MatchRow from '../components/ui/MatchRow';
+import CreamButton from '../components/ui/CreamButton';
+import { colors, font, space } from '../theme/tokens';
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<AppTabParamList, 'MatchSchedule'>,
@@ -26,20 +28,14 @@ type NavProp = CompositeNavigationProp<
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr + 'T00:00:00');
-  return date.toLocaleDateString('es-CO', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+  return date.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 function formatTime(timeStr: string): string {
   const [hours, minutes] = timeStr.split(':');
   const h = parseInt(hours, 10);
   const ampm = h >= 12 ? 'PM' : 'AM';
-  const h12 = h % 12 || 12;
-  return `${h12}:${minutes} ${ampm}`;
+  return `${h % 12 || 12}:${minutes} ${ampm}`;
 }
 
 export default function MatchScheduleScreen() {
@@ -74,73 +70,47 @@ export default function MatchScheduleScreen() {
 
   const renderMatch = ({ item }: { item: MatchWithTeams }) => {
     const isHome = item.homeTeamId === team?.id;
-    const myTeamName = isHome ? item.homeTeam.name : item.awayTeam.name;
-    const opponentName = isHome ? item.awayTeam.name : item.homeTeam.name;
+    const hasResult = Boolean(item.result);
 
     return (
-      <View style={styles.matchCard}>
-        <Text style={styles.matchDate}>
-          {formatDate(item.date)} · {formatTime(item.time)}
-        </Text>
-
-        <View style={styles.teamsRow}>
-          <View style={styles.teamCol}>
-            <Text style={styles.myTeamName} numberOfLines={1}>{myTeamName}</Text>
-            <Text style={styles.teamRole}>{isHome ? t('match.home') : t('match.away')}</Text>
-          </View>
-
-          <Text style={styles.vs}>vs</Text>
-
-          <View style={[styles.teamCol, styles.teamColRight]}>
-            <Text style={styles.opponentName} numberOfLines={1}>{opponentName}</Text>
-            <Text style={styles.teamRole}>{isHome ? t('match.away') : t('match.home')}</Text>
-          </View>
-        </View>
-
-        {item.result ? (
-          <View style={styles.resultBadge}>
-            <Text style={styles.resultText}>{item.result}</Text>
-          </View>
-        ) : null}
-
-        <View style={styles.locationRow}>
-          <Text style={styles.locationIcon}>📍</Text>
-          <Text style={styles.locationText}>{item.location}</Text>
-        </View>
-      </View>
+      <MatchRow
+        homeTeam={{ name: item.homeTeam.name }}
+        awayTeam={{ name: item.awayTeam.name }}
+        date={formatDate(item.date)}
+        time={formatTime(item.time)}
+        location={item.location}
+        status={hasResult ? 'final' : 'upcoming'}
+      />
     );
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.pageHeader}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.navigate('Home')}>
-          <Text style={styles.backBtnText}>← {t('common.back')}</Text>
-        </TouchableOpacity>
-        <Text style={styles.pageTitle}>{t('match.schedule')}</Text>
-        {team && <Text style={styles.subtitle}>{team.name}</Text>}
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <View style={styles.navBar}>
+        <Text style={styles.pageTitle}>Partidos</Text>
+        {team && <Text style={styles.teamName}>{team.name}</Text>}
       </View>
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.cream45} />
         </View>
       ) : error ? (
         <View style={styles.centered}>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={load}>
+          <TouchableOpacity onPress={load}>
             <Text style={styles.retryText}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       ) : !team ? (
         <View style={styles.centered}>
-          <Text style={styles.noTeamTitle}>{t('match.noTeamForSchedule')}</Text>
-          <TouchableOpacity
-            style={styles.ctaBtn}
-            onPress={() => navigation.navigate('MyTeam')}
-          >
-            <Text style={styles.ctaBtnText}>{t('team.myTeam')}</Text>
-          </TouchableOpacity>
+          <Text style={styles.emptyTitle}>{t('match.noTeamForSchedule')}</Text>
+          <View style={{ marginTop: space.lg }}>
+            <CreamButton
+              label={t('team.myTeam')}
+              onPress={() => navigation.navigate('MyTeam')}
+            />
+          </View>
         </View>
       ) : (
         <FlatList
@@ -151,7 +121,7 @@ export default function MatchScheduleScreen() {
           }
           ListEmptyComponent={
             <View style={styles.centered}>
-              <Text style={styles.emptyText}>{t('match.noMatches')}</Text>
+              <Text style={styles.emptyTitle}>{t('match.noMatches')}</Text>
             </View>
           }
           renderItem={renderMatch}
@@ -162,107 +132,17 @@ export default function MatchScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  safe: { flex: 1, backgroundColor: colors.black },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  // Header
-  pageHeader: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backBtn: { marginBottom: spacing.xs },
-  backBtnText: { fontSize: fontSizes.sm, color: colors.gray, fontWeight: '500' },
-  pageTitle: { fontSize: fontSizes.xxl, fontWeight: 'bold', color: colors.darkGray },
-  subtitle: { fontSize: fontSizes.sm, color: colors.gray, marginTop: spacing.xs },
+  navBar: { paddingHorizontal: 18, paddingVertical: space.md, gap: 4 },
+  pageTitle: { fontFamily: font.sansXBold, fontSize: 27, letterSpacing: -0.5, color: colors.cream },
+  teamName: { fontFamily: font.sans, fontSize: 13, color: colors.cream70 },
 
-  // Error
-  errorText: { color: colors.primary, fontSize: fontSizes.sm, textAlign: 'center', marginBottom: spacing.md },
-  retryBtn: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  retryText: { color: colors.primary, fontWeight: '600' },
+  errorText: { fontFamily: font.sans, fontSize: 13, color: '#EF4444', textAlign: 'center', marginBottom: space.md },
+  retryText: { fontFamily: font.sansBold, fontSize: 13, color: colors.cream70 },
+  emptyTitle: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center' },
 
-  // No team
-  noTeamTitle: {
-    fontSize: fontSizes.md,
-    color: colors.gray,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  ctaBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xl,
-  },
-  ctaBtnText: { color: colors.white, fontWeight: 'bold', fontSize: fontSizes.md },
-
-  // Empty
-  emptyText: { color: colors.gray, fontSize: fontSizes.md, textAlign: 'center' },
-
-  // List
-  listContent: { padding: spacing.lg, gap: spacing.md },
-
-  // Match card
-  matchCard: {
-    backgroundColor: colors.lightGray,
-    borderRadius: 14,
-    padding: spacing.md,
-  },
-  matchDate: {
-    fontSize: fontSizes.xs,
-    color: colors.gray,
-    marginBottom: spacing.md,
-    textTransform: 'capitalize',
-  },
-  teamsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  teamCol: { flex: 1 },
-  teamColRight: { alignItems: 'flex-end' },
-  myTeamName: {
-    fontSize: fontSizes.md,
-    fontWeight: '700',
-    color: colors.darkGray,
-  },
-  opponentName: {
-    fontSize: fontSizes.md,
-    fontWeight: '500',
-    color: colors.darkGray,
-    textAlign: 'right',
-  },
-  teamRole: {
-    fontSize: fontSizes.xs,
-    color: colors.gray,
-    marginTop: 2,
-    textTransform: 'uppercase',
-  },
-  vs: {
-    fontSize: fontSizes.sm,
-    fontWeight: '700',
-    color: colors.primary,
-    marginHorizontal: spacing.sm,
-  },
-  resultBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.teal,
-    borderRadius: 8,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    marginBottom: spacing.sm,
-  },
-  resultText: { color: colors.white, fontSize: fontSizes.xs, fontWeight: '700' },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  locationIcon: { fontSize: fontSizes.xs },
-  locationText: { fontSize: fontSizes.xs, color: colors.gray, flex: 1 },
+  listContent: { padding: 18, gap: space.md, paddingBottom: 120 },
 });

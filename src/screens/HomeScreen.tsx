@@ -1,289 +1,199 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Bell } from 'lucide-react-native';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { getFeaturedPlayers, FeaturedPlayer } from '../services/users';
-import { colors, spacing, fontSizes } from '../utils/theme';
+import { getDailyTournaments } from '../services/tournaments';
+import { Tournament } from '../types';
+import { useAuth } from '../context/AuthContext';
+import SectionHeader from '../components/ui/SectionHeader';
+import Monogram from '../components/ui/Monogram';
+import TournamentCard from '../components/ui/TournamentCard';
+import CreamButton from '../components/ui/CreamButton';
+import { colors, font, space, radius } from '../theme/tokens';
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<AppTabParamList, 'Home'>,
   NativeStackNavigationProp<RootStackParamList>
 >;
 
-const STATS_CARDS = [
-  { key: 'topScorers', color: colors.primary, icon: '⚽' },
-  { key: 'rankings', color: colors.teal, icon: '🏆' },
-  { key: 'recentResults', color: colors.orange, icon: '📊' },
-] as const;
-
-const AVATAR_COLORS = [colors.primary, colors.teal, colors.orange, colors.accent, '#7B68EE', '#20B2AA'];
-
-function avatarColor(index: number) {
-  return AVATAR_COLORS[index % AVATAR_COLORS.length];
-}
-
-const LARGE_TITLE_THRESHOLD = 52;
-
 export default function HomeScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<NavProp>();
+  const { session } = useAuth();
   const [players, setPlayers] = useState<FeaturedPlayer[]>([]);
-  const scrollY = useRef(new Animated.Value(0)).current;
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+
+  const firstName = session?.user?.user_metadata?.name ?? 'Jugador';
 
   useEffect(() => {
     getFeaturedPlayers().then(setPlayers).catch(() => {});
+    getDailyTournaments().then(setTournaments).catch(() => {});
   }, []);
 
-  const smallTitleOpacity = scrollY.interpolate({
-    inputRange: [LARGE_TITLE_THRESHOLD - 12, LARGE_TITLE_THRESHOLD + 12],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-
-  const largeTitleOpacity = scrollY.interpolate({
-    inputRange: [0, LARGE_TITLE_THRESHOLD],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
-  const largeTitleTranslateY = scrollY.interpolate({
-    inputRange: [0, LARGE_TITLE_THRESHOLD],
-    outputRange: [0, -14],
-    extrapolate: 'clamp',
-  });
-
-  const categoryTabs = [
-    { key: 'MyTeam' as const, label: t('home.myTeam') },
-    { key: 'MatchSchedule' as const, label: t('match.schedule') },
-    { key: 'Inbox' as const, label: t('inbox.title') },
-  ];
-
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Fixed nav bar — small title fades in on scroll */}
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      {/* Nav bar */}
       <View style={styles.navBar}>
-        <View style={styles.navSpacer} />
-        <Animated.Text style={[styles.navTitle, { opacity: smallTitleOpacity }]}>
-          Comuna League
-        </Animated.Text>
-        <View style={styles.navRight}>
-          <TouchableOpacity hitSlop={12}>
-            <Text style={styles.bellIcon}>🔔</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.greeting}>Hola, {firstName}</Text>
+        <TouchableOpacity hitSlop={12} style={styles.bellWrap}>
+          <Bell size={20} color={colors.cream45} strokeWidth={2} />
+          <View style={styles.bellDot} />
+        </TouchableOpacity>
       </View>
 
-      <Animated.ScrollView
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true },
-        )}
-        scrollEventThrottle={16}
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        {/* Large title */}
-        <Animated.View
-          style={{
-            opacity: largeTitleOpacity,
-            transform: [{ translateY: largeTitleTranslateY }],
-          }}
-        >
-          <Text style={styles.largeTitle}>Comuna{'\n'}League</Text>
-        </Animated.View>
+        {/* Next match card */}
+        <View style={styles.nextMatchCard}>
+          <Text style={styles.nextMatchEyebrow}>PRÓXIMO PARTIDO</Text>
+          <View style={styles.teamsRow}>
+            <View style={styles.teamCol}>
+              <Monogram name="Mi" lastName="Equipo" size={52} />
+              <Text style={styles.teamName}>Mi equipo</Text>
+            </View>
+            <Text style={styles.vsText}>vs</Text>
+            <View style={styles.teamCol}>
+              <Monogram name="Ri" lastName="val" size={52} />
+              <Text style={styles.teamName}>Rival</Text>
+            </View>
+          </View>
+          <View style={styles.matchMeta}>
+            <Text style={styles.matchMetaText}>Domingo · 9:00 am · Cancha Norte</Text>
+          </View>
+          <CreamButton
+            label="Confirmar asistencia"
+            full
+            onPress={() => navigation.navigate('MatchSchedule')}
+          />
+        </View>
 
-        {/* Horizontal category tabs */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabsContent}
-          style={styles.tabsWrapper}
-        >
-          {categoryTabs.map((tab) => (
-            <TouchableOpacity
-              key={tab.key}
-              style={styles.tab}
-              onPress={() => navigation.navigate(tab.key)}
-            >
-              <Text style={styles.tabText}>{tab.label}</Text>
-              <View style={styles.tabUnderline} />
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Statistics */}
-        <Text style={styles.sectionTitle}>{t('home.statistics')}</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-        >
-          {STATS_CARDS.map((card) => (
-            <TouchableOpacity key={card.key} style={styles.statsCard} activeOpacity={0.82}>
-              <View style={[styles.statsCardImage, { backgroundColor: card.color }]}>
-                <Text style={styles.statsCardIcon}>{card.icon}</Text>
-              </View>
-              <Text style={styles.statsCardLabel}>{t(`home.${card.key}`)}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Featured Players */}
-        {players.length > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>{t('home.featuredPlayers')}</Text>
+        {/* Torneos abiertos */}
+        {tournaments.length > 0 && (
+          <View style={styles.section}>
+            <SectionHeader label="Torneos abiertos" />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalList}
+              contentContainerStyle={styles.hList}
             >
-              {players.map((player, i) => (
-                <View key={player.id} style={styles.playerCard}>
-                  <View style={[styles.playerAvatar, { backgroundColor: avatarColor(i) }]}>
-                    <Text style={styles.playerInitials}>
-                      {player.name[0]}{player.lastName[0]}
-                    </Text>
-                  </View>
+              {tournaments.map((tournament) => (
+                <TournamentCard
+                  key={tournament.id}
+                  name={tournament.name}
+                  format={tournament.format === 5 ? 'Fútbol 5' : 'Fútbol 11'}
+                  location={tournament.location}
+                  price={tournament.price}
+                  onRegister={() => navigation.navigate('OneGame')}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Jugadores destacados */}
+        {players.length > 0 && (
+          <View style={styles.section}>
+            <SectionHeader label="Destacados" />
+            <View style={styles.playerGrid}>
+              {players.slice(0, 6).map((p) => (
+                <View key={p.id} style={styles.playerChip}>
+                  <Monogram name={p.name} lastName={p.lastName} size={38} />
                   <Text style={styles.playerName} numberOfLines={1}>
-                    {player.name} {player.lastName}
+                    {p.name}
                   </Text>
-                  <Text style={styles.playerPosition} numberOfLines={1}>
-                    {t(`positions.${player.position}`)}
+                  <Text style={styles.playerPos} numberOfLines={1}>
+                    {t(`positions.${p.position}`)}
                   </Text>
                 </View>
               ))}
-            </ScrollView>
-          </>
+            </View>
+          </View>
         )}
-      </Animated.ScrollView>
+
+        {/* Spacer for floating tab bar */}
+        <View style={{ height: 100 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-const card_shadow = {
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.11,
-  shadowRadius: 12,
-  elevation: 4,
-};
-
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1, backgroundColor: colors.black },
 
-  // Fixed nav bar
   navBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingVertical: space.md,
   },
-  navSpacer: { width: 32 },
-  navTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: fontSizes.md,
-    fontWeight: '700',
-    color: colors.black,
-    letterSpacing: 0.1,
-  },
-  navRight: { width: 32, alignItems: 'flex-end' },
-  bellIcon: { fontSize: 20 },
-
-  // Scrollable content
-  content: { paddingHorizontal: spacing.sm, paddingBottom: spacing.xl },
-
-  // Large title
-  largeTitle: {
-    fontSize: 40,
-    fontWeight: '900',
-    color: colors.black,
-    letterSpacing: -1,
-    lineHeight: 44,
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.lg,
-    textAlign: 'center',
+  greeting: { fontFamily: font.sansXBold, fontSize: 27, letterSpacing: -0.5, color: colors.cream },
+  bellWrap: { position: 'relative' },
+  bellDot: {
+    position: 'absolute',
+    top: -1, right: -1,
+    width: 7, height: 7,
+    borderRadius: 999,
+    backgroundColor: colors.green,
   },
 
-  // Category tabs
-  tabsWrapper: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    marginBottom: spacing.lg,
+  content: { paddingHorizontal: 18, paddingTop: space.sm },
+
+  nextMatchCard: {
+    backgroundColor: colors.surface1,
+    borderRadius: radius.card,
+    padding: space.lg,
+    gap: space.md,
+    marginBottom: space.xl,
   },
-  tabsContent: { gap: spacing.lg, paddingBottom: spacing.sm, justifyContent: 'center', flexGrow: 1 },
-  tab: { paddingBottom: spacing.sm, paddingTop: spacing.xs, alignItems: 'center' },
-  tabText: { fontSize: fontSizes.sm, fontWeight: '600', color: colors.black },
-  tabUnderline: { height: 2, backgroundColor: colors.black, marginTop: spacing.xs, borderRadius: 1 },
-
-  // Section titles
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.black,
-    letterSpacing: -0.3,
-    marginBottom: spacing.md,
-    marginTop: spacing.xs,
-    textAlign: 'center',
+  nextMatchEyebrow: {
+    fontFamily: font.sansBold,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: colors.cream45,
   },
-
-  // Horizontal rows
-  horizontalList: { gap: spacing.md, paddingBottom: spacing.lg, paddingRight: spacing.sm, justifyContent: 'center', flexGrow: 1 },
-
-  // Stats cards
-  statsCard: { width: 165, marginBottom: spacing.xs },
-  statsCardImage: {
-    width: 165,
-    height: 135,
-    borderRadius: 18,
+  teamsRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-    ...card_shadow,
+    justifyContent: 'space-between',
+    paddingHorizontal: space.sm,
   },
-  statsCardIcon: { fontSize: 44 },
-  statsCardLabel: { fontSize: fontSizes.sm, fontWeight: '700', color: colors.black },
+  teamCol: { alignItems: 'center', gap: space.xs, flex: 1 },
+  teamName: { fontFamily: font.sansBold, fontSize: 12, color: colors.cream70, textAlign: 'center' },
+  vsText: { fontFamily: font.serifItalic, fontSize: 22, color: colors.cream45, textAlign: 'center' },
+  matchMeta: { alignItems: 'center' },
+  matchMetaText: { fontFamily: font.sans, fontSize: 12.5, color: colors.cream45 },
 
-  // Player cards
-  playerCard: {
-    width: 110,
+  section: { marginBottom: space.xl },
+  hList: { gap: space.md, paddingRight: 18 },
+
+  playerGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
+  playerChip: {
+    width: '30%',
+    backgroundColor: colors.surface1,
+    borderRadius: radius.cardSm,
+    padding: space.md,
     alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    ...card_shadow,
+    gap: space.xs,
   },
-  playerAvatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xs,
-  },
-  playerInitials: { fontSize: fontSizes.lg, fontWeight: '700', color: colors.white },
-  playerName: {
-    fontSize: fontSizes.xs,
-    fontWeight: '700',
-    color: colors.black,
-    textAlign: 'center',
-  },
-  playerPosition: {
-    fontSize: fontSizes.xs,
-    color: colors.gray,
-    textAlign: 'center',
-  },
+  playerName: { fontFamily: font.sansBold, fontSize: 11, color: colors.cream, textAlign: 'center' },
+  playerPos: { fontFamily: font.sans, fontSize: 10, color: colors.gray500, textAlign: 'center' },
 });
