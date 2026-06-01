@@ -27,6 +27,8 @@ type NavProp = CompositeNavigationProp<
 type Member = Pick<User, 'id' | 'name' | 'lastName' | 'position' | 'skillLevel'>;
 type ProfileSummary = Pick<User, 'id' | 'name' | 'lastName'>;
 
+const AVATAR_COLORS = [colors.teal, colors.primary, colors.orange, colors.accent, '#7B68EE', '#20B2AA'];
+
 export default function MyTeamScreen() {
   const { t } = useTranslation();
   const { session } = useAuth();
@@ -144,23 +146,27 @@ export default function MyTeamScreen() {
 
         <Text style={styles.sectionTitle}>{t('team.squad')}</Text>
 
-        {members.map((m) => (
+        {members.map((m, i) => (
           <View key={m.id} style={styles.memberRow}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarInitial}>
-                {m.name.charAt(0).toUpperCase()}
+            <View style={[styles.avatar, { backgroundColor: AVATAR_COLORS[i % AVATAR_COLORS.length] }]}>
+              <Text style={styles.avatarInitials}>
+                {m.name[0]}{m.lastName[0]}
               </Text>
             </View>
             <View style={styles.memberInfo}>
               <View style={styles.nameRow}>
-                <Text style={styles.memberName}>{m.name} {m.lastName}</Text>
+                <Text style={styles.memberName} numberOfLines={1}>{m.name} {m.lastName}</Text>
                 {m.id === team.ownerId && (
                   <View style={styles.captainBadge}>
                     <Text style={styles.captainText}>{t('team.captain')}</Text>
                   </View>
                 )}
               </View>
-              <Text style={styles.memberPosition}>{t(`positions.${m.position}`)}</Text>
+              <View style={styles.memberMeta}>
+                <Text style={styles.memberPosition}>{t(`positions.${m.position}`)}</Text>
+                <Text style={styles.memberDot}>·</Text>
+                <Text style={styles.memberSkill}>{t(`skillLevel.${m.skillLevel}`)}</Text>
+              </View>
             </View>
           </View>
         ))}
@@ -281,10 +287,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: spacing.md,
   },
-  avatarInitial: { color: colors.white, fontWeight: 'bold', fontSize: fontSizes.md },
+  avatarInitials: { color: colors.white, fontWeight: 'bold', fontSize: fontSizes.sm },
   memberInfo: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  memberName: { fontSize: fontSizes.md, fontWeight: '600', color: colors.darkGray },
+  memberName: { fontSize: fontSizes.md, fontWeight: '600', color: colors.darkGray, flex: 1 },
   captainBadge: {
     backgroundColor: colors.accent,
     borderRadius: 8,
@@ -292,5 +298,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   captainText: { fontSize: fontSizes.xs, fontWeight: '700', color: colors.darkGray },
-  memberPosition: { fontSize: fontSizes.sm, color: colors.gray, marginTop: 2 },
+  memberMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: 2 },
+  memberPosition: { fontSize: fontSizes.sm, color: colors.gray },
+  memberDot: { fontSize: fontSizes.xs, color: colors.gray },
+  memberSkill: { fontSize: fontSizes.sm, color: colors.gray },
 });
