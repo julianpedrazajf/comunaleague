@@ -133,7 +133,16 @@
   },
   "inbox": {
     "title": "Mensajes",
-    "noMessages": "No hay mensajes aún"
+    "noMessages": "No hay mensajes aún",
+    "teammates": "Compañeros de equipo",
+    "noTeam": "Únete a un equipo para hablar con tus compañeros",
+    "noTeammates": "Aún no hay otros jugadores en tu equipo"
+  },
+  "chat": {
+    "placeholder": "Escribe un mensaje...",
+    "send": "Enviar",
+    "noMessages": "Sin mensajes aún. ¡Di hola!",
+    "youPrefix": "Tú:"
   },
   "guest": {
     "tagline": "Organiza y únete a torneos de fútbol amateur",

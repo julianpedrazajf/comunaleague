@@ -13,3 +13,33 @@ export async function getInboxMessages(userId: string): Promise<MessageWithSende
   if (error) throw error;
   return (data ?? []) as MessageWithSender[];
 }
+
+export async function getAllUserMessages(userId: string): Promise<Message[]> {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .or(`fromId.eq.${userId},toId.eq.${userId}`)
+    .order('timestamp', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Message[];
+}
+
+export async function getConversation(userId: string, peerId: string): Promise<Message[]> {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .or(`and(fromId.eq.${userId},toId.eq.${peerId}),and(fromId.eq.${peerId},toId.eq.${userId})`)
+    .order('timestamp', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Message[];
+}
+
+export async function sendMessage(fromId: string, toId: string, content: string): Promise<void> {
+  const { error } = await supabase.from('messages').insert({
+    fromId,
+    toId,
+    content,
+    timestamp: new Date().toISOString(),
+  });
+  if (error) throw error;
+}

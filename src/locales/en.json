@@ -133,7 +133,16 @@
   },
   "inbox": {
     "title": "Inbox",
-    "noMessages": "No messages yet"
+    "noMessages": "No messages yet",
+    "teammates": "Teammates",
+    "noTeam": "Join a team to message your teammates",
+    "noTeammates": "No other players on your team yet"
+  },
+  "chat": {
+    "placeholder": "Write a message...",
+    "send": "Send",
+    "noMessages": "No messages yet. Say hello!",
+    "youPrefix": "You:"
   },
   "guest": {
     "tagline": "Organize and join amateur soccer tournaments",
