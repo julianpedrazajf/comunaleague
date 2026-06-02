@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ImageBackground, Image } from 'react-native';
+import SoccerBallIcon from '../components/ui/SoccerBallIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
@@ -26,9 +27,13 @@ export default function GuestHomeScreen({ navigation }: Props) {
       {/* Content floats above */}
       <View style={styles.inner}>
         <View style={styles.lockup}>
-          <Text style={styles.title}>
-            Comuna{'\n'}League<Text style={styles.asterisk}>*</Text>
-          </Text>
+          <View style={styles.wordmarkWrap}>
+            <Text style={styles.title}>{'Comuna'}</Text>
+            <View style={styles.leagueRow}>
+              <Text style={styles.title}>{'League'}</Text>
+              <SoccerBallIcon size={25} color={colors.cream2} />
+            </View>
+          </View>
           <Text style={styles.tagline}>el barrio juega en serio.</Text>
         </View>
 
@@ -66,17 +71,14 @@ const styles = StyleSheet.create({
   },
 
   lockup: { gap: space.lg },
+  wordmarkWrap: { gap: -6 },
+  leagueRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: {
     fontFamily: font.sansXBold,
     fontSize: 58,
     letterSpacing: -2.9,
-    lineHeight: 56,
+    lineHeight: 62,
     color: colors.cream,
-  },
-  asterisk: {
-    fontFamily: font.serifItalic,
-    fontSize: 40,
-    color: colors.cream2,
   },
   tagline: {
     fontFamily: font.serifItalic,
