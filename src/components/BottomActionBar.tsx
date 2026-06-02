@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, Calendar, Shield, User } from 'lucide-react-native';
+import { Home, Calendar, Shield, Inbox, User } from 'lucide-react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
 import { colors, font } from '../theme/tokens';
@@ -10,6 +10,7 @@ const TABS = [
   { route: 'Home',          Icon: Home,     labelKey: 'nav.home' },
   { route: 'MatchSchedule', Icon: Calendar, labelKey: 'nav.matches' },
   { route: 'MyTeam',        Icon: Shield,   labelKey: 'nav.team' },
+  { route: 'Inbox',         Icon: Inbox,    labelKey: 'nav.inbox' },
   { route: 'Profile',       Icon: User,     labelKey: 'nav.profile' },
 ] as const;
 
