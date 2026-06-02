@@ -13,7 +13,6 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Bell } from 'lucide-react-native';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
-import { getFeaturedPlayers, FeaturedPlayer } from '../services/users';
 import { getDailyTournaments } from '../services/tournaments';
 import { Tournament } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -32,13 +31,11 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<NavProp>();
   const { session } = useAuth();
-  const [players, setPlayers] = useState<FeaturedPlayer[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
 
   const firstName = session?.user?.user_metadata?.name ?? 'Jugador';
 
   useEffect(() => {
-    getFeaturedPlayers().then(setPlayers).catch(() => {});
     getDailyTournaments().then(setTournaments).catch(() => {});
   }, []);
 
@@ -104,26 +101,6 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Jugadores destacados */}
-        {players.length > 0 && (
-          <View style={styles.section}>
-            <SectionHeader label={t('home.featured')} />
-            <View style={styles.playerGrid}>
-              {players.slice(0, 6).map((p) => (
-                <View key={p.id} style={styles.playerChip}>
-                  <Monogram name={p.name} lastName={p.lastName} size={38} />
-                  <Text style={styles.playerName} numberOfLines={1}>
-                    {p.name}
-                  </Text>
-                  <Text style={styles.playerPos} numberOfLines={1}>
-                    {t(`positions.${p.position}`)}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
         {/* Spacer for floating tab bar */}
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -180,20 +157,4 @@ const styles = StyleSheet.create({
 
   section: { marginBottom: space.xl },
   hList: { gap: space.md, paddingRight: 18 },
-
-  playerGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space.sm,
-  },
-  playerChip: {
-    width: '30%',
-    backgroundColor: colors.surface1,
-    borderRadius: radius.cardSm,
-    padding: space.md,
-    alignItems: 'center',
-    gap: space.xs,
-  },
-  playerName: { fontFamily: font.sansBold, fontSize: 11, color: colors.cream, textAlign: 'center' },
-  playerPos: { fontFamily: font.sans, fontSize: 10, color: colors.gray500, textAlign: 'center' },
 });
