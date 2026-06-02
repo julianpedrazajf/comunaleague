@@ -12,6 +12,7 @@ import { CompositeNavigationProp, useNavigation } from '@react-navigation/native
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Bell, Zap, Users, Plus } from 'lucide-react-native';
+import SoccerBallIcon from '../components/ui/SoccerBallIcon';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { getDailyTournaments } from '../services/tournaments';
 import { Tournament } from '../types';
@@ -43,7 +44,16 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       {/* Nav bar */}
       <View style={styles.navBar}>
-        <Text style={styles.greeting}>{t('home.greeting', { name: firstName })}</Text>
+        <View style={styles.wordmarkWrap}>
+          <View style={styles.leagueRow}>
+            <Text style={styles.wordmarkTitle}>{'Comuna'}</Text>
+          </View>
+          <View style={styles.leagueRow}>
+            <Text style={styles.wordmarkTitle}>{'League'}</Text>
+            <SoccerBallIcon size={16} color={colors.cream2} />
+          </View>
+          <Text style={styles.wordmarkTagline}>pibes de barrio.</Text>
+        </View>
         <TouchableOpacity hitSlop={12} style={styles.bellWrap}>
           <Bell size={20} color={colors.cream45} strokeWidth={2} />
           <View style={styles.bellDot} />
@@ -137,7 +147,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: space.md,
   },
-  greeting: { fontFamily: font.sansXBold, fontSize: 27, letterSpacing: -0.5, color: colors.cream },
+  wordmarkWrap: { gap: -2 },
+  leagueRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  wordmarkTitle: {
+    fontFamily: font.sansXBold,
+    fontSize: 28,
+    lineHeight: 30,
+    letterSpacing: -1.2,
+    color: colors.cream,
+  },
+  wordmarkTagline: {
+    fontFamily: font.serifItalic,
+    fontSize: 12,
+    color: colors.cream45,
+    letterSpacing: 0.2,
+    marginTop: 2,
+  },
   bellWrap: { position: 'relative' },
   bellDot: {
     position: 'absolute',

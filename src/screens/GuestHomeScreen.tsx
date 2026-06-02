@@ -34,7 +34,7 @@ export default function GuestHomeScreen({ navigation }: Props) {
               <SoccerBallIcon size={25} color={colors.cream2} />
             </View>
           </View>
-          <Text style={styles.tagline}>el barrio juega en serio.</Text>
+          <Text style={styles.tagline}>pibes de barrio.</Text>
         </View>
 
         <View style={styles.actions}>

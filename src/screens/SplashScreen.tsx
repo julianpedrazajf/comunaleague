@@ -29,7 +29,7 @@ export default function SplashScreen({ navigation }: Props) {
             <SoccerBallIcon size={25} color={colors.cream70} />
           </View>
         </View>
-        <Text style={styles.tagline}>el barrio juega en serio.</Text>
+        <Text style={styles.tagline}>pibes de barrio.</Text>
       </View>
     </View>
   );
