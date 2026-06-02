@@ -60,16 +60,16 @@ export default function HomeScreen() {
           <View style={styles.teamsRow}>
             <View style={styles.teamCol}>
               <Monogram name="Mi" lastName="Equipo" size={52} />
-              <Text style={styles.teamName}>Mi equipo</Text>
+              <Text style={styles.teamName}>{t('home.myTeam')}</Text>
             </View>
             <Text style={styles.vsText}>vs</Text>
             <View style={styles.teamCol}>
               <Monogram name="Ri" lastName="val" size={52} />
-              <Text style={styles.teamName}>Rival</Text>
+              <Text style={styles.teamName}>{t('match.opponent')}</Text>
             </View>
           </View>
           <View style={styles.matchMeta}>
-            <Text style={styles.matchMetaText}>Domingo · 9:00 am · Cancha Norte</Text>
+            <Text style={styles.matchMetaText}>{t('home.nextMatchMeta')}</Text>
           </View>
           <CreamButton
             label={t('home.confirmAttendance')}
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.green,
   },
 
-  content: { paddingHorizontal: 18, paddingTop: space.sm },
+  content: { paddingHorizontal: 18, paddingTop: space.sm, flexGrow: 1, justifyContent: 'center' },
 
   nextMatchCard: {
     backgroundColor: colors.surface1,
@@ -136,23 +136,27 @@ const styles = StyleSheet.create({
     padding: space.lg,
     gap: space.md,
     marginBottom: space.xl,
+    alignItems: 'center',
   },
   nextMatchEyebrow: {
     fontFamily: font.sansBold,
     fontSize: 10,
     letterSpacing: 1.5,
     color: colors.cream45,
+    alignSelf: 'stretch',
+    textAlign: 'center',
   },
   teamsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: space.sm,
+    alignSelf: 'stretch',
   },
   teamCol: { alignItems: 'center', gap: space.xs, flex: 1 },
   teamName: { fontFamily: font.sansBold, fontSize: 12, color: colors.cream70, textAlign: 'center' },
   vsText: { fontFamily: font.serifItalic, fontSize: 22, color: colors.cream45, textAlign: 'center' },
-  matchMeta: { alignItems: 'center' },
+  matchMeta: { alignItems: 'center', alignSelf: 'stretch' },
   matchMetaText: { fontFamily: font.sans, fontSize: 12.5, color: colors.cream45 },
 
   section: { marginBottom: space.xl },

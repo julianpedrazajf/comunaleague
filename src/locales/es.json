@@ -97,6 +97,7 @@
     "welcome": "Bienvenido",
     "greeting": "Hola, {{name}}",
     "nextMatch": "Próximo partido",
+    "nextMatchMeta": "Domingo · 9:00 am · Cancha Norte",
     "confirmAttendance": "Confirmar asistencia",
     "openTournaments": "Torneos abiertos",
     "featured": "Destacados",

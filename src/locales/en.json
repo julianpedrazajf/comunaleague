@@ -97,6 +97,7 @@
     "welcome": "Welcome",
     "greeting": "Hello, {{name}}",
     "nextMatch": "Next match",
+    "nextMatchMeta": "Sunday · 9:00 am · North Field",
     "confirmAttendance": "Confirm attendance",
     "openTournaments": "Open tournaments",
     "featured": "Featured",
