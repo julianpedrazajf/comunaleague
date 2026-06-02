@@ -181,6 +181,12 @@
     "confirmTitle": "¿Unirte a este partido?",
     "confirmMsg": "Serás registrado como jugador individual."
   },
+  "nav": {
+    "home": "Inicio",
+    "matches": "Partidos",
+    "team": "Equipo",
+    "profile": "Perfil"
+  },
   "payment": {
     "registerTeam": "Registrar equipo",
     "registerPlayer": "Registrarse como jugador",

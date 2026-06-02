@@ -3,24 +3,26 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Calendar, Shield, User } from 'lucide-react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useTranslation } from 'react-i18next';
 import { colors, font } from '../theme/tokens';
 
 const TABS = [
-  { route: 'Home',          Icon: Home,     label: 'Inicio' },
-  { route: 'MatchSchedule', Icon: Calendar, label: 'Partidos' },
-  { route: 'MyTeam',        Icon: Shield,   label: 'Equipo' },
-  { route: 'Profile',       Icon: User,     label: 'Perfil' },
+  { route: 'Home',          Icon: Home,     labelKey: 'nav.home' },
+  { route: 'MatchSchedule', Icon: Calendar, labelKey: 'nav.matches' },
+  { route: 'MyTeam',        Icon: Shield,   labelKey: 'nav.team' },
+  { route: 'Profile',       Icon: User,     labelKey: 'nav.profile' },
 ] as const;
 
 export default function BottomActionBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   const currentRoute = state.routes[state.index]?.name;
 
   return (
     <View style={[styles.wrapper, { bottom: Math.max(insets.bottom, 16) + 8 }]} pointerEvents="box-none">
       <View style={styles.pill}>
-        {TABS.map(({ route, Icon, label }) => {
+        {TABS.map(({ route, Icon, labelKey }) => {
           const active = currentRoute === route;
           const iconColor = active ? colors.cream : colors.cream45;
 
@@ -32,7 +34,7 @@ export default function BottomActionBar({ state, navigation }: BottomTabBarProps
               activeOpacity={0.75}
             >
               <Icon size={20} color={iconColor} strokeWidth={2} />
-              <Text style={[styles.label, active && styles.labelActive]}>{label}</Text>
+              <Text style={[styles.label, active && styles.labelActive]}>{t(labelKey)}</Text>
             </TouchableOpacity>
           );
         })}

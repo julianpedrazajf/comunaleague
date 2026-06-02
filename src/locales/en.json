@@ -181,6 +181,12 @@
     "confirmTitle": "Join this match?",
     "confirmMsg": "You will be registered as a solo player."
   },
+  "nav": {
+    "home": "Home",
+    "matches": "Matches",
+    "team": "Team",
+    "profile": "Profile"
+  },
   "payment": {
     "registerTeam": "Register Team",
     "registerPlayer": "Register as Player",
