@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Bell } from 'lucide-react-native';
+import { Bell, Zap, Users, Plus } from 'lucide-react-native';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { getDailyTournaments } from '../services/tournaments';
 import { Tournament } from '../types';
@@ -48,6 +48,25 @@ export default function HomeScreen() {
           <Bell size={20} color={colors.cream45} strokeWidth={2} />
           <View style={styles.bellDot} />
         </TouchableOpacity>
+      </View>
+
+      {/* Quick actions */}
+      <View style={styles.quickActions}>
+        {([
+          { Icon: Zap,   labelKey: 'home.playSolo',   route: 'OneGame'    },
+          { Icon: Users, labelKey: 'home.joinTeam',   route: 'JoinTeam'   },
+          { Icon: Plus,  labelKey: 'home.createTeam', route: 'CreateTeam' },
+        ] as const).map(({ Icon, labelKey, route }) => (
+          <TouchableOpacity
+            key={route}
+            style={styles.quickBtn}
+            onPress={() => navigation.navigate(route as never)}
+            activeOpacity={0.75}
+          >
+            <Icon size={18} color={colors.cream} strokeWidth={2} />
+            <Text style={styles.quickBtnLabel}>{t(labelKey)}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <ScrollView
@@ -161,4 +180,28 @@ const styles = StyleSheet.create({
 
   section: { marginBottom: space.xl },
   hList: { gap: space.md, paddingRight: 18 },
+
+  quickActions: {
+    flexDirection: 'row',
+    paddingHorizontal: 18,
+    paddingTop: space.md,
+    paddingBottom: space.sm,
+    gap: space.sm,
+  },
+  quickBtn: {
+    flex: 1,
+    backgroundColor: colors.surface1,
+    borderRadius: radius.card,
+    paddingVertical: space.md,
+    alignItems: 'center',
+    gap: space.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(222,219,200,0.08)',
+  },
+  quickBtnLabel: {
+    fontFamily: font.sansBold,
+    fontSize: 10.5,
+    color: colors.cream70,
+    textAlign: 'center',
+  },
 });

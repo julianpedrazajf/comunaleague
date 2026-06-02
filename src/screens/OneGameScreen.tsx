@@ -22,13 +22,13 @@ import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OneGame'>;
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, locale: string): string {
   const date = new Date(dateStr + 'T00:00:00');
-  return date.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' });
+  return date.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 export default function OneGameScreen({ navigation }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { session } = useAuth();
 
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -95,11 +95,11 @@ export default function OneGameScreen({ navigation }: Props) {
         <View style={styles.cardMeta}>
           <View style={styles.metaRow}>
             <Calendar size={11} color={colors.gray500} strokeWidth={2} />
-            <Text style={styles.metaText}>{t('onegame.starts')}: {formatDate(item.startDate)}</Text>
+            <Text style={styles.metaText}>{t('onegame.starts')}: {formatDate(item.startDate, i18n.language)}</Text>
           </View>
           <View style={styles.metaRow}>
             <Clock size={11} color={colors.gray500} strokeWidth={2} />
-            <Text style={styles.metaText}>{t('onegame.deadline')}: {formatDate(item.registrationDeadline)}</Text>
+            <Text style={styles.metaText}>{t('onegame.deadline')}: {formatDate(item.registrationDeadline, i18n.language)}</Text>
           </View>
           {item.location ? (
             <View style={styles.metaRow}>
