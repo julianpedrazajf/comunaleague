@@ -26,7 +26,11 @@
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "loginWithGoogle": "Continue with Google",
-    "loginWithApple": "Continue with Apple"
+    "loginWithApple": "Continue with Apple",
+    "welcomeTitle": "Welcome back",
+    "welcomeSubtitle": "Sign in to continue",
+    "createAccountTitle": "Create account",
+    "joinLeague": "Join the league"
   },
   "errors": {
     "required": "Field required",
@@ -41,6 +45,13 @@
   },
   "profile": {
     "setup": "Set Up Your Profile",
+    "setupSubtitle": "Tell us who you are on the field",
+    "title": "Profile",
+    "attributes": "Attributes",
+    "settingsTitle": "Settings",
+    "language": "Language",
+    "notifications": "Notifications",
+    "preferences": "Preferences",
     "name": "First Name",
     "lastName": "Last Name",
     "age": "Age",
@@ -84,6 +95,11 @@
   },
   "home": {
     "welcome": "Welcome",
+    "greeting": "Hello, {{name}}",
+    "nextMatch": "Next match",
+    "confirmAttendance": "Confirm attendance",
+    "openTournaments": "Open tournaments",
+    "featured": "Featured",
     "myTeam": "My Team",
     "matchSchedule": "Match Schedule",
     "inbox": "Inbox",
@@ -117,9 +133,12 @@
     "join": "Join",
     "joinConfirm": "Do you want to join",
     "players": "players",
-    "searchPlaceholder": "Search teams..."
+    "searchPlaceholder": "Search teams...",
+    "createSubtitle": "Give your team an identity",
+    "joinSubtitle": "Find your team in Cali"
   },
   "match": {
+    "title": "Matches",
     "schedule": "Match Schedule",
     "upcoming": "Upcoming Matches",
     "location": "Location",

@@ -74,7 +74,7 @@ export default function ProfileSetupScreen() {
         >
           <View style={styles.header}>
             <Text style={styles.title}>{t('profile.setup')}</Text>
-            <Text style={styles.subtitle}>Cuéntanos quién eres en la cancha</Text>
+            <Text style={styles.subtitle}>{t('profile.setupSubtitle')}</Text>
           </View>
 
           <Formik

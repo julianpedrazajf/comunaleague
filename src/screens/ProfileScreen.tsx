@@ -51,15 +51,15 @@ export default function ProfileScreen() {
     : [];
 
   const settingsRows = [
-    { label: 'Idioma', icon: Globe },
-    { label: 'Notificaciones', icon: Bell },
-    { label: 'Preferencias', icon: Settings },
+    { label: t('profile.language'), icon: Globe },
+    { label: t('profile.notifications'), icon: Bell },
+    { label: t('profile.preferences'), icon: Settings },
   ];
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.navBar}>
-        <Text style={styles.pageTitle}>Perfil</Text>
+        <Text style={styles.pageTitle}>{t('profile.title')}</Text>
       </View>
 
       {loading ? (
@@ -99,7 +99,7 @@ export default function ProfileScreen() {
           {/* Attributes card */}
           {attrRows.length > 0 && (
             <View style={styles.infoCard}>
-              <Text style={styles.cardEyebrow}>Atributos</Text>
+              <Text style={styles.cardEyebrow}>{t('profile.attributes')}</Text>
               {attrRows.map((row, i) => (
                 <View key={row.label}>
                   {i > 0 && <View style={styles.divider} />}
@@ -114,7 +114,7 @@ export default function ProfileScreen() {
 
           {/* Settings card */}
           <View style={styles.infoCard}>
-            <Text style={styles.cardEyebrow}>Ajustes</Text>
+            <Text style={styles.cardEyebrow}>{t('profile.settingsTitle')}</Text>
             {settingsRows.map((row, i) => {
               const Icon = row.icon;
               return (

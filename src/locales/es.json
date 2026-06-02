@@ -26,7 +26,11 @@
     "noAccount": "¿No tienes cuenta?",
     "hasAccount": "¿Ya tienes cuenta?",
     "loginWithGoogle": "Continuar con Google",
-    "loginWithApple": "Continuar con Apple"
+    "loginWithApple": "Continuar con Apple",
+    "welcomeTitle": "Bienvenido",
+    "welcomeSubtitle": "Inicia sesión para continuar",
+    "createAccountTitle": "Crear cuenta",
+    "joinLeague": "Únete a la liga"
   },
   "errors": {
     "required": "Campo requerido",
@@ -41,6 +45,13 @@
   },
   "profile": {
     "setup": "Configura tu perfil",
+    "setupSubtitle": "Cuéntanos quién eres en la cancha",
+    "title": "Perfil",
+    "attributes": "Atributos",
+    "settingsTitle": "Ajustes",
+    "language": "Idioma",
+    "notifications": "Notificaciones",
+    "preferences": "Preferencias",
     "name": "Nombre",
     "lastName": "Apellido",
     "age": "Edad",
@@ -84,6 +95,11 @@
   },
   "home": {
     "welcome": "Bienvenido",
+    "greeting": "Hola, {{name}}",
+    "nextMatch": "Próximo partido",
+    "confirmAttendance": "Confirmar asistencia",
+    "openTournaments": "Torneos abiertos",
+    "featured": "Destacados",
     "myTeam": "Mi equipo",
     "matchSchedule": "Calendario",
     "inbox": "Mensajes",
@@ -117,9 +133,12 @@
     "join": "Unirse",
     "joinConfirm": "¿Quieres unirte a",
     "players": "jugadores",
-    "searchPlaceholder": "Buscar equipos..."
+    "searchPlaceholder": "Buscar equipos...",
+    "createSubtitle": "Dale identidad a tu equipo",
+    "joinSubtitle": "Encuentra tu equipo en Cali"
   },
   "match": {
+    "title": "Partidos",
     "schedule": "Calendario de partidos",
     "upcoming": "Próximos partidos",
     "location": "Lugar",

@@ -56,8 +56,8 @@ export default function LoginScreen({ navigation }: Props) {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={styles.title}>Bienvenido</Text>
-            <Text style={styles.subtitle}>Inicia sesión para continuar</Text>
+            <Text style={styles.title}>{t('auth.welcomeTitle')}</Text>
+            <Text style={styles.subtitle}>{t('auth.welcomeSubtitle')}</Text>
           </View>
 
           <Formik

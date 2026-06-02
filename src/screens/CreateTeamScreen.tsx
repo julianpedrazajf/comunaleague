@@ -49,7 +49,7 @@ export default function CreateTeamScreen({ navigation }: Props) {
           <View style={styles.header}>
             <View style={styles.headerText}>
               <Text style={styles.title}>{t('team.createTeam')}</Text>
-              <Text style={styles.subtitle}>Dale identidad a tu equipo</Text>
+              <Text style={styles.subtitle}>{t('team.createSubtitle')}</Text>
             </View>
             <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()} hitSlop={12}>
               <X size={20} color={colors.cream45} strokeWidth={2} />

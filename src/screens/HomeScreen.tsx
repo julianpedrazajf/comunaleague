@@ -46,7 +46,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       {/* Nav bar */}
       <View style={styles.navBar}>
-        <Text style={styles.greeting}>Hola, {firstName}</Text>
+        <Text style={styles.greeting}>{t('home.greeting', { name: firstName })}</Text>
         <TouchableOpacity hitSlop={12} style={styles.bellWrap}>
           <Bell size={20} color={colors.cream45} strokeWidth={2} />
           <View style={styles.bellDot} />
@@ -59,7 +59,7 @@ export default function HomeScreen() {
       >
         {/* Next match card */}
         <View style={styles.nextMatchCard}>
-          <Text style={styles.nextMatchEyebrow}>PRÓXIMO PARTIDO</Text>
+          <Text style={styles.nextMatchEyebrow}>{t('home.nextMatch').toUpperCase()}</Text>
           <View style={styles.teamsRow}>
             <View style={styles.teamCol}>
               <Monogram name="Mi" lastName="Equipo" size={52} />
@@ -75,7 +75,7 @@ export default function HomeScreen() {
             <Text style={styles.matchMetaText}>Domingo · 9:00 am · Cancha Norte</Text>
           </View>
           <CreamButton
-            label="Confirmar asistencia"
+            label={t('home.confirmAttendance')}
             full
             onPress={() => navigation.navigate('MatchSchedule')}
           />
@@ -84,7 +84,7 @@ export default function HomeScreen() {
         {/* Torneos abiertos */}
         {tournaments.length > 0 && (
           <View style={styles.section}>
-            <SectionHeader label="Torneos abiertos" />
+            <SectionHeader label={t('home.openTournaments')} />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -107,7 +107,7 @@ export default function HomeScreen() {
         {/* Jugadores destacados */}
         {players.length > 0 && (
           <View style={styles.section}>
-            <SectionHeader label="Destacados" />
+            <SectionHeader label={t('home.featured')} />
             <View style={styles.playerGrid}>
               {players.slice(0, 6).map((p) => (
                 <View key={p.id} style={styles.playerChip}>

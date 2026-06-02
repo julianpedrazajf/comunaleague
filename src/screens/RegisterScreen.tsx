@@ -58,8 +58,8 @@ export default function RegisterScreen({ navigation }: Props) {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={styles.title}>Crear cuenta</Text>
-            <Text style={styles.subtitle}>Únete a la liga</Text>
+            <Text style={styles.title}>{t('auth.createAccountTitle')}</Text>
+            <Text style={styles.subtitle}>{t('auth.joinLeague')}</Text>
           </View>
 
           <Formik

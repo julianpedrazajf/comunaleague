@@ -84,7 +84,7 @@ export default function JoinTeamScreen({ navigation }: Props) {
       <View style={styles.header}>
         <View style={styles.headerText}>
           <Text style={styles.title}>{t('team.joinTeam')}</Text>
-          <Text style={styles.subtitle}>Encuentra tu equipo en Cali</Text>
+          <Text style={styles.subtitle}>{t('team.joinSubtitle')}</Text>
         </View>
         <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()} hitSlop={12}>
           <X size={20} color={colors.cream45} strokeWidth={2} />

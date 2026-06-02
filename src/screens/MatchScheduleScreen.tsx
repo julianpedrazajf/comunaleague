@@ -87,7 +87,7 @@ export default function MatchScheduleScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.navBar}>
-        <Text style={styles.pageTitle}>Partidos</Text>
+        <Text style={styles.pageTitle}>{t('match.title')}</Text>
         {team && <Text style={styles.teamName}>{team.name}</Text>}
       </View>
 
