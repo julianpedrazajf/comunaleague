@@ -5,6 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ImageBackground,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +14,7 @@ import { CompositeNavigationProp, useNavigation } from '@react-navigation/native
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Bell, Zap, Users, Plus } from 'lucide-react-native';
+import SoccerBallIcon from '../components/ui/SoccerBallIcon';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { getDailyTournaments } from '../services/tournaments';
 import { Tournament } from '../types';
@@ -21,6 +24,9 @@ import Monogram from '../components/ui/Monogram';
 import TournamentCard from '../components/ui/TournamentCard';
 import CreamButton from '../components/ui/CreamButton';
 import { colors, font, space, radius } from '../theme/tokens';
+
+const homeBg = require('../../assets/textures/Night_Pitch_Dew_Bokeh.png');
+const grain   = require('../../assets/textures/grain.png');
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<AppTabParamList, 'Home'>,
@@ -41,9 +47,26 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      {/* Background */}
+      <ImageBackground source={homeBg} style={styles.bg} resizeMode="cover">
+        <View style={styles.scrim} pointerEvents="none" />
+        <View style={styles.grainWrap} pointerEvents="none">
+          <Image source={grain} style={styles.grain} resizeMode="repeat" />
+        </View>
+      </ImageBackground>
+
       {/* Nav bar */}
       <View style={styles.navBar}>
-        <Text style={styles.greeting}>{t('home.greeting', { name: firstName })}</Text>
+        <View style={styles.wordmarkWrap}>
+          <View style={styles.leagueRow}>
+            <Text style={styles.wordmarkTitle}>{'Comuna'}</Text>
+          </View>
+          <View style={styles.leagueRow}>
+            <Text style={styles.wordmarkTitle}>{'League'}</Text>
+            <SoccerBallIcon size={16} color={colors.cream2} />
+          </View>
+          <Text style={styles.wordmarkTagline}>pibes de barrio.</Text>
+        </View>
         <TouchableOpacity hitSlop={12} style={styles.bellWrap}>
           <Bell size={20} color={colors.cream45} strokeWidth={2} />
           <View style={styles.bellDot} />
@@ -130,6 +153,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
 
+  bg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.68)' },
+  grainWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  grain: { width: '100%', height: '100%', opacity: 0.07 },
+
   navBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -137,7 +165,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: space.md,
   },
-  greeting: { fontFamily: font.sansXBold, fontSize: 27, letterSpacing: -0.5, color: colors.cream },
+  wordmarkWrap: { gap: -2 },
+  leagueRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  wordmarkTitle: {
+    fontFamily: font.sansXBold,
+    fontSize: 28,
+    lineHeight: 30,
+    letterSpacing: -1.2,
+    color: colors.cream,
+  },
+  wordmarkTagline: {
+    fontFamily: font.serifItalic,
+    fontSize: 12,
+    color: colors.cream45,
+    letterSpacing: 0.2,
+    marginTop: 2,
+  },
   bellWrap: { position: 'relative' },
   bellDot: {
     position: 'absolute',

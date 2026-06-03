@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import SoccerBallIcon from '../components/ui/SoccerBallIcon';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
 import { colors, font } from '../theme/tokens';
@@ -21,11 +22,14 @@ export default function SplashScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.lockup}>
-        <Text style={styles.wordmark}>
-          {'Comuna\nLeague'}
-          <Text style={styles.asterisk}>*</Text>
-        </Text>
-        <Text style={styles.tagline}>el barrio juega en serio.</Text>
+        <View style={styles.wordmarkWrap}>
+          <Text style={styles.wordmarkLine}>{'Comuna'}</Text>
+          <View style={styles.leagueRow}>
+            <Text style={styles.wordmarkLine}>{'League'}</Text>
+            <SoccerBallIcon size={25} color={colors.cream70} />
+          </View>
+        </View>
+        <Text style={styles.tagline}>pibes de barrio.</Text>
       </View>
     </View>
   );
@@ -42,18 +46,19 @@ const styles = StyleSheet.create({
   grain: { width: '100%', height: '100%', opacity: 0.06 },
 
   lockup: { alignItems: 'center', gap: 14 },
-  wordmark: {
+  wordmarkWrap: { alignItems: 'center', gap: -6 },
+  wordmarkLine: {
     fontFamily: font.sansXBold,
     fontSize: 58,
-    lineHeight: 52,
+    lineHeight: 62,
     letterSpacing: -2.9,
     color: colors.cream,
     textAlign: 'center',
   },
-  asterisk: {
-    fontFamily: font.serifItalic,
-    fontSize: 52,
-    color: colors.cream70,
+  leagueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   tagline: {
     fontFamily: font.serifItalic,
