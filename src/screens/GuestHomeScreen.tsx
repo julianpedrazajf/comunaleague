@@ -3,17 +3,20 @@ import { View, Text, StyleSheet, ImageBackground, Image } from 'react-native';
 import SoccerBallIcon from '../components/ui/SoccerBallIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { AuthStackParamList } from '../navigation/types';
 import CreamButton from '../components/ui/CreamButton';
 import GhostButton from '../components/ui/GhostButton';
 import { colors, font, space } from '../theme/tokens';
 
-const loginBg = require('../../assets/textures/login-bg.png');
+const loginBg = require('../../assets/textures/Night_Pitch_Dew_Bokeh.png');
 const grain   = require('../../assets/textures/grain.png');
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'GuestHome'>;
 
 export default function GuestHomeScreen({ navigation }: Props) {
+  const { t } = useTranslation();
+
   return (
     <SafeAreaView style={styles.safe}>
       {/* Full-bleed background + scrim + grain */}
@@ -39,12 +42,12 @@ export default function GuestHomeScreen({ navigation }: Props) {
 
         <View style={styles.actions}>
           <CreamButton
-            label="Entrar"
+            label={t('guest.enter')}
             full
             onPress={() => navigation.navigate('Login')}
           />
           <GhostButton
-            label="Continuar como invitado"
+            label={t('guest.continueAsGuest')}
             full
             onPress={() => navigation.navigate('Login')}
           />

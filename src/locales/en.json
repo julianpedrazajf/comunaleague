@@ -168,7 +168,9 @@
     "tagline": "Organize and join amateur soccer tournaments",
     "loginPrompt": "Sign in to access all features",
     "explore": "Explore",
-    "signIn": "Sign In"
+    "signIn": "Sign In",
+    "enter": "Sign In",
+    "continueAsGuest": "Continue as guest"
   },
   "onegame": {
     "title": "Play Solo",

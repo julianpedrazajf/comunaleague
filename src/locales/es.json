@@ -168,7 +168,9 @@
     "tagline": "Organiza y únete a torneos de fútbol amateur",
     "loginPrompt": "Inicia sesión para acceder a todas las funciones",
     "explore": "Explorar",
-    "signIn": "Iniciar sesión"
+    "signIn": "Iniciar sesión",
+    "enter": "Entrar",
+    "continueAsGuest": "Continuar como invitado"
   },
   "onegame": {
     "title": "Jugar Solo",
