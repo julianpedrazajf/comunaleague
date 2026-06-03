@@ -5,6 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ImageBackground,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +24,9 @@ import Monogram from '../components/ui/Monogram';
 import TournamentCard from '../components/ui/TournamentCard';
 import CreamButton from '../components/ui/CreamButton';
 import { colors, font, space, radius } from '../theme/tokens';
+
+const homeBg = require('../../assets/textures/Night_Pitch_Dew_Bokeh.png');
+const grain   = require('../../assets/textures/grain.png');
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<AppTabParamList, 'Home'>,
@@ -42,6 +47,14 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      {/* Background */}
+      <ImageBackground source={homeBg} style={styles.bg} resizeMode="cover">
+        <View style={styles.scrim} pointerEvents="none" />
+        <View style={styles.grainWrap} pointerEvents="none">
+          <Image source={grain} style={styles.grain} resizeMode="repeat" />
+        </View>
+      </ImageBackground>
+
       {/* Nav bar */}
       <View style={styles.navBar}>
         <View style={styles.wordmarkWrap}>
@@ -139,6 +152,11 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
+
+  bg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.68)' },
+  grainWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  grain: { width: '100%', height: '100%', opacity: 0.07 },
 
   navBar: {
     flexDirection: 'row',
