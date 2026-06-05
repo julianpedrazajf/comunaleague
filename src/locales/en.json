@@ -104,6 +104,7 @@
     "nextMatch": "Next match",
     "nextMatchMeta": "Sunday · 9:00 am · North Field",
     "confirmAttendance": "Confirm attendance",
+    "attendanceConfirmed": "Attendance confirmed",
     "openTournaments": "Open tournaments",
     "featured": "Featured",
     "myTeam": "My Team",
@@ -159,7 +160,10 @@
     "noMatches": "No upcoming matches",
     "home": "Home",
     "away": "Away",
-    "noTeamForSchedule": "Join or create a team to see your schedule"
+    "noTeamForSchedule": "Join or create a team to see your schedule",
+    "live": "Live",
+    "final": "Final",
+    "upcoming_chip": "Upcoming"
   },
   "inbox": {
     "title": "Inbox",

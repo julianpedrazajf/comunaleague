@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { MapPin, Clock } from 'lucide-react-native';
+import { MapPin } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import Chip from './Chip';
 import Monogram from './Monogram';
 import { colors, font, radius, space } from '../../theme/tokens';
@@ -11,6 +12,7 @@ interface Team {
   name: string;
   lastName?: string;
   score?: number;
+  badgeUrl?: string | null;
 }
 
 interface MatchRowProps {
@@ -23,8 +25,9 @@ interface MatchRowProps {
 }
 
 export default function MatchRow({ homeTeam, awayTeam, date, time, location, status }: MatchRowProps) {
+  const { t } = useTranslation();
   const chipVariant = status === 'live' ? 'live' : status === 'final' ? 'final' : 'default';
-  const chipLabel = status === 'live' ? 'En vivo' : status === 'final' ? 'Final' : 'Próximo';
+  const chipLabel = status === 'live' ? t('match.live') : status === 'final' ? t('match.final') : t('match.upcoming_chip');
   const scoreColor = status === 'live' ? colors.green : colors.cream;
   const hasScore = status === 'live' || status === 'final';
 
@@ -37,7 +40,7 @@ export default function MatchRow({ homeTeam, awayTeam, date, time, location, sta
 
       <View style={styles.teamsRow}>
         <View style={styles.teamCol}>
-          <Monogram name={homeTeam.name} lastName={homeTeam.lastName} size={40} />
+          <Monogram name={homeTeam.name} lastName={homeTeam.lastName} size={40} shape="square" imageUri={homeTeam.badgeUrl} />
           <Text style={styles.teamName} numberOfLines={1}>{homeTeam.name}</Text>
         </View>
 
@@ -52,7 +55,7 @@ export default function MatchRow({ homeTeam, awayTeam, date, time, location, sta
         </View>
 
         <View style={styles.teamCol}>
-          <Monogram name={awayTeam.name} lastName={awayTeam.lastName} size={40} />
+          <Monogram name={awayTeam.name} lastName={awayTeam.lastName} size={40} shape="square" imageUri={awayTeam.badgeUrl} />
           <Text style={styles.teamName} numberOfLines={1}>{awayTeam.name}</Text>
         </View>
       </View>

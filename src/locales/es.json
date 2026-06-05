@@ -104,6 +104,7 @@
     "nextMatch": "Próximo partido",
     "nextMatchMeta": "Domingo · 9:00 am · Cancha Norte",
     "confirmAttendance": "Confirmar asistencia",
+    "attendanceConfirmed": "Asistencia confirmada",
     "openTournaments": "Torneos abiertos",
     "featured": "Destacados",
     "myTeam": "Mi equipo",
@@ -159,7 +160,10 @@
     "noMatches": "No hay partidos próximos",
     "home": "Local",
     "away": "Visitante",
-    "noTeamForSchedule": "Únete o crea un equipo para ver tu calendario"
+    "noTeamForSchedule": "Únete o crea un equipo para ver tu calendario",
+    "live": "En vivo",
+    "final": "Final",
+    "upcoming_chip": "Próximo"
   },
   "inbox": {
     "title": "Mensajes",
