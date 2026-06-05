@@ -39,3 +39,11 @@ export async function updateAvatarUrl(userId: string, avatarUrl: string): Promis
   const { error } = await supabase.from('users').update({ avatarUrl }).eq('id', userId);
   if (error) throw error;
 }
+
+export async function updateUserPreferences(
+  userId: string,
+  data: { position: string; foot: string; skillLevel: string; favoriteTeam: string | null },
+): Promise<void> {
+  const { error } = await supabase.from('users').update(data).eq('id', userId);
+  if (error) throw error;
+}

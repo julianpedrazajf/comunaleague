@@ -201,6 +201,17 @@
     "inbox": "Inbox",
     "profile": "Profile"
   },
+  "language": {
+    "title": "Language"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "push": "Push notifications",
+    "pushDesc": "Receive alerts for matches and messages"
+  },
+  "preferences": {
+    "title": "Preferences"
+  },
   "payment": {
     "registerTeam": "Register Team",
     "registerPlayer": "Register as Player",

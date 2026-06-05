@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useFocusEffect } from '@react-navigation/native';
+import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Globe, Bell, Settings, ChevronRight } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
@@ -18,15 +20,21 @@ import { getFullProfile, updateAvatarUrl } from '../services/users';
 import { getPlayerStats } from '../services/player_stats';
 import { uploadAvatar } from '../services/storage';
 import { User, PlayerStats } from '../types';
-import { AppTabParamList } from '../navigation/types';
+import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import Monogram from '../components/ui/Monogram';
 import StatTriple from '../components/ui/StatTriple';
 import GhostButton from '../components/ui/GhostButton';
 import { colors, font, space, radius } from '../theme/tokens';
 
+type NavProp = CompositeNavigationProp<
+  BottomTabNavigationProp<AppTabParamList, 'Profile'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
+
 export default function ProfileScreen() {
   const { t } = useTranslation();
   const { session, signOut } = useAuth();
+  const navigation = useNavigation<NavProp>();
   const [profile, setProfile] = useState<User | null>(null);
   const [stats, setStats] = useState<PlayerStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,10 +91,10 @@ export default function ProfileScreen() {
       ]
     : [];
 
-  const settingsRows = [
-    { label: t('profile.language'), icon: Globe },
-    { label: t('profile.notifications'), icon: Bell },
-    { label: t('profile.preferences'), icon: Settings },
+  const settingsRows: { label: string; icon: React.ComponentType<any>; route: 'Language' | 'Notifications' | 'Preferences' }[] = [
+    { label: t('profile.language'), icon: Globe, route: 'Language' },
+    { label: t('profile.notifications'), icon: Bell, route: 'Notifications' },
+    { label: t('profile.preferences'), icon: Settings, route: 'Preferences' },
   ];
 
   return (
@@ -162,7 +170,7 @@ export default function ProfileScreen() {
               return (
                 <View key={row.label}>
                   {i > 0 && <View style={styles.divider} />}
-                  <TouchableOpacity style={styles.settingsRow}>
+                  <TouchableOpacity style={styles.settingsRow} onPress={() => navigation.navigate(row.route)} activeOpacity={0.7}>
                     <Icon size={15} color={colors.cream45} strokeWidth={2} />
                     <Text style={styles.settingsLabel}>{row.label}</Text>
                     <ChevronRight size={14} color={colors.cream25} strokeWidth={2} />

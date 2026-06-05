@@ -5,6 +5,8 @@ import { getLocales } from 'expo-localization';
 import en from '../locales/en.json';
 import es from '../locales/es.json';
 
+export const LANG_STORAGE_KEY = '@lang';
+
 const deviceLanguage = getLocales()[0]?.languageCode ?? 'es';
 const supportedLanguage = ['en', 'es'].includes(deviceLanguage) ? deviceLanguage : 'es';
 

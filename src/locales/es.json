@@ -201,6 +201,17 @@
     "inbox": "Mensajes",
     "profile": "Perfil"
   },
+  "language": {
+    "title": "Idioma"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "push": "Notificaciones push",
+    "pushDesc": "Recibe alertas de partidos y mensajes"
+  },
+  "preferences": {
+    "title": "Preferencias"
+  },
   "payment": {
     "registerTeam": "Registrar equipo",
     "registerPlayer": "Registrarse como jugador",
