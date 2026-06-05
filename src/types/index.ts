@@ -80,6 +80,28 @@ export interface Registration {
   paymentId?: string;
 }
 
+export interface PlayerStats {
+  id: string;
+  userId: string;
+  position: number;
+  goals: number;
+  assists: number;
+  matches: number;
+  updatedAt: string;
+}
+
+export interface Standing {
+  id: string;
+  teamId: string;
+  tournamentId: string | null;
+  position: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  points: number;
+  updatedAt: string;
+}
+
 export interface Message {
   id: string;
   fromId: string;

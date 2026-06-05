@@ -10,12 +10,13 @@ interface PlayerRowProps {
   foot?: string;
   isCaptain?: boolean;
   number?: number;
+  avatarUrl?: string | null;
 }
 
-export default function PlayerRow({ name, lastName, position, foot, isCaptain, number }: PlayerRowProps) {
+export default function PlayerRow({ name, lastName, position, foot, isCaptain, number, avatarUrl }: PlayerRowProps) {
   return (
     <View style={styles.row}>
-      <Monogram name={name} lastName={lastName} size={44} />
+      <Monogram name={name} lastName={lastName} size={44} imageUri={avatarUrl} />
 
       <View style={styles.body}>
         <View style={styles.nameRow}>

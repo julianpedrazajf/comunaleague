@@ -25,6 +25,7 @@
     "forgotPassword": "Forgot password?",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
+    "emailPlaceholder": "you@email.com",
     "loginWithGoogle": "Continue with Google",
     "loginWithApple": "Continue with Apple",
     "welcomeTitle": "Welcome back",
@@ -63,7 +64,11 @@
     "skillLevel": "Skill Level",
     "favoriteTeam": "Favorite Team",
     "profilePicture": "Profile Picture",
-    "edit": "Edit Profile"
+    "edit": "Edit Profile",
+    "statsRanking": "Ranking",
+    "statsGoals": "Goals",
+    "statsAssists": "Assists",
+    "statsMatches": "Matches"
   },
   "positions": {
     "goalkeeper": "Goalkeeper",
@@ -136,7 +141,12 @@
     "players": "players",
     "searchPlaceholder": "Search teams...",
     "createSubtitle": "Give your team an identity",
-    "joinSubtitle": "Find your team in Cali"
+    "joinSubtitle": "Find your team in Cali",
+    "invite": "Invite",
+    "statsPosition": "Position",
+    "statsWins": "Wins",
+    "statsPoints": "Points",
+    "editStats": "Edit Stats"
   },
   "match": {
     "title": "Matches",

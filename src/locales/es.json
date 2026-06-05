@@ -25,6 +25,7 @@
     "forgotPassword": "¿Olvidaste tu contraseña?",
     "noAccount": "¿No tienes cuenta?",
     "hasAccount": "¿Ya tienes cuenta?",
+    "emailPlaceholder": "tu@correo.com",
     "loginWithGoogle": "Continuar con Google",
     "loginWithApple": "Continuar con Apple",
     "welcomeTitle": "Bienvenido",
@@ -63,7 +64,11 @@
     "skillLevel": "Nivel de habilidad",
     "favoriteTeam": "Equipo favorito",
     "profilePicture": "Foto de perfil",
-    "edit": "Editar perfil"
+    "edit": "Editar perfil",
+    "statsRanking": "Posición",
+    "statsGoals": "Goles",
+    "statsAssists": "Asist.",
+    "statsMatches": "Partidos"
   },
   "positions": {
     "goalkeeper": "Portero",
@@ -136,7 +141,12 @@
     "players": "jugadores",
     "searchPlaceholder": "Buscar equipos...",
     "createSubtitle": "Dale identidad a tu equipo",
-    "joinSubtitle": "Encuentra tu equipo en Cali"
+    "joinSubtitle": "Encuentra tu equipo en Cali",
+    "invite": "Invitar",
+    "statsPosition": "Posición",
+    "statsWins": "Victorias",
+    "statsPoints": "Puntos",
+    "editStats": "Editar stats"
   },
   "match": {
     "title": "Partidos",

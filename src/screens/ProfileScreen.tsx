@@ -6,14 +6,18 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import { Globe, Bell, Settings, ChevronRight } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
-import { getFullProfile } from '../services/users';
-import { User } from '../types';
+import { getFullProfile, updateAvatarUrl } from '../services/users';
+import { getPlayerStats } from '../services/player_stats';
+import { uploadAvatar } from '../services/storage';
+import { User, PlayerStats } from '../types';
 import { AppTabParamList } from '../navigation/types';
 import Monogram from '../components/ui/Monogram';
 import StatTriple from '../components/ui/StatTriple';
@@ -24,14 +28,20 @@ export default function ProfileScreen() {
   const { t } = useTranslation();
   const { session, signOut } = useAuth();
   const [profile, setProfile] = useState<User | null>(null);
+  const [stats, setStats] = useState<PlayerStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
     setLoading(true);
     try {
-      const data = await getFullProfile(session.user.id);
+      const [data, playerStats] = await Promise.all([
+        getFullProfile(session.user.id),
+        getPlayerStats(session.user.id),
+      ]);
       setProfile(data);
+      setStats(playerStats);
     } catch {
       // silently fail
     } finally {
@@ -40,6 +50,29 @@ export default function ProfileScreen() {
   }, [session]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const handlePickAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (result.canceled || !session) return;
+    setUploading(true);
+    try {
+      const uri = result.assets[0].uri;
+      const url = await uploadAvatar(session.user.id, uri);
+      await updateAvatarUrl(session.user.id, url);
+      setProfile((p) => p ? { ...p, avatarUrl: url } : p);
+    } catch (e: any) {
+      Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const attrRows = profile
     ? [
@@ -70,11 +103,20 @@ export default function ProfileScreen() {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           {/* Avatar header */}
           <View style={styles.avatarSection}>
-            <Monogram
-              name={profile?.name ?? '?'}
-              lastName={profile?.lastName}
-              size={80}
-            />
+            <View>
+              <Monogram
+                name={profile?.name ?? '?'}
+                lastName={profile?.lastName}
+                size={80}
+                imageUri={profile?.avatarUrl}
+                onPress={uploading ? undefined : handlePickAvatar}
+              />
+              {uploading && (
+                <View style={styles.uploadOverlay}>
+                  <ActivityIndicator size="small" color={colors.cream} />
+                </View>
+              )}
+            </View>
             <View style={styles.nameBlock}>
               <Text style={styles.fullName}>
                 {profile?.name} {profile?.lastName}
@@ -87,12 +129,12 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* Stats */}
+          {/* Stats — managed from Supabase dashboard (player_stats table) */}
           <StatTriple
             stats={[
-              { value: '24', label: 'Partidos' },
-              { value: '8', label: 'Goles' },
-              { value: '5', label: 'Asist.' },
+              { value: stats ? String(stats.matches) : '—', label: t('profile.statsMatches') },
+              { value: stats ? String(stats.goals)   : '—', label: t('profile.statsGoals')    },
+              { value: stats ? String(stats.assists)  : '—', label: t('profile.statsAssists') },
             ]}
           />
 
@@ -149,6 +191,11 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 18, gap: space.xl },
 
   avatarSection: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
+  uploadOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 40,
+    alignItems: 'center', justifyContent: 'center',
+  },
   nameBlock: { flex: 1, gap: 4 },
   fullName: { fontFamily: font.sansXBold, fontSize: 20, color: colors.cream },
   positionEyebrow: {

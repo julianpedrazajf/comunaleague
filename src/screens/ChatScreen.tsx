@@ -26,7 +26,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
 export default function ChatScreen({ route, navigation }: Props) {
   const { peerId, peerName } = route.params;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { session } = useAuth();
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -92,7 +92,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             {item.content}
           </Text>
           <Text style={[styles.bubbleTime, isMe ? styles.bubbleTimeMe : styles.bubbleTimeThem]}>
-            {new Date(item.timestamp).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+            {new Date(item.timestamp).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}
           </Text>
         </View>
       </View>
