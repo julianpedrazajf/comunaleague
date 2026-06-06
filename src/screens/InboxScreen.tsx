@@ -25,20 +25,20 @@ type NavProp = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
-type Teammate = Pick<User, 'id' | 'name' | 'lastName' | 'position' | 'skillLevel'>;
+type Teammate = Pick<User, 'id' | 'name' | 'lastName' | 'position' | 'skillLevel' | 'avatarUrl'>;
 type TeammateRow = Teammate & { lastMessage: Message | null };
 
-function formatTimestamp(ts: string): string {
+function formatTimestamp(ts: string, locale: string): string {
   const date = new Date(ts);
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-  if (diffDays < 7) return date.toLocaleDateString('es-CO', { weekday: 'short' });
-  return date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+  if (diffDays === 0) return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  if (diffDays < 7) return date.toLocaleDateString(locale, { weekday: 'short' });
+  return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
 export default function InboxScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<NavProp>();
   const { session } = useAuth();
 
@@ -102,13 +102,13 @@ export default function InboxScreen() {
         onPress={() => navigation.navigate('Chat', { peerId: item.id, peerName: fullName })}
         activeOpacity={0.7}
       >
-        <Monogram name={item.name} lastName={item.lastName} size={50} />
+        <Monogram name={item.name} lastName={item.lastName} size={50} imageUri={item.avatarUrl} />
 
         <View style={styles.rowBody}>
           <View style={styles.rowTop}>
             <Text style={styles.rowName} numberOfLines={1}>{fullName}</Text>
             {item.lastMessage && (
-              <Text style={styles.rowTime}>{formatTimestamp(item.lastMessage.timestamp)}</Text>
+              <Text style={styles.rowTime}>{formatTimestamp(item.lastMessage.timestamp, i18n.language)}</Text>
             )}
           </View>
           <Text style={styles.rowSub} numberOfLines={1}>{preview}</Text>

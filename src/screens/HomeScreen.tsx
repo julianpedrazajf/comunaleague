@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,21 @@ import {
   TouchableOpacity,
   ImageBackground,
   Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Bell, Zap, Users, Plus } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Bell, Zap, Users, Plus, Check } from 'lucide-react-native';
 import SoccerBallIcon from '../components/ui/SoccerBallIcon';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { getDailyTournaments } from '../services/tournaments';
-import { Tournament } from '../types';
+import { getMyTeam } from '../services/teams';
+import { getTeamMatches, MatchWithTeams } from '../services/matches';
+import { Tournament, Team } from '../types';
 import { useAuth } from '../context/AuthContext';
 import SectionHeader from '../components/ui/SectionHeader';
 import Monogram from '../components/ui/Monogram';
@@ -33,17 +37,69 @@ type NavProp = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
+function formatMatchDate(dateStr: string, locale: string): string {
+  const date = new Date(dateStr + 'T00:00:00');
+  return date.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function formatMatchTime(timeStr: string): string {
+  const [hours, minutes] = timeStr.split(':');
+  const h = parseInt(hours, 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${minutes} ${ampm}`;
+}
+
 export default function HomeScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<NavProp>();
   const { session } = useAuth();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [myTeam, setMyTeam] = useState<Team | null>(null);
+  const [nextMatch, setNextMatch] = useState<MatchWithTeams | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
 
-  const firstName = session?.user?.user_metadata?.name ?? 'Jugador';
-
-  useEffect(() => {
+  const load = useCallback(async () => {
     getDailyTournaments().then(setTournaments).catch(() => {});
-  }, []);
+    if (!session) return;
+    try {
+      const team = await getMyTeam(session.user.id);
+      setMyTeam(team);
+      if (team) {
+        const matches = await getTeamMatches(team.id);
+        const next = matches[0] ?? null;
+        setNextMatch(next);
+        if (next) {
+          const saved = await AsyncStorage.getItem(`@confirmed_${next.id}`);
+          setConfirmed(saved === 'true');
+        }
+      }
+    } catch { /* silently fail */ }
+  }, [session]);
+
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const handleCreateTeam = () => {
+    if (myTeam) {
+      Alert.alert(t('team.alreadyMemberTitle'), t('team.cantCreateAlreadyMember'));
+      return;
+    }
+    navigation.navigate('CreateTeam');
+  };
+
+  const handleConfirm = async () => {
+    if (!nextMatch) return;
+    if (confirmed) {
+      const matchDateTime = new Date(`${nextMatch.date}T${nextMatch.time}`);
+      const hoursUntilMatch = (matchDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+      if (hoursUntilMatch <= 24) {
+        Alert.alert(t('home.cancelLockTitle'), t('home.cancelLockMessage'));
+        return;
+      }
+    }
+    const next = !confirmed;
+    setConfirmed(next);
+    await AsyncStorage.setItem(`@confirmed_${nextMatch.id}`, next.toString());
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -83,7 +139,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             key={route}
             style={styles.quickBtn}
-            onPress={() => navigation.navigate(route as never)}
+            onPress={() => route === 'CreateTeam' ? handleCreateTeam() : navigation.navigate(route as never)}
             activeOpacity={0.75}
           >
             <Icon size={18} color={colors.cream} strokeWidth={2} />
@@ -99,25 +155,56 @@ export default function HomeScreen() {
         {/* Next match card */}
         <View style={styles.nextMatchCard}>
           <Text style={styles.nextMatchEyebrow}>{t('home.nextMatch').toUpperCase()}</Text>
-          <View style={styles.teamsRow}>
-            <View style={styles.teamCol}>
-              <Monogram name="Mi" lastName="Equipo" size={52} />
-              <Text style={styles.teamName}>{t('home.myTeam')}</Text>
-            </View>
-            <Text style={styles.vsText}>vs</Text>
-            <View style={styles.teamCol}>
-              <Monogram name="Ri" lastName="val" size={52} />
-              <Text style={styles.teamName}>{t('match.opponent')}</Text>
-            </View>
-          </View>
-          <View style={styles.matchMeta}>
-            <Text style={styles.matchMetaText}>{t('home.nextMatchMeta')}</Text>
-          </View>
-          <CreamButton
-            label={t('home.confirmAttendance')}
-            full
-            onPress={() => navigation.navigate('MatchSchedule')}
-          />
+
+          {nextMatch ? (
+            <>
+              <View style={styles.teamsRow}>
+                <View style={styles.teamCol}>
+                  <Monogram
+                    name={nextMatch.homeTeam.name}
+                    size={52}
+                    shape="square"
+                    imageUri={nextMatch.homeTeam.badgeUrl}
+                  />
+                  <Text style={styles.teamName} numberOfLines={2}>
+                    {nextMatch.homeTeam.name}
+                  </Text>
+                </View>
+                <Text style={styles.vsText}>vs</Text>
+                <View style={styles.teamCol}>
+                  <Monogram
+                    name={nextMatch.awayTeam.name}
+                    size={52}
+                    shape="square"
+                    imageUri={nextMatch.awayTeam.badgeUrl}
+                  />
+                  <Text style={styles.teamName} numberOfLines={2}>
+                    {nextMatch.awayTeam.name}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.matchMeta}>
+                <Text style={styles.matchMetaText}>
+                  {formatMatchDate(nextMatch.date, i18n.language)} · {formatMatchTime(nextMatch.time)}
+                </Text>
+                {nextMatch.location ? (
+                  <Text style={styles.matchMetaLocation}>{nextMatch.location}</Text>
+                ) : null}
+              </View>
+
+              {confirmed ? (
+                <TouchableOpacity style={styles.confirmedPill} onPress={handleConfirm} activeOpacity={0.8}>
+                  <Check size={15} color={colors.black} strokeWidth={2.5} />
+                  <Text style={styles.confirmedText}>{t('home.attendanceConfirmed')}</Text>
+                </TouchableOpacity>
+              ) : (
+                <CreamButton label={t('home.confirmAttendance')} full onPress={handleConfirm} />
+              )}
+            </>
+          ) : (
+            <Text style={styles.noMatchText}>{t('match.noMatches')}</Text>
+          )}
         </View>
 
         {/* Torneos abiertos */}
@@ -218,8 +305,22 @@ const styles = StyleSheet.create({
   teamCol: { alignItems: 'center', gap: space.xs, flex: 1 },
   teamName: { fontFamily: font.sansBold, fontSize: 12, color: colors.cream70, textAlign: 'center' },
   vsText: { fontFamily: font.serifItalic, fontSize: 22, color: colors.cream45, textAlign: 'center' },
-  matchMeta: { alignItems: 'center', alignSelf: 'stretch' },
+  matchMeta: { alignItems: 'center', alignSelf: 'stretch', gap: 4 },
   matchMetaText: { fontFamily: font.sans, fontSize: 12.5, color: colors.cream45 },
+  matchMetaLocation: { fontFamily: font.sans, fontSize: 11.5, color: colors.cream25 },
+  noMatchText: { fontFamily: font.sans, fontSize: 14, color: colors.cream45, textAlign: 'center', paddingVertical: space.md },
+  confirmedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.green,
+    borderRadius: radius.pill,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignSelf: 'stretch',
+    gap: space.sm,
+  },
+  confirmedText: { fontFamily: font.sansBold, fontSize: 15, color: colors.black },
 
   section: { marginBottom: space.xl },
   hList: { gap: space.md, paddingRight: 18 },

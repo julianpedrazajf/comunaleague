@@ -27,6 +27,9 @@ export type RootStackParamList = {
   CreateTeam: undefined;
   OneGame: undefined;
   Chat: { peerId: string; peerName: string };
+  Language: undefined;
+  Notifications: undefined;
+  Preferences: undefined;
 };
 
 export type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;

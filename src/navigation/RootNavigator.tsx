@@ -10,6 +10,9 @@ import JoinTeamScreen from '../screens/JoinTeamScreen';
 import CreateTeamScreen from '../screens/CreateTeamScreen';
 import OneGameScreen from '../screens/OneGameScreen';
 import ChatScreen from '../screens/ChatScreen';
+import LanguageScreen from '../screens/LanguageScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
+import PreferencesScreen from '../screens/PreferencesScreen';
 
 const Root = createNativeStackNavigator<RootStackParamList>();
 
@@ -30,6 +33,9 @@ export default function RootNavigator() {
           <Root.Screen name="CreateTeam" component={CreateTeamScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="OneGame" component={OneGameScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="Chat" component={ChatScreen} />
+          <Root.Screen name="Language" component={LanguageScreen} options={{ presentation: 'modal' }} />
+          <Root.Screen name="Notifications" component={NotificationsScreen} options={{ presentation: 'modal' }} />
+          <Root.Screen name="Preferences" component={PreferencesScreen} options={{ presentation: 'modal' }} />
         </>
       ) : (
         // Different name ("Auth") so React Navigation doesn't confuse it with the authenticated "AppTabs" screen

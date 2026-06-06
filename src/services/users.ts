@@ -34,3 +34,16 @@ export async function getFullProfile(userId: string): Promise<User | null> {
   if (error) throw error;
   return data as User;
 }
+
+export async function updateAvatarUrl(userId: string, avatarUrl: string): Promise<void> {
+  const { error } = await supabase.from('users').update({ avatarUrl }).eq('id', userId);
+  if (error) throw error;
+}
+
+export async function updateUserPreferences(
+  userId: string,
+  data: { position: string; foot: string; skillLevel: string; favoriteTeam: string | null },
+): Promise<void> {
+  const { error } = await supabase.from('users').update(data).eq('id', userId);
+  if (error) throw error;
+}

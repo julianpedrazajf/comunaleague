@@ -25,6 +25,7 @@
     "forgotPassword": "¿Olvidaste tu contraseña?",
     "noAccount": "¿No tienes cuenta?",
     "hasAccount": "¿Ya tienes cuenta?",
+    "emailPlaceholder": "tu@correo.com",
     "loginWithGoogle": "Continuar con Google",
     "loginWithApple": "Continuar con Apple",
     "welcomeTitle": "Bienvenido",
@@ -63,7 +64,11 @@
     "skillLevel": "Nivel de habilidad",
     "favoriteTeam": "Equipo favorito",
     "profilePicture": "Foto de perfil",
-    "edit": "Editar perfil"
+    "edit": "Editar perfil",
+    "statsRanking": "Posición",
+    "statsGoals": "Goles",
+    "statsAssists": "Asist.",
+    "statsMatches": "Partidos"
   },
   "positions": {
     "goalkeeper": "Portero",
@@ -99,6 +104,9 @@
     "nextMatch": "Próximo partido",
     "nextMatchMeta": "Domingo · 9:00 am · Cancha Norte",
     "confirmAttendance": "Confirmar asistencia",
+    "attendanceConfirmed": "Asistencia confirmada",
+    "cancelLockTitle": "No puedes cancelar",
+    "cancelLockMessage": "La asistencia no se puede cancelar dentro de las 24 horas antes del partido",
     "openTournaments": "Torneos abiertos",
     "featured": "Destacados",
     "myTeam": "Mi equipo",
@@ -136,7 +144,28 @@
     "players": "jugadores",
     "searchPlaceholder": "Buscar equipos...",
     "createSubtitle": "Dale identidad a tu equipo",
-    "joinSubtitle": "Encuentra tu equipo en Cali"
+    "joinSubtitle": "Encuentra tu equipo en Cali",
+    "invite": "Invitar",
+    "statsPosition": "Posición",
+    "statsWins": "Victorias",
+    "statsPoints": "Puntos",
+    "editStats": "Editar stats",
+    "alreadyMemberTitle": "Ya perteneces a un equipo",
+    "alreadyMemberMessage": "Ya eres miembro de \"{{name}}\". Debes salir de ese equipo primero.",
+    "cantCreateAlreadyMember": "No puedes crear un equipo mientras perteneces a uno. Primero debes salir del equipo actual.",
+    "leaveTeam": "Dejar equipo",
+    "leaveTeamConfirmTitle": "¿Estás seguro?",
+    "leaveTeamConfirmMessage": "Si dejas \"{{name}}\" y deseas ingresar de nuevo al mismo o a otro equipo, deberás pagar de nuevo la inscripción.",
+    "leaveTeamOwnerTitle": "Eres el capitán",
+    "leaveTeamOwnerMessage": "El capitán no puede dejar el equipo. Transfiere el liderazgo o elimina el equipo primero.",
+    "makeCaptain": "Hacer capitán",
+    "transferTitle": "¿Transferir liderazgo?",
+    "transferMessage": "{{name}} será el nuevo capitán del equipo.",
+    "deleteTeam": "Eliminar equipo",
+    "deleteTeamTitle": "¿Eliminar equipo?",
+    "deleteTeamMessage": "Esta acción es permanente y no se puede deshacer.",
+    "deleteTeamHasMembers": "El equipo todavía tiene integrantes. Todos deben salir antes de que se pueda eliminar. Si necesitas ayuda, contáctanos en comunaleagueau@gmail.com.",
+    "captainSection": "Opciones del capitán"
   },
   "match": {
     "title": "Partidos",
@@ -149,7 +178,10 @@
     "noMatches": "No hay partidos próximos",
     "home": "Local",
     "away": "Visitante",
-    "noTeamForSchedule": "Únete o crea un equipo para ver tu calendario"
+    "noTeamForSchedule": "Únete o crea un equipo para ver tu calendario",
+    "live": "En vivo",
+    "final": "Final",
+    "upcoming_chip": "Próximo"
   },
   "inbox": {
     "title": "Mensajes",
@@ -168,7 +200,9 @@
     "tagline": "Organiza y únete a torneos de fútbol amateur",
     "loginPrompt": "Inicia sesión para acceder a todas las funciones",
     "explore": "Explorar",
-    "signIn": "Iniciar sesión"
+    "signIn": "Iniciar sesión",
+    "enter": "Entrar",
+    "continueAsGuest": "Continuar como invitado"
   },
   "onegame": {
     "title": "Jugar Solo",
@@ -188,6 +222,17 @@
     "team": "Equipo",
     "inbox": "Mensajes",
     "profile": "Perfil"
+  },
+  "language": {
+    "title": "Idioma"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "push": "Notificaciones push",
+    "pushDesc": "Recibe alertas de partidos y mensajes"
+  },
+  "preferences": {
+    "title": "Preferencias"
   },
   "payment": {
     "registerTeam": "Registrar equipo",

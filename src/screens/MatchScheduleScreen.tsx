@@ -126,8 +126,8 @@ export default function MatchScheduleScreen() {
 
   const renderMatch = ({ item }: { item: MatchWithTeams }) => (
     <MatchRow
-      homeTeam={{ name: item.homeTeam.name }}
-      awayTeam={{ name: item.awayTeam.name }}
+      homeTeam={{ name: item.homeTeam.name, badgeUrl: item.homeTeam.badgeUrl }}
+      awayTeam={{ name: item.awayTeam.name, badgeUrl: item.awayTeam.badgeUrl }}
       date={formatDate(item.date, i18n.language)}
       time={formatTime(item.time)}
       location={item.location}

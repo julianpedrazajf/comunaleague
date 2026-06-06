@@ -90,7 +90,7 @@ export default function RegisterScreen({ navigation }: Props) {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
-                    placeholder="tu@correo.com"
+                    placeholder={t('auth.emailPlaceholder')}
                     placeholderTextColor={colors.cream45}
                     selectionColor={colors.cream}
                     keyboardAppearance="dark"
