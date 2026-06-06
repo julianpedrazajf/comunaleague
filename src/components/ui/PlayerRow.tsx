@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Monogram from './Monogram';
 import { colors, font, space } from '../../theme/tokens';
 
@@ -11,9 +11,11 @@ interface PlayerRowProps {
   isCaptain?: boolean;
   number?: number;
   avatarUrl?: string | null;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
-export default function PlayerRow({ name, lastName, position, foot, isCaptain, number, avatarUrl }: PlayerRowProps) {
+export default function PlayerRow({ name, lastName, position, foot, isCaptain, number, avatarUrl, actionLabel, onAction }: PlayerRowProps) {
   return (
     <View style={styles.row}>
       <Monogram name={name} lastName={lastName} size={44} imageUri={avatarUrl} />
@@ -32,9 +34,13 @@ export default function PlayerRow({ name, lastName, position, foot, isCaptain, n
         )}
       </View>
 
-      {number !== undefined && (
+      {actionLabel && onAction ? (
+        <TouchableOpacity style={styles.actionBtn} onPress={onAction} hitSlop={8}>
+          <Text style={styles.actionText}>{actionLabel}</Text>
+        </TouchableOpacity>
+      ) : number !== undefined ? (
         <Text style={styles.number}>{number}</Text>
-      )}
+      ) : null}
     </View>
   );
 }
@@ -58,4 +64,11 @@ const styles = StyleSheet.create({
   capText: { fontFamily: font.sansBold, fontSize: 8.5, letterSpacing: 1, color: colors.cream70, textTransform: 'uppercase' },
   detail: { fontFamily: font.sans, fontSize: 12, color: colors.gray500 },
   number: { fontFamily: font.serifItalic, fontSize: 20, color: colors.cream45 },
+  actionBtn: {
+    backgroundColor: 'rgba(222,219,200,0.10)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  actionText: { fontFamily: font.sansBold, fontSize: 11, color: colors.cream70 },
 });

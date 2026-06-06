@@ -54,6 +54,21 @@ export async function joinTeam(teamId: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function leaveTeam(teamId: string): Promise<void> {
+  const { error } = await supabase.rpc('leave_team', { team_id: teamId });
+  if (error) throw error;
+}
+
+export async function transferOwnership(teamId: string, newOwnerId: string): Promise<void> {
+  const { error } = await supabase.rpc('transfer_ownership', { team_id: teamId, new_owner_id: newOwnerId });
+  if (error) throw error;
+}
+
+export async function deleteTeam(teamId: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_team', { team_id: teamId });
+  if (error) throw error;
+}
+
 export async function updateTeamBadge(teamId: string, badgeUrl: string): Promise<void> {
   const { error } = await supabase.from('teams').update({ badgeUrl }).eq('id', teamId);
   if (error) throw error;

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ImageBackground,
   Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -77,8 +78,24 @@ export default function HomeScreen() {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  const handleCreateTeam = () => {
+    if (myTeam) {
+      Alert.alert(t('team.alreadyMemberTitle'), t('team.cantCreateAlreadyMember'));
+      return;
+    }
+    navigation.navigate('CreateTeam');
+  };
+
   const handleConfirm = async () => {
     if (!nextMatch) return;
+    if (confirmed) {
+      const matchDateTime = new Date(`${nextMatch.date}T${nextMatch.time}`);
+      const hoursUntilMatch = (matchDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+      if (hoursUntilMatch <= 24) {
+        Alert.alert(t('home.cancelLockTitle'), t('home.cancelLockMessage'));
+        return;
+      }
+    }
     const next = !confirmed;
     setConfirmed(next);
     await AsyncStorage.setItem(`@confirmed_${nextMatch.id}`, next.toString());
@@ -122,7 +139,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             key={route}
             style={styles.quickBtn}
-            onPress={() => navigation.navigate(route as never)}
+            onPress={() => route === 'CreateTeam' ? handleCreateTeam() : navigation.navigate(route as never)}
             activeOpacity={0.75}
           >
             <Icon size={18} color={colors.cream} strokeWidth={2} />

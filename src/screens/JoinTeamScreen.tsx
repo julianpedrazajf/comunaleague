@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import { X, Search } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { getAvailableTeams, joinTeam } from '../services/teams';
+import { getAvailableTeams, getMyTeam, joinTeam } from '../services/teams';
 import { RootStackParamList } from '../navigation/types';
 import { Team } from '../types';
 import Monogram from '../components/ui/Monogram';
@@ -29,6 +29,7 @@ export default function JoinTeamScreen({ navigation }: Props) {
   const { session } = useAuth();
 
   const [teams, setTeams] = useState<Team[]>([]);
+  const [myTeam, setMyTeam] = useState<Team | null>(null);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [joiningId, setJoiningId] = useState<string | null>(null);
@@ -44,8 +45,12 @@ export default function JoinTeamScreen({ navigation }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const available = await getAvailableTeams(session.user.id);
+      const [available, existing] = await Promise.all([
+        getAvailableTeams(session.user.id),
+        getMyTeam(session.user.id),
+      ]);
       setTeams(available);
+      setMyTeam(existing);
     } catch (e: any) {
       setError(e?.message ?? t('common.error'));
     } finally {
@@ -56,6 +61,10 @@ export default function JoinTeamScreen({ navigation }: Props) {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const handleJoin = (team: Team) => {
+    if (myTeam) {
+      Alert.alert(t('team.alreadyMemberTitle'), t('team.alreadyMemberMessage', { name: myTeam.name }));
+      return;
+    }
     Alert.alert(
       t('team.joinTeam'),
       `${t('team.joinConfirm')} "${team.name}"?`,

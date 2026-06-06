@@ -15,7 +15,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
-import { getMyTeam, getTeamMembers, updateTeamBadge } from '../services/teams';
+import { getMyTeam, getTeamMembers, leaveTeam, transferOwnership, deleteTeam, updateTeamBadge } from '../services/teams';
 import { getTeamStanding } from '../services/standings';
 import { uploadTeamBadge } from '../services/storage';
 import { Team, User, Standing } from '../types';
@@ -71,6 +71,88 @@ export default function MyTeamScreen() {
   }, [session, t]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const handleTransferOwnership = (member: Member) => {
+    if (!team || !session) return;
+    const fullName = `${member.name} ${member.lastName}`;
+    Alert.alert(
+      t('team.transferTitle'),
+      t('team.transferMessage', { name: fullName }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('team.makeCaptain'),
+          onPress: async () => {
+            try {
+              await transferOwnership(team.id, member.id);
+              setTeam((prev) => prev ? { ...prev, ownerId: member.id } : prev);
+            } catch (e: any) {
+              Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleDeleteTeam = () => {
+    if (!team || !session) return;
+    const otherMembers = members.filter((m) => m.id !== session.user.id);
+    if (otherMembers.length > 0) {
+      Alert.alert(t('team.deleteTeam'), t('team.deleteTeamHasMembers'));
+      return;
+    }
+    Alert.alert(
+      t('team.deleteTeamTitle'),
+      t('team.deleteTeamMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('team.deleteTeam'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteTeam(team.id);
+              setTeam(null);
+              setMembers([]);
+              setStanding(null);
+            } catch (e: any) {
+              Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleLeaveTeam = () => {
+    if (!team || !session) return;
+    if (team.ownerId === session.user.id) {
+      Alert.alert(t('team.leaveTeamOwnerTitle'), t('team.leaveTeamOwnerMessage'));
+      return;
+    }
+    Alert.alert(
+      t('team.leaveTeamConfirmTitle'),
+      t('team.leaveTeamConfirmMessage', { name: team.name }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('team.leaveTeam'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await leaveTeam(team.id);
+              setTeam(null);
+              setMembers([]);
+              setStanding(null);
+            } catch (e: any) {
+              Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+            }
+          },
+        },
+      ],
+    );
+  };
 
   const handlePickBadge = async () => {
     if (!team || !session || team.ownerId !== session.user.id) return;
@@ -181,26 +263,41 @@ export default function MyTeamScreen() {
 
         {/* Squad */}
         <View style={styles.section}>
-          <SectionHeader
-            label={t('team.squad')}
-            actionLabel={t('team.invite')}
-            onAction={() => {}}
-          />
+          <SectionHeader label={t('team.squad')} />
           <View style={styles.playerList}>
-            {members.map((m) => (
-              <View key={m.id}>
-                <PlayerRow
-                  name={m.name}
-                  lastName={m.lastName}
-                  position={t(`positions.${m.position}`)}
-                  isCaptain={m.id === team.ownerId}
-                  avatarUrl={m.avatarUrl}
-                />
-                <View style={styles.divider} />
-              </View>
-            ))}
+            {members.map((m) => {
+              const isCaptain = m.id === team.ownerId;
+              const viewerIsCaptain = session?.user.id === team.ownerId;
+              return (
+                <View key={m.id}>
+                  <PlayerRow
+                    name={m.name}
+                    lastName={m.lastName}
+                    position={t(`positions.${m.position}`)}
+                    isCaptain={isCaptain}
+                    avatarUrl={m.avatarUrl}
+                    actionLabel={viewerIsCaptain && !isCaptain ? t('team.makeCaptain') : undefined}
+                    onAction={viewerIsCaptain && !isCaptain ? () => handleTransferOwnership(m) : undefined}
+                  />
+                  <View style={styles.divider} />
+                </View>
+              );
+            })}
           </View>
         </View>
+
+        {session?.user.id === team.ownerId ? (
+          <View style={styles.captainSection}>
+            <Text style={styles.captainSectionTitle}>{t('team.captainSection')}</Text>
+            <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteTeam} activeOpacity={0.75}>
+              <Text style={styles.deleteBtnText}>{t('team.deleteTeam')}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.leaveBtn} onPress={handleLeaveTeam} activeOpacity={0.75}>
+            <Text style={styles.leaveBtnText}>{t('team.leaveTeam')}</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -234,4 +331,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
   },
   divider: { height: 1, backgroundColor: colors.hairline },
+
+  leaveBtn: {
+    alignItems: 'center',
+    paddingVertical: space.md,
+  },
+  leaveBtnText: {
+    fontFamily: font.sansBold,
+    fontSize: 14,
+    color: '#EF4444',
+  },
+
+  captainSection: {
+    gap: space.md,
+  },
+  captainSectionTitle: {
+    fontFamily: font.sansBold,
+    fontSize: 11,
+    letterSpacing: 0.8,
+    color: colors.cream45,
+    textTransform: 'uppercase',
+  },
+  deleteBtn: {
+    alignItems: 'center',
+    paddingVertical: space.md,
+  },
+  deleteBtnText: {
+    fontFamily: font.sansBold,
+    fontSize: 14,
+    color: '#EF4444',
+  },
 });
