@@ -17,8 +17,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import { getMyTeam, getTeamMembers, leaveTeam, transferOwnership, deleteTeam, updateTeamBadge } from '../services/teams';
 import { getTeamStanding } from '../services/standings';
+import { getTeamMatches, MatchWithTeams } from '../services/matches';
+import { createPlayerRequest, cancelPlayerRequest, getTeamOpenRequest } from '../services/playerRequests';
 import { uploadTeamBadge } from '../services/storage';
-import { Team, User, Standing } from '../types';
+import { Team, User, Standing, PlayerRequest } from '../types';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import SectionHeader from '../components/ui/SectionHeader';
 import StatTriple from '../components/ui/StatTriple';
@@ -44,6 +46,8 @@ export default function MyTeamScreen() {
   const [team, setTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [standing, setStanding] = useState<Standing | null>(null);
+  const [nextMatch, setNextMatch] = useState<MatchWithTeams | null>(null);
+  const [playerRequest, setPlayerRequest] = useState<PlayerRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -56,12 +60,19 @@ export default function MyTeamScreen() {
       const found = await getMyTeam(session.user.id);
       setTeam(found);
       if (found) {
-        const [m, s] = await Promise.all([
+        const [m, s, matches] = await Promise.all([
           getTeamMembers(found.playerIds),
           getTeamStanding(found.id),
+          getTeamMatches(found.id),
         ]);
         setMembers(m);
         setStanding(s);
+        const next = matches[0] ?? null;
+        setNextMatch(next);
+        if (next) {
+          const req = await getTeamOpenRequest(found.id, next.id);
+          setPlayerRequest(req);
+        }
       }
     } catch (e: any) {
       setError(e?.message ?? t('common.error'));
@@ -100,6 +111,10 @@ export default function MyTeamScreen() {
     const otherMembers = members.filter((m) => m.id !== session.user.id);
     if (otherMembers.length > 0) {
       Alert.alert(t('team.deleteTeam'), t('team.deleteTeamHasMembers'));
+      return;
+    }
+    if (nextMatch) {
+      Alert.alert(t('team.deleteTeam'), t('team.deleteTeamHasMatches'));
       return;
     }
     Alert.alert(
@@ -152,6 +167,54 @@ export default function MyTeamScreen() {
         },
       ],
     );
+  };
+
+  const handleTogglePlayerRequest = () => {
+    if (!team || !session || !nextMatch) return;
+    if (session.user.id !== team.ownerId) {
+      Alert.alert(t('team.needPlayerCaptainOnlyTitle'), t('team.needPlayerCaptainOnlyMessage'));
+      return;
+    }
+    if (playerRequest) {
+      Alert.alert(
+        t('team.cancelPlayerRequestTitle'),
+        t('team.cancelPlayerRequestMessage'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.confirm'),
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await cancelPlayerRequest(playerRequest.id);
+                setPlayerRequest(null);
+              } catch (e: any) {
+                Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+              }
+            },
+          },
+        ],
+      );
+    } else {
+      Alert.alert(
+        t('team.needPlayerTitle'),
+        t('team.needPlayerMessage'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('team.postRequest'),
+            onPress: async () => {
+              try {
+                const id = await createPlayerRequest(team.id, nextMatch.id);
+                setPlayerRequest({ id, teamId: team.id, matchId: nextMatch.id, createdAt: new Date().toISOString(), status: 'open' });
+              } catch (e: any) {
+                Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+              }
+            },
+          },
+        ],
+      );
+    }
   };
 
   const handlePickBadge = async () => {
@@ -276,6 +339,7 @@ export default function MyTeamScreen() {
                     position={t(`positions.${m.position}`)}
                     isCaptain={isCaptain}
                     avatarUrl={m.avatarUrl}
+                    attendanceConfirmed={nextMatch ? (nextMatch.confirmedPlayerIds ?? []).includes(m.id) : undefined}
                     actionLabel={viewerIsCaptain && !isCaptain ? t('team.makeCaptain') : undefined}
                     onAction={viewerIsCaptain && !isCaptain ? () => handleTransferOwnership(m) : undefined}
                   />
@@ -285,6 +349,18 @@ export default function MyTeamScreen() {
             })}
           </View>
         </View>
+
+        {nextMatch && (
+          <TouchableOpacity
+            style={[styles.needPlayerBtn, !!playerRequest && styles.needPlayerBtnActive]}
+            onPress={handleTogglePlayerRequest}
+            activeOpacity={0.75}
+          >
+            <Text style={[styles.needPlayerBtnText, !!playerRequest && styles.needPlayerBtnTextActive]}>
+              {playerRequest ? t('team.cancelPlayerRequest') : t('team.needPlayer')}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {session?.user.id === team.ownerId ? (
           <View style={styles.captainSection}>
@@ -344,6 +420,27 @@ const styles = StyleSheet.create({
 
   captainSection: {
     gap: space.md,
+  },
+  needPlayerBtn: {
+    backgroundColor: colors.surface1,
+    borderRadius: radius.card,
+    paddingVertical: space.md,
+    paddingHorizontal: space.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
+  needPlayerBtnActive: {
+    backgroundColor: 'rgba(242,177,102,0.10)',
+    borderColor: 'rgba(242,177,102,0.40)',
+  },
+  needPlayerBtnText: {
+    fontFamily: font.sansBold,
+    fontSize: 14,
+    color: colors.cream70,
+  },
+  needPlayerBtnTextActive: {
+    color: '#F2B366',
   },
   captainSectionTitle: {
     fontFamily: font.sansBold,

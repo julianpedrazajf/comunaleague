@@ -109,3 +109,13 @@ export interface Message {
   content: string;
   timestamp: string;
 }
+
+export interface PlayerRequest {
+  id: string;
+  teamId: string;
+  matchId: string;
+  createdAt: string;
+  status: 'open' | 'cancelled';
+  team?: { name: string; badgeUrl?: string; format: TeamFormat };
+  match?: { date: string; time: string; location: string };
+}

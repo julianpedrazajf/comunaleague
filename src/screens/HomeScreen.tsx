@@ -20,7 +20,7 @@ import SoccerBallIcon from '../components/ui/SoccerBallIcon';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { getDailyTournaments } from '../services/tournaments';
 import { getMyTeam } from '../services/teams';
-import { getTeamMatches, MatchWithTeams } from '../services/matches';
+import { getTeamMatches, confirmAttendance, MatchWithTeams } from '../services/matches';
 import { Tournament, Team } from '../types';
 import { useAuth } from '../context/AuthContext';
 import SectionHeader from '../components/ui/SectionHeader';
@@ -69,7 +69,7 @@ export default function HomeScreen() {
         const next = matches[0] ?? null;
         setNextMatch(next);
         if (next) {
-          const saved = await AsyncStorage.getItem(`@confirmed_${next.id}`);
+          const saved = await AsyncStorage.getItem(`@confirmed_${session.user.id}_${next.id}`);
           setConfirmed(saved === 'true');
         }
       }
@@ -98,7 +98,16 @@ export default function HomeScreen() {
     }
     const next = !confirmed;
     setConfirmed(next);
-    await AsyncStorage.setItem(`@confirmed_${nextMatch.id}`, next.toString());
+    const storageKey = `@confirmed_${session!.user.id}_${nextMatch.id}`;
+    await AsyncStorage.setItem(storageKey, next.toString());
+    try {
+      await confirmAttendance(nextMatch.id, next);
+    } catch (e: any) {
+      Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+      // Revert local state if DB sync failed
+      setConfirmed(!next);
+      await AsyncStorage.setItem(storageKey, (!next).toString());
+    }
   };
 
   return (

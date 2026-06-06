@@ -15,9 +15,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import { X, MapPin, Calendar, Clock, Check } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getDailyTournaments, getUserRegistrations, registerForTournament } from '../services/tournaments';
-import { Tournament } from '../types';
+import { getOpenPlayerRequests, expressInterest } from '../services/playerRequests';
+import { Tournament, PlayerRequest } from '../types';
 import { RootStackParamList } from '../navigation/types';
 import Chip from '../components/ui/Chip';
+import Monogram from '../components/ui/Monogram';
+import SectionHeader from '../components/ui/SectionHeader';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OneGame'>;
@@ -27,12 +30,21 @@ function formatDate(dateStr: string, locale: string): string {
   return date.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
+function formatTime(timeStr: string): string {
+  const [hours, minutes] = timeStr.split(':');
+  const h = parseInt(hours, 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${minutes} ${ampm}`;
+}
+
 export default function OneGameScreen({ navigation }: Props) {
   const { t, i18n } = useTranslation();
   const { session } = useAuth();
 
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [registeredIds, setRegisteredIds] = useState<Set<string>>(new Set());
+  const [playerRequests, setPlayerRequests] = useState<PlayerRequest[]>([]);
+  const [interestedIds, setInterestedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [registeringId, setRegisteringId] = useState<string | null>(null);
 
@@ -46,6 +58,13 @@ export default function OneGameScreen({ navigation }: Props) {
       ]);
       setTournaments(data);
       setRegisteredIds(new Set(regs.map((r) => r.tournamentId)));
+    } catch {
+      // silently fail
+    }
+    // Load separately so a failure here doesn't break the tournaments section
+    try {
+      const requests = await getOpenPlayerRequests();
+      setPlayerRequests(requests);
     } catch {
       // silently fail
     } finally {
@@ -77,6 +96,78 @@ export default function OneGameScreen({ navigation }: Props) {
           },
         },
       ],
+    );
+  }
+
+  function handleApply(req: PlayerRequest) {
+    Alert.alert(
+      t('onegame.applyTitle'),
+      t('onegame.applyMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('onegame.apply'),
+          onPress: async () => {
+            if (!session) return;
+            try {
+              await expressInterest(req.id);
+              setInterestedIds((prev) => new Set([...prev, req.id]));
+            } catch (e: any) {
+              Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  function renderRequestCard(req: PlayerRequest) {
+    const isInterested = interestedIds.has(req.id);
+    return (
+      <View key={req.id} style={styles.card}>
+        <View style={styles.reqCardTop}>
+          <Monogram name={req.team?.name ?? ''} size={44} shape="square" imageUri={req.team?.badgeUrl} />
+          <Text style={[styles.cardName, { flex: 1 }]} numberOfLines={1}>{req.team?.name ?? ''}</Text>
+          {req.team && (
+            <Chip label={req.team.format === 5 ? t('team.format5') : t('team.format11')} />
+          )}
+        </View>
+
+        {req.match && (
+          <View style={styles.cardMeta}>
+            <View style={styles.metaRow}>
+              <Calendar size={11} color={colors.gray500} strokeWidth={2} />
+              <Text style={styles.metaText}>{formatDate(req.match.date, i18n.language)}</Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Clock size={11} color={colors.gray500} strokeWidth={2} />
+              <Text style={styles.metaText}>{formatTime(req.match.time)}</Text>
+            </View>
+            {req.match.location ? (
+              <View style={styles.metaRow}>
+                <MapPin size={11} color={colors.gray500} strokeWidth={2} />
+                <Text style={styles.metaText} numberOfLines={1}>{req.match.location}</Text>
+              </View>
+            ) : null}
+          </View>
+        )}
+
+        <View style={styles.hairline} />
+
+        <View style={styles.cardFooter}>
+          <Text style={styles.price}>{t('onegame.oneMatch')}</Text>
+          {isInterested ? (
+            <View style={styles.registeredBadge}>
+              <Check size={12} color={colors.green} strokeWidth={2.5} />
+              <Text style={styles.registeredText}>{t('onegame.applied')}</Text>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.registerBtn} onPress={() => handleApply(req)}>
+              <Text style={styles.registerBtnText}>{t('onegame.apply')}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
     );
   }
 
@@ -156,7 +247,17 @@ export default function OneGameScreen({ navigation }: Props) {
         <FlatList
           data={tournaments}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={tournaments.length === 0 ? styles.emptyContainer : styles.listContent}
+          contentContainerStyle={styles.listContent}
+          ListHeaderComponent={
+            playerRequests.length > 0 ? (
+              <View style={styles.requestsSection}>
+                <SectionHeader label={t('onegame.teamsLooking')} />
+                <View style={styles.requestsList}>
+                  {playerRequests.map(renderRequestCard)}
+                </View>
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View style={styles.centered}>
               <Text style={styles.emptyText}>{t('onegame.noGames')}</Text>
@@ -172,8 +273,7 @@ export default function OneGameScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center' },
+  emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center', padding: 24 },
 
   header: {
     flexDirection: 'row',
@@ -191,6 +291,9 @@ const styles = StyleSheet.create({
   closeBtn: { padding: 4, marginTop: 4 },
 
   listContent: { padding: 18, gap: space.md, paddingBottom: 40 },
+  requestsSection: { marginBottom: space.xl },
+  requestsList: { gap: space.md },
+  reqCardTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
 
   card: {
     backgroundColor: colors.surface1,

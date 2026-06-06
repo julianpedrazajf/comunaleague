@@ -134,7 +134,7 @@
     "format11": "Fútbol 11",
     "invitePlayers": "Invite Players",
     "captain": "Captain",
-    "confirmed": "Confirmed",
+    "confirmed": "Attendance confirmed",
     "pending": "Pending",
     "noTeam": "You're not on a team yet",
     "noTeamSub": "Create your own or join an existing one",
@@ -165,7 +165,17 @@
     "deleteTeamTitle": "Delete team?",
     "deleteTeamMessage": "This action is permanent and cannot be undone.",
     "deleteTeamHasMembers": "The team still has members. All players must leave before the team can be deleted. If you need help, contact us at comunaleagueau@gmail.com.",
-    "captainSection": "Captain options"
+    "deleteTeamHasMatches": "The team cannot be deleted because it has scheduled matches. Please contact us at comunaleagueau@gmail.com to proceed.",
+    "captainSection": "Captain options",
+    "needPlayer": "We need a player for the next match",
+    "needPlayerTitle": "Request a player?",
+    "needPlayerMessage": "Your request will be visible to solo players looking for a one-time match.",
+    "postRequest": "Post request",
+    "cancelPlayerRequest": "Cancel request",
+    "cancelPlayerRequestTitle": "Cancel request?",
+    "cancelPlayerRequestMessage": "Your team's player request will be removed.",
+    "needPlayerCaptainOnlyTitle": "Captain only",
+    "needPlayerCaptainOnlyMessage": "Only the captain can request extra players for a match."
   },
   "match": {
     "title": "Matches",
@@ -214,7 +224,13 @@
     "starts": "Starts",
     "free": "Free",
     "confirmTitle": "Join this match?",
-    "confirmMsg": "You will be registered as a solo player."
+    "confirmMsg": "You will be registered as a solo player.",
+    "teamsLooking": "Teams looking for a player",
+    "apply": "Apply",
+    "applied": "Applied",
+    "applyTitle": "Apply to play?",
+    "applyMessage": "Your interest will be sent to the team. They'll reach out if you're a good fit.",
+    "oneMatch": "1 match"
   },
   "nav": {
     "home": "Home",

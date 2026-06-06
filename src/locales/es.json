@@ -134,7 +134,7 @@
     "format11": "Fútbol 11",
     "invitePlayers": "Invitar jugadores",
     "captain": "Capitán",
-    "confirmed": "Confirmado",
+    "confirmed": "Asistencia confirmada",
     "pending": "Pendiente",
     "noTeam": "Aún no perteneces a ningún equipo",
     "noTeamSub": "Crea el tuyo o únete a uno existente",
@@ -165,7 +165,17 @@
     "deleteTeamTitle": "¿Eliminar equipo?",
     "deleteTeamMessage": "Esta acción es permanente y no se puede deshacer.",
     "deleteTeamHasMembers": "El equipo todavía tiene integrantes. Todos deben salir antes de que se pueda eliminar. Si necesitas ayuda, contáctanos en comunaleagueau@gmail.com.",
-    "captainSection": "Opciones del capitán"
+    "deleteTeamHasMatches": "El equipo no se puede eliminar porque tiene partidos programados. Por favor contáctanos en comunaleagueau@gmail.com para proceder.",
+    "captainSection": "Opciones del capitán",
+    "needPlayer": "Necesitamos un jugador para el próximo partido",
+    "needPlayerTitle": "¿Solicitar jugador?",
+    "needPlayerMessage": "Tu solicitud será visible para jugadores que buscan jugar una sola jornada.",
+    "postRequest": "Publicar solicitud",
+    "cancelPlayerRequest": "Cancelar solicitud",
+    "cancelPlayerRequestTitle": "¿Cancelar solicitud?",
+    "cancelPlayerRequestMessage": "La solicitud de jugador de tu equipo será eliminada.",
+    "needPlayerCaptainOnlyTitle": "Solo el capitán",
+    "needPlayerCaptainOnlyMessage": "Solo el capitán puede solicitar más jugadores para el partido."
   },
   "match": {
     "title": "Partidos",
@@ -214,7 +224,13 @@
     "starts": "Inicio",
     "free": "Gratis",
     "confirmTitle": "¿Unirte a este partido?",
-    "confirmMsg": "Serás registrado como jugador individual."
+    "confirmMsg": "Serás registrado como jugador individual.",
+    "teamsLooking": "Equipos que buscan jugador",
+    "apply": "Postularse",
+    "applied": "Postulado",
+    "applyTitle": "¿Postularte a jugar?",
+    "applyMessage": "Tu interés será enviado al equipo. Se pondrán en contacto si encajas.",
+    "oneMatch": "1 jornada"
   },
   "nav": {
     "home": "Inicio",
