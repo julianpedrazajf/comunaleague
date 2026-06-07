@@ -15,7 +15,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { X, MapPin, Calendar, Clock, Check } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getDailyTournaments, getUserRegistrations, registerForTournament } from '../services/tournaments';
-import { getOpenPlayerRequests, expressInterest } from '../services/playerRequests';
+import { getOpenPlayerRequests, expressInterest, getMyInterests } from '../services/playerRequests';
+import { getApplicationStatuses } from '../services/notifications';
 import { Tournament, PlayerRequest } from '../types';
 import { RootStackParamList } from '../navigation/types';
 import Chip from '../components/ui/Chip';
@@ -45,6 +46,7 @@ export default function OneGameScreen({ navigation }: Props) {
   const [registeredIds, setRegisteredIds] = useState<Set<string>>(new Set());
   const [playerRequests, setPlayerRequests] = useState<PlayerRequest[]>([]);
   const [interestedIds, setInterestedIds] = useState<Set<string>>(new Set());
+  const [applicationStatuses, setApplicationStatuses] = useState<Map<string, 'accepted' | 'rejected'>>(new Map());
   const [loading, setLoading] = useState(true);
   const [registeringId, setRegisteringId] = useState<string | null>(null);
 
@@ -63,8 +65,14 @@ export default function OneGameScreen({ navigation }: Props) {
     }
     // Load separately so a failure here doesn't break the tournaments section
     try {
-      const requests = await getOpenPlayerRequests();
+      const [requests, myInterests, statuses] = await Promise.all([
+        getOpenPlayerRequests(),
+        getMyInterests(),
+        getApplicationStatuses(),
+      ]);
       setPlayerRequests(requests);
+      setInterestedIds(new Set(myInterests));
+      setApplicationStatuses(statuses);
     } catch {
       // silently fail
     } finally {
@@ -123,6 +131,8 @@ export default function OneGameScreen({ navigation }: Props) {
 
   function renderRequestCard(req: PlayerRequest) {
     const isInterested = interestedIds.has(req.id);
+    const appStatus = req.matchId ? applicationStatuses.get(req.matchId) : undefined;
+
     return (
       <View key={req.id} style={styles.card}>
         <View style={styles.reqCardTop}>
@@ -157,10 +167,22 @@ export default function OneGameScreen({ navigation }: Props) {
         <View style={styles.cardFooter}>
           <Text style={styles.price}>{t('onegame.oneMatch')}</Text>
           {isInterested ? (
-            <View style={styles.registeredBadge}>
-              <Check size={12} color={colors.green} strokeWidth={2.5} />
-              <Text style={styles.registeredText}>{t('onegame.applied')}</Text>
-            </View>
+            appStatus === 'accepted' ? (
+              <View style={[styles.registeredBadge, styles.acceptedBadge]}>
+                <Check size={12} color={colors.green} strokeWidth={2.5} />
+                <Text style={styles.registeredText}>{t('onegame.statusAccepted')}</Text>
+              </View>
+            ) : appStatus === 'rejected' ? (
+              <View style={[styles.registeredBadge, styles.rejectedBadge]}>
+                <X size={12} color="#EF4444" strokeWidth={2.5} />
+                <Text style={styles.rejectedText}>{t('onegame.statusRejected')}</Text>
+              </View>
+            ) : (
+              <View style={styles.registeredBadge}>
+                <Check size={12} color={colors.green} strokeWidth={2.5} />
+                <Text style={styles.registeredText}>{t('onegame.applied')}</Text>
+              </View>
+            )
           ) : (
             <TouchableOpacity style={styles.registerBtn} onPress={() => handleApply(req)}>
               <Text style={styles.registerBtnText}>{t('onegame.apply')}</Text>
@@ -332,4 +354,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
   },
   registeredText: { fontFamily: font.sansBold, fontSize: 12, color: colors.green },
+  acceptedBadge: { backgroundColor: 'rgba(34,197,94,0.12)' },
+  rejectedBadge: { backgroundColor: 'rgba(239,68,68,0.12)' },
+  rejectedText: { fontFamily: font.sansBold, fontSize: 12, color: '#EF4444' },
 });

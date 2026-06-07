@@ -324,6 +324,18 @@ export default function MyTeamScreen() {
           ]}
         />
 
+        {nextMatch && (
+          <TouchableOpacity
+            style={[styles.needPlayerBtn, !!playerRequest && styles.needPlayerBtnActive]}
+            onPress={handleTogglePlayerRequest}
+            activeOpacity={0.75}
+          >
+            <Text style={[styles.needPlayerBtnText, !!playerRequest && styles.needPlayerBtnTextActive]}>
+              {playerRequest ? t('team.cancelPlayerRequest') : t('team.needPlayer')}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* Squad */}
         <View style={styles.section}>
           <SectionHeader label={t('team.squad')} />
@@ -349,18 +361,6 @@ export default function MyTeamScreen() {
             })}
           </View>
         </View>
-
-        {nextMatch && (
-          <TouchableOpacity
-            style={[styles.needPlayerBtn, !!playerRequest && styles.needPlayerBtnActive]}
-            onPress={handleTogglePlayerRequest}
-            activeOpacity={0.75}
-          >
-            <Text style={[styles.needPlayerBtnText, !!playerRequest && styles.needPlayerBtnTextActive]}>
-              {playerRequest ? t('team.cancelPlayerRequest') : t('team.needPlayer')}
-            </Text>
-          </TouchableOpacity>
-        )}
 
         {session?.user.id === team.ownerId ? (
           <View style={styles.captainSection}>

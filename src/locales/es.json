@@ -229,8 +229,10 @@
     "apply": "Postularse",
     "applied": "Postulado",
     "applyTitle": "¿Postularte a jugar?",
-    "applyMessage": "Tu interés será enviado al equipo. Se pondrán en contacto si encajas.",
-    "oneMatch": "1 jornada"
+    "applyMessage": "Después de aplicar no podrás cancelar la solicitud. ¿Estás seguro que deseas aplicar?",
+    "oneMatch": "1 jornada",
+    "statusAccepted": "¡Tu solicitud fue aceptada!",
+    "statusRejected": "Tu solicitud fue negada"
   },
   "nav": {
     "home": "Inicio",
@@ -245,7 +247,15 @@
   "notifications": {
     "title": "Notificaciones",
     "push": "Notificaciones push",
-    "pushDesc": "Recibe alertas de partidos y mensajes"
+    "pushDesc": "Recibe alertas de partidos y mensajes",
+    "empty": "No hay notificaciones aún",
+    "playerInterest": "{{name}} quiere jugar en tu próximo partido",
+    "playerAccepted": "¡Tu solicitud fue aceptada!",
+    "playerRejected": "Tu solicitud no fue aceptada esta vez.",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "accepted": "Aceptado",
+    "rejected": "Rechazado"
   },
   "preferences": {
     "title": "Preferencias"

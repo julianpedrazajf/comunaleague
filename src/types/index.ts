@@ -119,3 +119,19 @@ export interface PlayerRequest {
   team?: { name: string; badgeUrl?: string; format: TeamFormat };
   match?: { date: string; time: string; location: string };
 }
+
+export type NotificationType =
+  | 'player_request_interest'
+  | 'player_request_accepted'
+  | 'player_request_rejected';
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  relatedId?: string;
+  fromUserId?: string;
+  fromName?: string;
+  read: boolean;
+  createdAt: string;
+}

@@ -229,8 +229,10 @@
     "apply": "Apply",
     "applied": "Applied",
     "applyTitle": "Apply to play?",
-    "applyMessage": "Your interest will be sent to the team. They'll reach out if you're a good fit.",
-    "oneMatch": "1 match"
+    "applyMessage": "Once you apply you won't be able to cancel your request. Are you sure you want to apply?",
+    "oneMatch": "1 match",
+    "statusAccepted": "Your request was accepted!",
+    "statusRejected": "Your request was not accepted"
   },
   "nav": {
     "home": "Home",
@@ -245,7 +247,15 @@
   "notifications": {
     "title": "Notifications",
     "push": "Push notifications",
-    "pushDesc": "Receive alerts for matches and messages"
+    "pushDesc": "Receive alerts for matches and messages",
+    "empty": "No notifications yet",
+    "playerInterest": "{{name}} wants to play in your next match",
+    "playerAccepted": "Your request was accepted!",
+    "playerRejected": "Your request was not accepted this time.",
+    "accept": "Accept",
+    "reject": "Reject",
+    "accepted": "Accepted",
+    "rejected": "Rejected"
   },
   "preferences": {
     "title": "Preferences"

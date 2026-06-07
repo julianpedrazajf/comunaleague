@@ -21,6 +21,7 @@ import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { getDailyTournaments } from '../services/tournaments';
 import { getMyTeam } from '../services/teams';
 import { getTeamMatches, confirmAttendance, MatchWithTeams } from '../services/matches';
+import { getUnreadCount } from '../services/notifications';
 import { Tournament, Team } from '../types';
 import { useAuth } from '../context/AuthContext';
 import SectionHeader from '../components/ui/SectionHeader';
@@ -57,9 +58,11 @@ export default function HomeScreen() {
   const [myTeam, setMyTeam] = useState<Team | null>(null);
   const [nextMatch, setNextMatch] = useState<MatchWithTeams | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const load = useCallback(async () => {
     getDailyTournaments().then(setTournaments).catch(() => {});
+    getUnreadCount().then(setUnreadCount).catch(() => {});
     if (!session) return;
     try {
       const team = await getMyTeam(session.user.id);
@@ -132,9 +135,13 @@ export default function HomeScreen() {
           </View>
           <Text style={styles.wordmarkTagline}>pibes de barrio.</Text>
         </View>
-        <TouchableOpacity hitSlop={12} style={styles.bellWrap}>
+        <TouchableOpacity hitSlop={12} style={styles.bellWrap} onPress={() => navigation.navigate('Notifications')}>
           <Bell size={20} color={colors.cream45} strokeWidth={2} />
-          <View style={styles.bellDot} />
+          {unreadCount > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : String(unreadCount)}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -278,12 +285,21 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   bellWrap: { position: 'relative' },
-  bellDot: {
+  bellBadge: {
     position: 'absolute',
-    top: -1, right: -1,
-    width: 7, height: 7,
-    borderRadius: 999,
-    backgroundColor: colors.green,
+    top: -5, right: -7,
+    minWidth: 16, height: 16,
+    borderRadius: 8,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  bellBadgeText: {
+    fontFamily: font.sansBold,
+    fontSize: 9,
+    color: colors.cream,
+    lineHeight: 11,
   },
 
   content: { paddingHorizontal: 18, paddingTop: space.sm, flexGrow: 1, justifyContent: 'center' },
