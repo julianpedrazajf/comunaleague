@@ -18,7 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { getMyTeam, getTeamMembers, leaveTeam, transferOwnership, deleteTeam, updateTeamBadge } from '../services/teams';
 import { getTeamStanding } from '../services/standings';
 import { getTeamMatches, MatchWithTeams } from '../services/matches';
-import { createPlayerRequest, cancelPlayerRequest, getTeamOpenRequest } from '../services/playerRequests';
+import { createPlayerRequest, cancelPlayerRequest, getTeamOpenRequest, getRequestInterests } from '../services/playerRequests';
 import { uploadTeamBadge } from '../services/storage';
 import { Team, User, Standing, PlayerRequest } from '../types';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
@@ -76,9 +76,13 @@ export default function MyTeamScreen() {
           setPlayerRequest(req);
           const matchDateTime = new Date(`${next.date}T${next.time}`);
           const hoursUntil = (matchDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
-          if (hoursUntil > 0 && hoursUntil <= 24) {
+          if (hoursUntil > 0 && hoursUntil <= 24 && req) {
+            // Only players who explicitly applied to THIS team's request and were accepted
+            const interests = await getRequestInterests(req.id);
             const confirmedIds = next.confirmedPlayerIds ?? [];
-            const guestIds = confirmedIds.filter((id) => !found.playerIds.includes(id));
+            const guestIds = interests.filter(
+              (id) => confirmedIds.includes(id) && !found.playerIds.includes(id),
+            );
             if (guestIds.length > 0) {
               const guests = await getTeamMembers(guestIds);
               setGuestMembers(guests);

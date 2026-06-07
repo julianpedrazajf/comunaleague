@@ -233,7 +233,9 @@
     "applyMessage": "Después de aplicar no podrás cancelar la solicitud. ¿Estás seguro que deseas aplicar?",
     "oneMatch": "1 jornada",
     "statusAccepted": "¡Tu solicitud fue aceptada!",
-    "statusRejected": "Tu solicitud fue negada"
+    "statusRejected": "Tu solicitud fue negada",
+    "alreadyMember": "Ya eres parte de este encuentro",
+    "alreadyInMatch": "Ya juegas en este encuentro"
   },
   "nav": {
     "home": "Inicio",

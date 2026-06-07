@@ -233,7 +233,9 @@
     "applyMessage": "Once you apply you won't be able to cancel your request. Are you sure you want to apply?",
     "oneMatch": "1 match",
     "statusAccepted": "Your request was accepted!",
-    "statusRejected": "Your request was not accepted"
+    "statusRejected": "Your request was not accepted",
+    "alreadyMember": "You're already in this match",
+    "alreadyInMatch": "You're already playing in this match"
   },
   "nav": {
     "home": "Home",

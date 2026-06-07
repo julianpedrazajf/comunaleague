@@ -29,6 +29,15 @@ export async function getOpenPlayerRequests(): Promise<PlayerRequest[]> {
   return ((data ?? []) as PlayerRequest[]).filter((r) => !r.match || r.match.date >= today);
 }
 
+export async function getRequestInterests(requestId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('player_request_interests')
+    .select('userId')
+    .eq('requestId', requestId);
+  if (error) throw error;
+  return (data ?? []).map((r) => r.userId as string);
+}
+
 export async function getMyInterests(): Promise<string[]> {
   const { data, error } = await supabase
     .from('player_request_interests')

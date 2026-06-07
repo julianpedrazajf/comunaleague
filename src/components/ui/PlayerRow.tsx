@@ -11,6 +11,7 @@ interface PlayerRowProps {
   foot?: string;
   isCaptain?: boolean;
   guestBadge?: boolean;
+  memberBadge?: boolean;
   number?: number;
   avatarUrl?: string | null;
   actionLabel?: string;
@@ -18,7 +19,7 @@ interface PlayerRowProps {
   attendanceConfirmed?: boolean;
 }
 
-export default function PlayerRow({ name, lastName, position, foot, isCaptain, guestBadge, number, avatarUrl, actionLabel, onAction, attendanceConfirmed }: PlayerRowProps) {
+export default function PlayerRow({ name, lastName, position, foot, isCaptain, guestBadge, memberBadge, number, avatarUrl, actionLabel, onAction, attendanceConfirmed }: PlayerRowProps) {
   const { t } = useTranslation();
   return (
     <View style={styles.row}>
@@ -30,6 +31,7 @@ export default function PlayerRow({ name, lastName, position, foot, isCaptain, g
             {name} {lastName}
           </Text>
           {isCaptain && <View style={styles.capBadge}><Text style={styles.capText}>CAP</Text></View>}
+          {memberBadge && !isCaptain && <View style={styles.memberBadge}><Text style={styles.memberText}>{t('team.memberBadge')}</Text></View>}
           {guestBadge && <View style={styles.guestBadge}><Text style={styles.guestText}>{t('team.guestBadge')}</Text></View>}
         </View>
         {(position || foot) && (
@@ -75,6 +77,13 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
   },
   capText: { fontFamily: font.sansBold, fontSize: 8.5, letterSpacing: 1, color: colors.cream70, textTransform: 'uppercase' },
+  memberBadge: {
+    backgroundColor: 'rgba(73,115,115,0.18)',
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+  },
+  memberText: { fontFamily: font.sansBold, fontSize: 8.5, letterSpacing: 1, color: '#497373', textTransform: 'uppercase' },
   guestBadge: {
     backgroundColor: 'rgba(242,179,102,0.15)',
     borderRadius: 4,

@@ -16,6 +16,8 @@ import { X, MapPin, Calendar, Clock, Check } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getDailyTournaments, getUserRegistrations, registerForTournament } from '../services/tournaments';
 import { getOpenPlayerRequests, expressInterest, getMyInterests } from '../services/playerRequests';
+import { getMyTeam } from '../services/teams';
+import { getTeamMatches } from '../services/matches';
 import { getApplicationStatuses } from '../services/notifications';
 import { Tournament, PlayerRequest } from '../types';
 import { RootStackParamList } from '../navigation/types';
@@ -47,6 +49,8 @@ export default function OneGameScreen({ navigation }: Props) {
   const [playerRequests, setPlayerRequests] = useState<PlayerRequest[]>([]);
   const [interestedIds, setInterestedIds] = useState<Set<string>>(new Set());
   const [applicationStatuses, setApplicationStatuses] = useState<Map<string, 'accepted' | 'rejected'>>(new Map());
+  const [myTeamId, setMyTeamId] = useState<string | null>(null);
+  const [myMatchIds, setMyMatchIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [registeringId, setRegisteringId] = useState<string | null>(null);
 
@@ -54,12 +58,22 @@ export default function OneGameScreen({ navigation }: Props) {
     if (!session) return;
     setLoading(true);
     try {
-      const [data, regs] = await Promise.all([
+      const [data, regs, myTeam] = await Promise.all([
         getDailyTournaments(),
         getUserRegistrations(session.user.id),
+        getMyTeam(session.user.id),
       ]);
       setTournaments(data);
       setRegisteredIds(new Set(regs.map((r) => r.tournamentId)));
+      const teamId = myTeam?.id ?? null;
+      setMyTeamId(teamId);
+      if (teamId) {
+        getTeamMatches(teamId)
+          .then((matches) => setMyMatchIds(new Set(matches.map((m) => m.id))))
+          .catch(() => {});
+      } else {
+        setMyMatchIds(new Set());
+      }
     } catch {
       // silently fail
     }
@@ -132,6 +146,10 @@ export default function OneGameScreen({ navigation }: Props) {
   function renderRequestCard(req: PlayerRequest) {
     const isInterested = interestedIds.has(req.id);
     const appStatus = req.matchId ? applicationStatuses.get(req.matchId) : undefined;
+    const isOwnTeam = myTeamId !== null && req.teamId === myTeamId;
+    const isOpposingTeam = !isOwnTeam && myMatchIds.has(req.matchId);
+    const isPartOfMatch = isOwnTeam || isOpposingTeam;
+    const isAlreadyInMatch = !isPartOfMatch && !isInterested && applicationStatuses.get(req.matchId) === 'accepted';
 
     return (
       <View key={req.id} style={styles.card}>
@@ -166,7 +184,15 @@ export default function OneGameScreen({ navigation }: Props) {
 
         <View style={styles.cardFooter}>
           <Text style={styles.price}>{t('onegame.oneMatch')}</Text>
-          {isInterested ? (
+          {isPartOfMatch ? (
+            <View style={styles.ownTeamBadge}>
+              <Text style={styles.ownTeamText}>{t('onegame.alreadyMember')}</Text>
+            </View>
+          ) : isAlreadyInMatch ? (
+            <View style={styles.alreadyInMatchBadge}>
+              <Text style={styles.alreadyInMatchText}>{t('onegame.alreadyInMatch')}</Text>
+            </View>
+          ) : isInterested ? (
             appStatus === 'accepted' ? (
               <View style={[styles.registeredBadge, styles.acceptedBadge]}>
                 <Check size={12} color={colors.green} strokeWidth={2.5} />
@@ -357,4 +383,22 @@ const styles = StyleSheet.create({
   acceptedBadge: { backgroundColor: 'rgba(34,197,94,0.12)' },
   rejectedBadge: { backgroundColor: 'rgba(239,68,68,0.12)' },
   rejectedText: { fontFamily: font.sansBold, fontSize: 12, color: '#EF4444' },
+  ownTeamBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(222,219,200,0.08)',
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: space.md,
+  },
+  ownTeamText: { fontFamily: font.sansBold, fontSize: 12, color: colors.cream45 },
+  alreadyInMatchBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(73,115,115,0.20)',
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: space.md,
+  },
+  alreadyInMatchText: { fontFamily: font.sansBold, fontSize: 12, color: '#497373' },
 });
