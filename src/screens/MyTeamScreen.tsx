@@ -48,6 +48,7 @@ export default function MyTeamScreen() {
   const [standing, setStanding] = useState<Standing | null>(null);
   const [nextMatch, setNextMatch] = useState<MatchWithTeams | null>(null);
   const [playerRequest, setPlayerRequest] = useState<PlayerRequest | null>(null);
+  const [guestMembers, setGuestMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -69,9 +70,20 @@ export default function MyTeamScreen() {
         setStanding(s);
         const next = matches[0] ?? null;
         setNextMatch(next);
+        setGuestMembers([]);
         if (next) {
           const req = await getTeamOpenRequest(found.id, next.id);
           setPlayerRequest(req);
+          const matchDateTime = new Date(`${next.date}T${next.time}`);
+          const hoursUntil = (matchDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+          if (hoursUntil > 0 && hoursUntil <= 24) {
+            const confirmedIds = next.confirmedPlayerIds ?? [];
+            const guestIds = confirmedIds.filter((id) => !found.playerIds.includes(id));
+            if (guestIds.length > 0) {
+              const guests = await getTeamMembers(guestIds);
+              setGuestMembers(guests);
+            }
+          }
         }
       }
     } catch (e: any) {
@@ -359,6 +371,19 @@ export default function MyTeamScreen() {
                 </View>
               );
             })}
+            {guestMembers.map((m) => (
+              <View key={`guest-${m.id}`}>
+                <PlayerRow
+                  name={m.name}
+                  lastName={m.lastName}
+                  position={t(`positions.${m.position}`)}
+                  guestBadge
+                  avatarUrl={m.avatarUrl}
+                  attendanceConfirmed
+                />
+                <View style={styles.divider} />
+              </View>
+            ))}
           </View>
         </View>
 

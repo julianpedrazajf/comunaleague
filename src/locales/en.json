@@ -136,6 +136,7 @@
     "captain": "Captain",
     "confirmed": "Attendance confirmed",
     "pending": "Pending",
+    "guestBadge": "1 MATCH",
     "noTeam": "You're not on a team yet",
     "noTeamSub": "Create your own or join an existing one",
     "noTeamsAvailable": "No teams available to join",

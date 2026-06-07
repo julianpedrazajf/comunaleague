@@ -21,7 +21,7 @@ import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { getDailyTournaments } from '../services/tournaments';
 import { getMyTeam } from '../services/teams';
 import { getTeamMatches, confirmAttendance, MatchWithTeams } from '../services/matches';
-import { getUnreadCount } from '../services/notifications';
+import { getUnreadCount, getUpcomingAcceptedMatch } from '../services/notifications';
 import { Tournament, Team } from '../types';
 import { useAuth } from '../context/AuthContext';
 import SectionHeader from '../components/ui/SectionHeader';
@@ -67,14 +67,25 @@ export default function HomeScreen() {
     try {
       const team = await getMyTeam(session.user.id);
       setMyTeam(team);
+
+      let resolvedMatch = null;
       if (team) {
         const matches = await getTeamMatches(team.id);
-        const next = matches[0] ?? null;
-        setNextMatch(next);
-        if (next) {
-          const saved = await AsyncStorage.getItem(`@confirmed_${session.user.id}_${next.id}`);
-          setConfirmed(saved === 'true');
-        }
+        resolvedMatch = matches[0] ?? null;
+      }
+
+      // If no team match, check if accepted as guest for an upcoming match
+      if (!resolvedMatch) {
+        resolvedMatch = await getUpcomingAcceptedMatch().catch(() => null);
+      }
+
+      setNextMatch(resolvedMatch);
+
+      if (resolvedMatch) {
+        const saved = await AsyncStorage.getItem(`@confirmed_${session.user.id}_${resolvedMatch.id}`);
+        // Guest players are already in confirmedPlayerIds — use that as the default
+        const isAlreadyConfirmed = (resolvedMatch.confirmedPlayerIds ?? []).includes(session.user.id);
+        setConfirmed(saved !== null ? saved === 'true' : isAlreadyConfirmed);
       }
     } catch { /* silently fail */ }
   }, [session]);

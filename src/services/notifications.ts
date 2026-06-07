@@ -1,5 +1,27 @@
 import { supabase } from './supabase';
 import { AppNotification } from '../types';
+import { MatchWithTeams } from './matches';
+
+export async function getUpcomingAcceptedMatch(): Promise<MatchWithTeams | null> {
+  const today = new Date().toISOString().split('T')[0];
+  const { data: notifs, error: notifError } = await supabase
+    .from('notifications')
+    .select('relatedId')
+    .eq('type', 'player_request_accepted');
+  if (notifError || !notifs?.length) return null;
+  const matchIds = (notifs ?? []).map((n) => n.relatedId as string).filter(Boolean);
+  if (!matchIds.length) return null;
+  const { data, error } = await supabase
+    .from('matches')
+    .select('*, homeTeam:homeTeamId(id, name, badgeUrl), awayTeam:awayTeamId(id, name, badgeUrl)')
+    .in('id', matchIds)
+    .gte('date', today)
+    .order('date', { ascending: true })
+    .order('time', { ascending: true })
+    .limit(1);
+  if (error || !data?.length) return null;
+  return data[0] as MatchWithTeams;
+}
 
 export async function cleanupPastNotifications(): Promise<void> {
   await supabase.rpc('cleanup_my_notifications');
