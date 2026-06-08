@@ -18,10 +18,9 @@ import { useAuth } from '../context/AuthContext';
 import { getMyTeam, getTeamMembers, leaveTeam, transferOwnership, deleteTeam, updateTeamBadge } from '../services/teams';
 import { getTeamStanding } from '../services/standings';
 import { getTeamMatches, MatchWithTeams } from '../services/matches';
-import { createPlayerRequest, cancelPlayerRequest, getTeamOpenRequest, getRequestInterests } from '../services/playerRequests';
-import { hasPendingApplicants } from '../services/notifications';
+import { getTeamOpenRequest, getAllTeamMatchInterests } from '../services/playerRequests';
 import { uploadTeamBadge } from '../services/storage';
-import { Team, User, Standing, PlayerRequest } from '../types';
+import { Team, User, Standing } from '../types';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import SectionHeader from '../components/ui/SectionHeader';
 import StatTriple from '../components/ui/StatTriple';
@@ -48,7 +47,6 @@ export default function MyTeamScreen() {
   const [members, setMembers] = useState<Member[]>([]);
   const [standing, setStanding] = useState<Standing | null>(null);
   const [nextMatch, setNextMatch] = useState<MatchWithTeams | null>(null);
-  const [playerRequest, setPlayerRequest] = useState<PlayerRequest | null>(null);
   const [guestMembers, setGuestMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,19 +67,20 @@ export default function MyTeamScreen() {
         ]);
         setMembers(m);
         setStanding(s);
-        const next = matches[0] ?? null;
+        const now = new Date();
+        const next = matches.find((m) => new Date(`${m.date}T${m.time}`) > now) ?? null;
         setNextMatch(next);
         setGuestMembers([]);
         if (next) {
           const req = await getTeamOpenRequest(found.id, next.id);
-          setPlayerRequest(req);
           const matchDateTime = new Date(`${next.date}T${next.time}`);
           const hoursUntil = (matchDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
-          if (hoursUntil > 0 && hoursUntil <= 24 && req) {
-            // Only players who explicitly applied to THIS team's request and were accepted
-            const interests = await getRequestInterests(req.id);
+          if (hoursUntil > 0 && hoursUntil <= 24) {
+            // Collect all interests across every request for this team+match
+            // so guests accepted from cancelled or multiple requests all appear
+            const allInterests = await getAllTeamMatchInterests(found.id, next.id);
             const confirmedIds = next.confirmedPlayerIds ?? [];
-            const guestIds = interests.filter(
+            const guestIds = allInterests.filter(
               (id) => confirmedIds.includes(id) && !found.playerIds.includes(id),
             );
             if (guestIds.length > 0) {
@@ -184,60 +183,6 @@ export default function MyTeamScreen() {
         },
       ],
     );
-  };
-
-  const handleTogglePlayerRequest = async () => {
-    if (!team || !session || !nextMatch) return;
-    if (session.user.id !== team.ownerId) {
-      Alert.alert(t('team.needPlayerCaptainOnlyTitle'), t('team.needPlayerCaptainOnlyMessage'));
-      return;
-    }
-    if (playerRequest) {
-      // Block cancel if any applicant is still waiting for a response
-      const pending = await hasPendingApplicants(playerRequest.id);
-      if (pending) {
-        Alert.alert(t('team.cancelRequestHasPendingTitle'), t('team.cancelRequestHasPendingMessage'));
-        return;
-      }
-      Alert.alert(
-        t('team.cancelPlayerRequestTitle'),
-        t('team.cancelPlayerRequestMessage'),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('common.confirm'),
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await cancelPlayerRequest(playerRequest.id);
-                setPlayerRequest(null);
-              } catch (e: any) {
-                Alert.alert(t('common.error'), e?.message ?? t('common.error'));
-              }
-            },
-          },
-        ],
-      );
-    } else {
-      Alert.alert(
-        t('team.needPlayerTitle'),
-        t('team.needPlayerMessage'),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('team.postRequest'),
-            onPress: async () => {
-              try {
-                const id = await createPlayerRequest(team.id, nextMatch.id);
-                setPlayerRequest({ id, teamId: team.id, matchId: nextMatch.id, createdAt: new Date().toISOString(), status: 'open' });
-              } catch (e: any) {
-                Alert.alert(t('common.error'), e?.message ?? t('common.error'));
-              }
-            },
-          },
-        ],
-      );
-    }
   };
 
   const handlePickBadge = async () => {
@@ -347,18 +292,6 @@ export default function MyTeamScreen() {
           ]}
         />
 
-        {nextMatch && (
-          <TouchableOpacity
-            style={[styles.needPlayerBtn, !!playerRequest && styles.needPlayerBtnActive]}
-            onPress={handleTogglePlayerRequest}
-            activeOpacity={0.75}
-          >
-            <Text style={[styles.needPlayerBtnText, !!playerRequest && styles.needPlayerBtnTextActive]}>
-              {playerRequest ? t('team.cancelPlayerRequest') : t('team.needPlayer')}
-            </Text>
-          </TouchableOpacity>
-        )}
-
         {/* Squad */}
         <View style={styles.section}>
           <SectionHeader label={t('team.squad')} />
@@ -375,8 +308,14 @@ export default function MyTeamScreen() {
                     isCaptain={isCaptain}
                     avatarUrl={m.avatarUrl}
                     attendanceConfirmed={nextMatch ? (nextMatch.confirmedPlayerIds ?? []).includes(m.id) : undefined}
-                    actionLabel={viewerIsCaptain && !isCaptain ? t('team.makeCaptain') : undefined}
-                    onAction={viewerIsCaptain && !isCaptain ? () => handleTransferOwnership(m) : undefined}
+                    actionLabel={!isCaptain ? t('team.makeCaptain') : undefined}
+                    onAction={!isCaptain ? () => {
+                      if (!viewerIsCaptain) {
+                        Alert.alert(t('team.makeCaptainOnlyTitle'), t('team.makeCaptainOnlyMessage'));
+                        return;
+                      }
+                      handleTransferOwnership(m);
+                    } : undefined}
                   />
                   <View style={styles.divider} />
                 </View>
@@ -456,27 +395,6 @@ const styles = StyleSheet.create({
 
   captainSection: {
     gap: space.md,
-  },
-  needPlayerBtn: {
-    backgroundColor: colors.surface1,
-    borderRadius: radius.card,
-    paddingVertical: space.md,
-    paddingHorizontal: space.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.hairline,
-  },
-  needPlayerBtnActive: {
-    backgroundColor: 'rgba(242,177,102,0.10)',
-    borderColor: 'rgba(242,177,102,0.40)',
-  },
-  needPlayerBtnText: {
-    fontFamily: font.sansBold,
-    fontSize: 14,
-    color: colors.cream70,
-  },
-  needPlayerBtnTextActive: {
-    color: '#F2B366',
   },
   captainSectionTitle: {
     fontFamily: font.sansBold,

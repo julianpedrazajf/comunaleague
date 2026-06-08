@@ -21,7 +21,7 @@ import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { getDailyTournaments } from '../services/tournaments';
 import { getMyTeam } from '../services/teams';
 import { getTeamMatches, confirmAttendance, MatchWithTeams } from '../services/matches';
-import { getUnreadCount, getUpcomingAcceptedMatch } from '../services/notifications';
+import { getUnreadCount, getUpcomingAcceptedMatches } from '../services/notifications';
 import { Tournament, Team } from '../types';
 import { useAuth } from '../context/AuthContext';
 import SectionHeader from '../components/ui/SectionHeader';
@@ -68,16 +68,22 @@ export default function HomeScreen() {
       const team = await getMyTeam(session.user.id);
       setMyTeam(team);
 
-      let resolvedMatch = null;
-      if (team) {
-        const matches = await getTeamMatches(team.id);
-        resolvedMatch = matches[0] ?? null;
-      }
-
-      // If no team match, check if accepted as guest for an upcoming match
-      if (!resolvedMatch) {
-        resolvedMatch = await getUpcomingAcceptedMatch().catch(() => null);
-      }
+      // Combine team matches + accepted guest matches, pick the next one chronologically
+      const now = new Date();
+      const [teamMatches, guestMatches] = await Promise.all([
+        team ? getTeamMatches(team.id) : Promise.resolve([]),
+        getUpcomingAcceptedMatches().catch(() => []),
+      ]);
+      const seen = new Set<string>();
+      const allMatches = [...teamMatches, ...guestMatches].filter((m) => {
+        if (seen.has(m.id)) return false;
+        seen.add(m.id);
+        return new Date(`${m.date}T${m.time}`) > now;
+      });
+      allMatches.sort((a, b) =>
+        new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime(),
+      );
+      const resolvedMatch = allMatches[0] ?? null;
 
       setNextMatch(resolvedMatch);
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MapPin } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import Chip from './Chip';
@@ -15,6 +15,12 @@ interface Team {
   badgeUrl?: string | null;
 }
 
+interface CaptainAction {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}
+
 interface MatchRowProps {
   homeTeam: Team;
   awayTeam: Team;
@@ -22,9 +28,11 @@ interface MatchRowProps {
   time: string;
   location?: string;
   status: MatchStatus;
+  attendanceConfirmed?: boolean;
+  captainAction?: CaptainAction;
 }
 
-export default function MatchRow({ homeTeam, awayTeam, date, time, location, status }: MatchRowProps) {
+export default function MatchRow({ homeTeam, awayTeam, date, time, location, status, attendanceConfirmed, captainAction }: MatchRowProps) {
   const { t } = useTranslation();
   const chipVariant = status === 'live' ? 'live' : status === 'final' ? 'final' : 'default';
   const chipLabel = status === 'live' ? t('match.live') : status === 'final' ? t('match.final') : t('match.upcoming_chip');
@@ -66,6 +74,30 @@ export default function MatchRow({ homeTeam, awayTeam, date, time, location, sta
           <Text style={styles.locationText}>{location}</Text>
         </View>
       )}
+
+      {attendanceConfirmed !== undefined && (
+        <View style={styles.attendanceRow}>
+          <View style={[styles.attendanceDot, attendanceConfirmed ? styles.dotGreen : styles.dotGray]} />
+          <Text style={[styles.attendanceText, attendanceConfirmed ? styles.textGreen : styles.textGray]}>
+            {attendanceConfirmed ? t('team.confirmed') : t('team.pending')}
+          </Text>
+        </View>
+      )}
+
+      {captainAction && (
+        <>
+          <View style={styles.hairline} />
+          <TouchableOpacity
+            style={[styles.captainBtn, captainAction.active && styles.captainBtnActive]}
+            onPress={captainAction.onPress}
+            activeOpacity={0.75}
+          >
+            <Text style={[styles.captainBtnText, captainAction.active && styles.captainBtnTextActive]}>
+              {captainAction.label}
+            </Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
@@ -87,4 +119,31 @@ const styles = StyleSheet.create({
   vs: { fontFamily: font.serifItalic, fontSize: 18, color: colors.cream45 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   locationText: { fontFamily: font.sans, fontSize: 11.5, color: colors.gray500 },
+  attendanceRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  attendanceDot: { width: 6, height: 6, borderRadius: 3 },
+  dotGreen: { backgroundColor: colors.green },
+  dotGray: { backgroundColor: colors.gray500 },
+  attendanceText: { fontFamily: font.sans, fontSize: 12 },
+  textGreen: { color: colors.green },
+  textGray: { color: colors.gray500 },
+  hairline: { height: 1, backgroundColor: colors.hairline },
+  captainBtn: {
+    borderRadius: radius.card,
+    paddingVertical: space.sm,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
+  captainBtnActive: {
+    backgroundColor: 'rgba(242,179,102,0.10)',
+    borderColor: 'rgba(242,179,102,0.40)',
+  },
+  captainBtnText: {
+    fontFamily: font.sansBold,
+    fontSize: 13,
+    color: colors.cream70,
+  },
+  captainBtnTextActive: {
+    color: '#F2B366',
+  },
 });

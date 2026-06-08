@@ -57,3 +57,41 @@ export async function getTeamOpenRequest(teamId: string, matchId: string): Promi
   if (error) throw error;
   return (data?.[0] as PlayerRequest) ?? null;
 }
+
+export async function getAllTeamMatchInterests(teamId: string, matchId: string): Promise<string[]> {
+  const { data: requests, error: reqErr } = await supabase
+    .from('player_requests')
+    .select('id')
+    .eq('teamId', teamId)
+    .eq('matchId', matchId);
+  if (reqErr || !requests?.length) return [];
+  const requestIds = requests.map((r) => r.id as string);
+  const { data, error } = await supabase
+    .from('player_request_interests')
+    .select('userId')
+    .in('requestId', requestIds);
+  if (error) return [];
+  return [...new Set((data ?? []).map((r) => r.userId as string))];
+}
+
+export async function getTeamOpenRequests(teamId: string): Promise<PlayerRequest[]> {
+  const { data, error } = await supabase
+    .from('player_requests')
+    .select('*')
+    .eq('teamId', teamId)
+    .eq('status', 'open');
+  if (error) throw error;
+  return (data ?? []) as PlayerRequest[];
+}
+
+export async function getTeamAnyRequest(teamId: string, matchId: string): Promise<PlayerRequest | null> {
+  const { data, error } = await supabase
+    .from('player_requests')
+    .select('*')
+    .eq('teamId', teamId)
+    .eq('matchId', matchId)
+    .order('createdAt', { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  return (data?.[0] as PlayerRequest) ?? null;
+}

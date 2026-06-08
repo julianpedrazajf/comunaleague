@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   FlatList,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +17,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getMyTeam } from '../services/teams';
 import { getTeamMatches, MatchWithTeams } from '../services/matches';
-import { Team } from '../types';
+import { createPlayerRequest, cancelPlayerRequest, getTeamOpenRequests } from '../services/playerRequests';
+import { hasPendingApplicants, getUpcomingAcceptedMatches } from '../services/notifications';
+import { Team, PlayerRequest } from '../types';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import MatchRow from '../components/ui/MatchRow';
 import CreamButton from '../components/ui/CreamButton';
@@ -62,6 +65,7 @@ export default function MatchScheduleScreen() {
 
   const [team, setTeam] = useState<Team | null>(null);
   const [matches, setMatches] = useState<MatchWithTeams[]>([]);
+  const [requestMap, setRequestMap] = useState<Map<string, PlayerRequest>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,10 +79,24 @@ export default function MatchScheduleScreen() {
       if (session) {
         const found = await getMyTeam(session.user.id);
         setTeam(found);
-        if (found) {
-          const m = await getTeamMatches(found.id);
-          setMatches(m);
-        }
+        const [teamMatches, guestMatches, openReqs] = await Promise.all([
+          found ? getTeamMatches(found.id) : Promise.resolve([]),
+          getUpcomingAcceptedMatches().catch(() => []),
+          found ? getTeamOpenRequests(found.id) : Promise.resolve([]),
+        ]);
+
+        // Combine team + guest matches, deduplicate, sort by date+time
+        const seen = new Set<string>();
+        const combined = [...teamMatches, ...guestMatches].filter((m) => {
+          if (seen.has(m.id)) return false;
+          seen.add(m.id);
+          return true;
+        });
+        combined.sort((a, b) =>
+          new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime(),
+        );
+        setMatches(combined);
+        setRequestMap(new Map(openReqs.map((r) => [r.matchId, r])));
       }
     } catch (e: any) {
       setError(e?.message ?? t('common.error'));
@@ -124,16 +142,86 @@ export default function MatchScheduleScreen() {
       return { year: d.getFullYear(), month: d.getMonth() };
     }), []);
 
-  const renderMatch = ({ item }: { item: MatchWithTeams }) => (
-    <MatchRow
-      homeTeam={{ name: item.homeTeam.name, badgeUrl: item.homeTeam.badgeUrl }}
-      awayTeam={{ name: item.awayTeam.name, badgeUrl: item.awayTeam.badgeUrl }}
-      date={formatDate(item.date, i18n.language)}
-      time={formatTime(item.time)}
-      location={item.location}
-      status={item.result ? 'final' : 'upcoming'}
-    />
-  );
+  const handleTogglePlayerRequest = async (match: MatchWithTeams) => {
+    if (!team || !session || session.user.id !== team.ownerId) return;
+    const existingReq = requestMap.get(match.id);
+    if (existingReq) {
+      const pending = await hasPendingApplicants(existingReq.id);
+      if (pending) {
+        Alert.alert(t('team.cancelRequestHasPendingTitle'), t('team.cancelRequestHasPendingMessage'));
+        return;
+      }
+      Alert.alert(
+        t('team.cancelPlayerRequestTitle'),
+        t('team.cancelPlayerRequestMessage'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.confirm'),
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await cancelPlayerRequest(existingReq.id);
+                setRequestMap((prev) => {
+                  const next = new Map(prev);
+                  next.delete(match.id);
+                  return next;
+                });
+              } catch (e: any) {
+                Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+              }
+            },
+          },
+        ],
+      );
+    } else {
+      Alert.alert(
+        t('team.needPlayerTitle'),
+        t('team.needPlayerMessage'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('team.postRequest'),
+            onPress: async () => {
+              try {
+                const id = await createPlayerRequest(team.id, match.id);
+                const newReq: PlayerRequest = { id, teamId: team.id, matchId: match.id, createdAt: new Date().toISOString(), status: 'open' };
+                setRequestMap((prev) => new Map(prev).set(match.id, newReq));
+              } catch (e: any) {
+                Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+              }
+            },
+          },
+        ],
+      );
+    }
+  };
+
+  const isCaptain = !!team && !!session && session.user.id === team.ownerId;
+
+  const renderMatch = ({ item }: { item: MatchWithTeams }) => {
+    const hasRequest = requestMap.has(item.id);
+    const isUpcoming = !item.result;
+    const userConfirmed = session
+      ? (item.confirmedPlayerIds ?? []).includes(session.user.id)
+      : undefined;
+    return (
+      <MatchRow
+        homeTeam={{ name: item.homeTeam.name, badgeUrl: item.homeTeam.badgeUrl }}
+        awayTeam={{ name: item.awayTeam.name, badgeUrl: item.awayTeam.badgeUrl }}
+        date={formatDate(item.date, i18n.language)}
+        time={formatTime(item.time)}
+        location={item.location}
+        status={item.result ? 'final' : 'upcoming'}
+        attendanceConfirmed={isUpcoming ? userConfirmed : undefined}
+        captainAction={isCaptain && isUpcoming ? {
+          label: hasRequest ? t('team.cancelPlayerRequest') : t('team.needPlayer'),
+          active: hasRequest,
+          onPress: () => handleTogglePlayerRequest(item),
+        } : undefined}
+      />
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -206,7 +294,7 @@ export default function MatchScheduleScreen() {
             <Text style={styles.retryText}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
-      ) : !team ? (
+      ) : !team && matches.length === 0 ? (
         <View style={styles.centered}>
           <Text style={styles.emptyTitle}>{t('match.noTeamForSchedule')}</Text>
           <View style={{ marginTop: space.lg }}>

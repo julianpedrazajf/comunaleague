@@ -16,7 +16,8 @@ export async function getTeamMatches(teamId: string): Promise<MatchWithTeams[]> 
     .select('*, homeTeam:homeTeamId(id, name, badgeUrl), awayTeam:awayTeamId(id, name, badgeUrl)')
     .or(`homeTeamId.eq.${teamId},awayTeamId.eq.${teamId}`)
     .gte('date', today)
-    .order('date', { ascending: true });
+    .order('date', { ascending: true })
+    .order('time', { ascending: true });
   if (error) throw error;
   return (data ?? []) as MatchWithTeams[];
 }

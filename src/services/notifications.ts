@@ -2,25 +2,25 @@ import { supabase } from './supabase';
 import { AppNotification } from '../types';
 import { MatchWithTeams } from './matches';
 
-export async function getUpcomingAcceptedMatch(): Promise<MatchWithTeams | null> {
+export async function getUpcomingAcceptedMatches(): Promise<MatchWithTeams[]> {
   const today = new Date().toISOString().split('T')[0];
   const { data: notifs, error: notifError } = await supabase
     .from('notifications')
     .select('relatedId')
     .eq('type', 'player_request_accepted');
-  if (notifError || !notifs?.length) return null;
+  if (notifError || !notifs?.length) return [];
   const matchIds = (notifs ?? []).map((n) => n.relatedId as string).filter(Boolean);
-  if (!matchIds.length) return null;
+  if (!matchIds.length) return [];
   const { data, error } = await supabase
     .from('matches')
     .select('*, homeTeam:homeTeamId(id, name, badgeUrl), awayTeam:awayTeamId(id, name, badgeUrl)')
     .in('id', matchIds)
     .gte('date', today)
     .order('date', { ascending: true })
-    .order('time', { ascending: true })
-    .limit(1);
-  if (error || !data?.length) return null;
-  return data[0] as MatchWithTeams;
+    .order('time', { ascending: true });
+  if (error || !data?.length) return [];
+  const now = new Date();
+  return (data as MatchWithTeams[]).filter((m) => new Date(`${m.date}T${m.time}`) > now);
 }
 
 export async function cleanupPastNotifications(): Promise<void> {
