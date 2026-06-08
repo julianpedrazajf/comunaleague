@@ -133,5 +133,6 @@ export interface AppNotification {
   fromUserId?: string;
   fromName?: string;
   read: boolean;
+  response?: 'accepted' | 'rejected';
   createdAt: string;
 }

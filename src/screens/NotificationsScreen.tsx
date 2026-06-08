@@ -29,7 +29,6 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
   const { t } = useTranslation();
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [responded, setResponded] = useState<Record<string, 'accepted' | 'rejected'>>({});
   const [loading, setLoading] = useState(true);
   const [pushEnabled, setPushEnabled] = useState(true);
 
@@ -70,10 +69,13 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
           onPress: async () => {
             try {
               await respondToInterest(notif.id, accept);
-              setResponded((prev) => ({
-                ...prev,
-                [notif.id]: accept ? 'accepted' : 'rejected',
-              }));
+              setNotifications((prev) =>
+                prev.map((n) =>
+                  n.id === notif.id
+                    ? { ...n, read: true, response: accept ? 'accepted' : 'rejected' }
+                    : n,
+                ),
+              );
             } catch (e: any) {
               Alert.alert(t('common.error'), e?.message ?? t('common.error'));
             }
@@ -86,7 +88,7 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
   const renderItem = ({ item }: { item: AppNotification }) => {
     const isInterest = item.type === 'player_request_interest';
     const isAccepted = item.type === 'player_request_accepted';
-    const resolution = responded[item.id];
+    const resolution = item.response;
 
     return (
       <View style={[styles.card, !item.read && !resolution && styles.cardUnread]}>

@@ -176,7 +176,9 @@
     "cancelPlayerRequestTitle": "Cancel request?",
     "cancelPlayerRequestMessage": "Your team's player request will be removed.",
     "needPlayerCaptainOnlyTitle": "Captain only",
-    "needPlayerCaptainOnlyMessage": "Only the captain can request extra players for a match."
+    "needPlayerCaptainOnlyMessage": "Only the captain can request extra players for a match.",
+    "cancelRequestHasPendingTitle": "Can't cancel yet",
+    "cancelRequestHasPendingMessage": "There's a player waiting for your response. Accept or reject their application before cancelling the request."
   },
   "match": {
     "title": "Matches",
@@ -235,7 +237,8 @@
     "statusAccepted": "Your request was accepted!",
     "statusRejected": "Your request was not accepted",
     "alreadyMember": "You're already in this match",
-    "alreadyInMatch": "You're already playing in this match"
+    "alreadyInMatch": "You're already playing in this match",
+    "allDates": "All"
   },
   "nav": {
     "home": "Home",

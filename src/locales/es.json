@@ -176,7 +176,9 @@
     "cancelPlayerRequestTitle": "¿Cancelar solicitud?",
     "cancelPlayerRequestMessage": "La solicitud de jugador de tu equipo será eliminada.",
     "needPlayerCaptainOnlyTitle": "Solo el capitán",
-    "needPlayerCaptainOnlyMessage": "Solo el capitán puede solicitar más jugadores para el partido."
+    "needPlayerCaptainOnlyMessage": "Solo el capitán puede solicitar más jugadores para el partido.",
+    "cancelRequestHasPendingTitle": "No puedes cancelar aún",
+    "cancelRequestHasPendingMessage": "Hay un jugador esperando tu respuesta. Acepta o rechaza su solicitud antes de cancelar."
   },
   "match": {
     "title": "Partidos",
@@ -235,7 +237,8 @@
     "statusAccepted": "¡Tu solicitud fue aceptada!",
     "statusRejected": "Tu solicitud fue negada",
     "alreadyMember": "Ya eres parte de este encuentro",
-    "alreadyInMatch": "Ya juegas en este encuentro"
+    "alreadyInMatch": "Ya juegas en este encuentro",
+    "allDates": "Todos"
   },
   "nav": {
     "home": "Inicio",

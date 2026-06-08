@@ -69,6 +69,17 @@ export async function getApplicationStatuses(): Promise<Map<string, 'accepted' |
   return map;
 }
 
+export async function hasPendingApplicants(requestId: string): Promise<boolean> {
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('*', { count: 'exact', head: true })
+    .eq('type', 'player_request_interest')
+    .eq('relatedId', requestId)
+    .is('response', null);
+  if (error) return false;
+  return (count ?? 0) > 0;
+}
+
 export async function respondToInterest(notificationId: string, accept: boolean): Promise<void> {
   const { error } = await supabase.rpc('respond_to_interest', {
     p_notification_id: notificationId,

@@ -19,6 +19,7 @@ import { getMyTeam, getTeamMembers, leaveTeam, transferOwnership, deleteTeam, up
 import { getTeamStanding } from '../services/standings';
 import { getTeamMatches, MatchWithTeams } from '../services/matches';
 import { createPlayerRequest, cancelPlayerRequest, getTeamOpenRequest, getRequestInterests } from '../services/playerRequests';
+import { hasPendingApplicants } from '../services/notifications';
 import { uploadTeamBadge } from '../services/storage';
 import { Team, User, Standing, PlayerRequest } from '../types';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
@@ -185,13 +186,19 @@ export default function MyTeamScreen() {
     );
   };
 
-  const handleTogglePlayerRequest = () => {
+  const handleTogglePlayerRequest = async () => {
     if (!team || !session || !nextMatch) return;
     if (session.user.id !== team.ownerId) {
       Alert.alert(t('team.needPlayerCaptainOnlyTitle'), t('team.needPlayerCaptainOnlyMessage'));
       return;
     }
     if (playerRequest) {
+      // Block cancel if any applicant is still waiting for a response
+      const pending = await hasPendingApplicants(playerRequest.id);
+      if (pending) {
+        Alert.alert(t('team.cancelRequestHasPendingTitle'), t('team.cancelRequestHasPendingMessage'));
+        return;
+      }
       Alert.alert(
         t('team.cancelPlayerRequestTitle'),
         t('team.cancelPlayerRequestMessage'),

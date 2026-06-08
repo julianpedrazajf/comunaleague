@@ -1,10 +1,11 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  ScrollView,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -51,8 +52,32 @@ export default function OneGameScreen({ navigation }: Props) {
   const [applicationStatuses, setApplicationStatuses] = useState<Map<string, 'accepted' | 'rejected'>>(new Map());
   const [myTeamId, setMyTeamId] = useState<string | null>(null);
   const [myMatchIds, setMyMatchIds] = useState<Set<string>>(new Set());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [registeringId, setRegisteringId] = useState<string | null>(null);
+
+  const requestDates = useMemo(() => {
+    const seen = new Set<string>();
+    const dates: string[] = [];
+    for (const r of playerRequests) {
+      if (r.match?.date && !seen.has(r.match.date)) {
+        seen.add(r.match.date);
+        dates.push(r.match.date);
+      }
+    }
+    return dates.sort();
+  }, [playerRequests]);
+
+  const filteredRequests = useMemo(
+    () => selectedDate ? playerRequests.filter((r) => r.match?.date === selectedDate) : playerRequests,
+    [playerRequests, selectedDate],
+  );
+
+  useEffect(() => {
+    if (selectedDate && !playerRequests.some((r) => r.match?.date === selectedDate)) {
+      setSelectedDate(null);
+    }
+  }, [playerRequests]);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -140,6 +165,26 @@ export default function OneGameScreen({ navigation }: Props) {
           },
         },
       ],
+    );
+  }
+
+  function renderDateCell(dateStr: string) {
+    const date = new Date(dateStr + 'T00:00:00');
+    const isSelected = selectedDate === dateStr;
+    const dayName = date.toLocaleDateString(i18n.language, { weekday: 'short' });
+    const dayNum = date.getDate();
+    const month = date.toLocaleDateString(i18n.language, { month: 'short' });
+    return (
+      <TouchableOpacity
+        key={dateStr}
+        style={[styles.dateCell, isSelected && styles.dateCellSelected]}
+        onPress={() => setSelectedDate(isSelected ? null : dateStr)}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.dateDayName, isSelected && styles.dateDayNameSelected]}>{dayName}</Text>
+        <Text style={[styles.dateDayNum, isSelected && styles.dateDayNumSelected]}>{dayNum}</Text>
+        <Text style={[styles.dateMonth, isSelected && styles.dateMonthSelected]}>{month}</Text>
+      </TouchableOpacity>
     );
   }
 
@@ -300,8 +345,26 @@ export default function OneGameScreen({ navigation }: Props) {
             playerRequests.length > 0 ? (
               <View style={styles.requestsSection}>
                 <SectionHeader label={t('onegame.teamsLooking')} />
+                {requestDates.length > 1 && (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.dateStrip}
+                  >
+                    <TouchableOpacity
+                      style={[styles.allDatesBtn, selectedDate === null && styles.dateCellSelected]}
+                      onPress={() => setSelectedDate(null)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.allDatesText, selectedDate === null && styles.dateDayNameSelected]}>
+                        {t('onegame.allDates')}
+                      </Text>
+                    </TouchableOpacity>
+                    {requestDates.map(renderDateCell)}
+                  </ScrollView>
+                )}
                 <View style={styles.requestsList}>
-                  {playerRequests.map(renderRequestCard)}
+                  {filteredRequests.map(renderRequestCard)}
                 </View>
               </View>
             ) : null
@@ -401,4 +464,67 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
   },
   alreadyInMatchText: { fontFamily: font.sansBold, fontSize: 12, color: '#497373' },
+
+  dateStrip: {
+    flexDirection: 'row',
+    paddingBottom: space.md,
+    gap: 8,
+  },
+  allDatesBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: colors.surface1,
+    minHeight: 62,
+  },
+  allDatesText: {
+    fontFamily: font.sansBold,
+    fontSize: 12,
+    color: colors.cream45,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  dateCell: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: colors.surface1,
+    minWidth: 52,
+    gap: 2,
+  },
+  dateCellSelected: {
+    backgroundColor: '#F21D2F',
+  },
+  dateDayName: {
+    fontFamily: font.sans,
+    fontSize: 10,
+    color: colors.cream45,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  dateDayNameSelected: {
+    color: colors.cream,
+  },
+  dateDayNum: {
+    fontFamily: font.sansBold,
+    fontSize: 20,
+    color: colors.cream,
+    lineHeight: 24,
+  },
+  dateDayNumSelected: {
+    color: colors.cream,
+  },
+  dateMonth: {
+    fontFamily: font.sans,
+    fontSize: 10,
+    color: colors.cream45,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  dateMonthSelected: {
+    color: colors.cream,
+  },
 });
