@@ -17,9 +17,10 @@ interface PlayerRowProps {
   actionLabel?: string;
   onAction?: () => void;
   attendanceConfirmed?: boolean;
+  matchDate?: string;
 }
 
-export default function PlayerRow({ name, lastName, position, foot, isCaptain, guestBadge, memberBadge, number, avatarUrl, actionLabel, onAction, attendanceConfirmed }: PlayerRowProps) {
+export default function PlayerRow({ name, lastName, position, foot, isCaptain, guestBadge, memberBadge, number, avatarUrl, actionLabel, onAction, attendanceConfirmed, matchDate }: PlayerRowProps) {
   const { t } = useTranslation();
   return (
     <View style={styles.row}>
@@ -34,9 +35,9 @@ export default function PlayerRow({ name, lastName, position, foot, isCaptain, g
           {memberBadge && !isCaptain && <View style={styles.memberBadge}><Text style={styles.memberText}>{t('team.memberBadge')}</Text></View>}
           {guestBadge && <View style={styles.guestBadge}><Text style={styles.guestText}>{t('team.guestBadge')}</Text></View>}
         </View>
-        {(position || foot) && (
+        {(position || foot || matchDate) && (
           <Text style={styles.detail}>
-            {[position, foot].filter(Boolean).join(' · ')}
+            {[position, foot, matchDate].filter(Boolean).join(' · ')}
           </Text>
         )}
         {attendanceConfirmed !== undefined && (

@@ -58,6 +58,7 @@ export default function HomeScreen() {
   const [myTeam, setMyTeam] = useState<Team | null>(null);
   const [nextMatch, setNextMatch] = useState<MatchWithTeams | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [isGuestMatch, setIsGuestMatch] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const load = useCallback(async () => {
@@ -87,11 +88,17 @@ export default function HomeScreen() {
 
       setNextMatch(resolvedMatch);
 
+      const isGuest = resolvedMatch ? guestMatches.some((m) => m.id === resolvedMatch.id) : false;
+      setIsGuestMatch(isGuest);
+
       if (resolvedMatch) {
-        const saved = await AsyncStorage.getItem(`@confirmed_${session.user.id}_${resolvedMatch.id}`);
-        // Guest players are already in confirmedPlayerIds — use that as the default
-        const isAlreadyConfirmed = (resolvedMatch.confirmedPlayerIds ?? []).includes(session.user.id);
-        setConfirmed(saved !== null ? saved === 'true' : isAlreadyConfirmed);
+        if (isGuest) {
+          setConfirmed(true);
+        } else {
+          const saved = await AsyncStorage.getItem(`@confirmed_${session.user.id}_${resolvedMatch.id}`);
+          const isAlreadyConfirmed = (resolvedMatch.confirmedPlayerIds ?? []).includes(session.user.id);
+          setConfirmed(saved !== null ? saved === 'true' : isAlreadyConfirmed);
+        }
       }
     } catch { /* silently fail */ }
   }, [session]);
@@ -226,7 +233,12 @@ export default function HomeScreen() {
                 ) : null}
               </View>
 
-              {confirmed ? (
+              {isGuestMatch ? (
+                <View style={styles.confirmedPill}>
+                  <Check size={15} color={colors.black} strokeWidth={2.5} />
+                  <Text style={styles.confirmedText}>{t('home.attendanceConfirmed')}</Text>
+                </View>
+              ) : confirmed ? (
                 <TouchableOpacity style={styles.confirmedPill} onPress={handleConfirm} activeOpacity={0.8}>
                   <Check size={15} color={colors.black} strokeWidth={2.5} />
                   <Text style={styles.confirmedText}>{t('home.attendanceConfirmed')}</Text>

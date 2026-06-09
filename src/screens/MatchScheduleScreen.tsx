@@ -66,6 +66,7 @@ export default function MatchScheduleScreen() {
   const [team, setTeam] = useState<Team | null>(null);
   const [matches, setMatches] = useState<MatchWithTeams[]>([]);
   const [requestMap, setRequestMap] = useState<Map<string, PlayerRequest>>(new Map());
+  const [guestMatchIds, setGuestMatchIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -96,6 +97,7 @@ export default function MatchScheduleScreen() {
           new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime(),
         );
         setMatches(combined);
+        setGuestMatchIds(new Set(guestMatches.map((m) => m.id)));
         setRequestMap(new Map(openReqs.map((r) => [r.matchId, r])));
       }
     } catch (e: any) {
@@ -143,7 +145,11 @@ export default function MatchScheduleScreen() {
     }), []);
 
   const handleTogglePlayerRequest = async (match: MatchWithTeams) => {
-    if (!team || !session || session.user.id !== team.ownerId) return;
+    if (!team || !session) return;
+    if (session.user.id !== team.ownerId) {
+      Alert.alert(t('team.needPlayerCaptainOnlyTitle'), t('team.needPlayerCaptainOnlyMessage'));
+      return;
+    }
     const existingReq = requestMap.get(match.id);
     if (existingReq) {
       const pending = await hasPendingApplicants(existingReq.id);
@@ -214,7 +220,7 @@ export default function MatchScheduleScreen() {
         location={item.location}
         status={item.result ? 'final' : 'upcoming'}
         attendanceConfirmed={isUpcoming ? userConfirmed : undefined}
-        captainAction={isCaptain && isUpcoming ? {
+        captainAction={isUpcoming && !!team && !guestMatchIds.has(item.id) ? {
           label: hasRequest ? t('team.cancelPlayerRequest') : t('team.needPlayer'),
           active: hasRequest,
           onPress: () => handleTogglePlayerRequest(item),

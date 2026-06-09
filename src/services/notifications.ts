@@ -41,7 +41,7 @@ export async function getUnreadCount(): Promise<number> {
   const { count, error } = await supabase
     .from('notifications')
     .select('*', { count: 'exact', head: true })
-    .eq('read', false);
+    .or('read.eq.false,and(type.eq.player_request_interest,response.is.null)');
   if (error) throw error;
   return count ?? 0;
 }

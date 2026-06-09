@@ -18,7 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { getMyTeam, getTeamMembers, leaveTeam, transferOwnership, deleteTeam, updateTeamBadge } from '../services/teams';
 import { getTeamStanding } from '../services/standings';
 import { getTeamMatches, MatchWithTeams } from '../services/matches';
-import { getTeamOpenRequest, getAllTeamMatchInterests } from '../services/playerRequests';
+import { getAllTeamMatchInterests } from '../services/playerRequests';
 import { uploadTeamBadge } from '../services/storage';
 import { Team, User, Standing } from '../types';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
@@ -37,9 +37,10 @@ type NavProp = CompositeNavigationProp<
 >;
 
 type Member = Pick<User, 'id' | 'name' | 'lastName' | 'position' | 'skillLevel' | 'avatarUrl'>;
+type GuestEntry = { member: Member; matchDate: string; matchTime: string };
 
 export default function MyTeamScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { session } = useAuth();
   const navigation = useNavigation<NavProp>();
 
@@ -47,7 +48,7 @@ export default function MyTeamScreen() {
   const [members, setMembers] = useState<Member[]>([]);
   const [standing, setStanding] = useState<Standing | null>(null);
   const [nextMatch, setNextMatch] = useState<MatchWithTeams | null>(null);
-  const [guestMembers, setGuestMembers] = useState<Member[]>([]);
+  const [guestEntries, setGuestEntries] = useState<GuestEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -70,25 +71,22 @@ export default function MyTeamScreen() {
         const now = new Date();
         const next = matches.find((m) => new Date(`${m.date}T${m.time}`) > now) ?? null;
         setNextMatch(next);
-        setGuestMembers([]);
-        if (next) {
-          const req = await getTeamOpenRequest(found.id, next.id);
-          const matchDateTime = new Date(`${next.date}T${next.time}`);
-          const hoursUntil = (matchDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
-          if (hoursUntil > 0 && hoursUntil <= 24) {
-            // Collect all interests across every request for this team+match
-            // so guests accepted from cancelled or multiple requests all appear
-            const allInterests = await getAllTeamMatchInterests(found.id, next.id);
-            const confirmedIds = next.confirmedPlayerIds ?? [];
-            const guestIds = allInterests.filter(
+        // Collect guests from ALL upcoming matches so they're visible
+        // regardless of which match is "next" for the team
+        const upcomingMatches = matches.filter((m) => new Date(`${m.date}T${m.time}`) > now);
+        const guestResults = await Promise.all(
+          upcomingMatches.map(async (match) => {
+            const interests = await getAllTeamMatchInterests(found.id, match.id);
+            const confirmedIds = match.confirmedPlayerIds ?? [];
+            const guestIds = interests.filter(
               (id) => confirmedIds.includes(id) && !found.playerIds.includes(id),
             );
-            if (guestIds.length > 0) {
-              const guests = await getTeamMembers(guestIds);
-              setGuestMembers(guests);
-            }
-          }
-        }
+            if (guestIds.length === 0) return [];
+            const guests = await getTeamMembers(guestIds);
+            return guests.map((g) => ({ member: g, matchDate: match.date, matchTime: match.time }));
+          }),
+        );
+        setGuestEntries(guestResults.flat());
       }
     } catch (e: any) {
       setError(e?.message ?? t('common.error'));
@@ -321,19 +319,26 @@ export default function MyTeamScreen() {
                 </View>
               );
             })}
-            {guestMembers.map((m) => (
-              <View key={`guest-${m.id}`}>
-                <PlayerRow
-                  name={m.name}
-                  lastName={m.lastName}
-                  position={t(`positions.${m.position}`)}
-                  guestBadge
-                  avatarUrl={m.avatarUrl}
-                  attendanceConfirmed
-                />
-                <View style={styles.divider} />
-              </View>
-            ))}
+            {guestEntries.map(({ member: m, matchDate, matchTime }) => {
+              const d = new Date(matchDate + 'T00:00:00').toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' });
+              const [h, min] = matchTime.split(':');
+              const hr = parseInt(h, 10);
+              const timeStr = `${hr % 12 || 12}:${min} ${hr >= 12 ? 'PM' : 'AM'}`;
+              return (
+                <View key={`guest-${m.id}-${matchDate}`}>
+                  <PlayerRow
+                    name={m.name}
+                    lastName={m.lastName}
+                    position={t(`positions.${m.position}`)}
+                    guestBadge
+                    avatarUrl={m.avatarUrl}
+                    attendanceConfirmed
+                    matchDate={`${d} · ${timeStr}`}
+                  />
+                  <View style={styles.divider} />
+                </View>
+              );
+            })}
           </View>
         </View>
 
