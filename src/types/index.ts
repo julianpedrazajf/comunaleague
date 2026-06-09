@@ -108,6 +108,7 @@ export interface Message {
   toId: string;
   content: string;
   timestamp: string;
+  read?: boolean;
 }
 
 export interface PlayerRequest {

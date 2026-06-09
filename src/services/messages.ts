@@ -40,6 +40,23 @@ export async function sendMessage(fromId: string, toId: string, content: string)
     toId,
     content,
     timestamp: new Date().toISOString(),
+    read: false,
   });
   if (error) throw error;
+}
+
+export async function getUnreadMessageCount(): Promise<number> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 0;
+  const { count, error } = await supabase
+    .from('messages')
+    .select('*', { count: 'exact', head: true })
+    .eq('toId', user.id)
+    .eq('read', false);
+  if (error) return 0;
+  return count ?? 0;
+}
+
+export async function markConversationRead(peerId: string): Promise<void> {
+  await supabase.rpc('mark_conversation_read', { p_peer_id: peerId });
 }

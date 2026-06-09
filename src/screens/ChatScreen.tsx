@@ -16,7 +16,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ArrowLeft } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { getConversation, sendMessage } from '../services/messages';
+import { useMessages } from '../context/MessagesContext';
+import { getConversation, sendMessage, markConversationRead } from '../services/messages';
+import { isTeamCaptain } from '../services/teams';
 import { supabase } from '../services/supabase';
 import { Message } from '../types';
 import { RootStackParamList } from '../navigation/types';
@@ -28,8 +30,10 @@ export default function ChatScreen({ route, navigation }: Props) {
   const { peerId, peerName } = route.params;
   const { t, i18n } = useTranslation();
   const { session } = useAuth();
+  const { refreshUnreadMessages } = useMessages();
 
   const [messages, setMessages] = useState<Message[]>([]);
+  const [peerIsCaptain, setPeerIsCaptain] = useState(false);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -38,8 +42,12 @@ export default function ChatScreen({ route, navigation }: Props) {
   const load = useCallback(async () => {
     if (!session) return;
     try {
-      const data = await getConversation(session.user.id, peerId);
+      const [data, captain] = await Promise.all([
+        getConversation(session.user.id, peerId),
+        isTeamCaptain(peerId),
+      ]);
       setMessages(data);
+      setPeerIsCaptain(captain);
     } catch {
       // silently fail
     } finally {
@@ -47,7 +55,10 @@ export default function ChatScreen({ route, navigation }: Props) {
     }
   }, [session, peerId]);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => {
+    load();
+    markConversationRead(peerId).then(() => refreshUnreadMessages()).catch(() => {});
+  }, [load, peerId, refreshUnreadMessages]));
 
   useEffect(() => {
     if (!session) return;
@@ -107,7 +118,14 @@ export default function ChatScreen({ route, navigation }: Props) {
           <ArrowLeft size={22} color={colors.cream70} strokeWidth={2} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerName} numberOfLines={1}>{peerName}</Text>
+          <View style={styles.headerNameRow}>
+            <Text style={styles.headerName} numberOfLines={1}>{peerName}</Text>
+            {peerIsCaptain && (
+              <View style={styles.capBadge}>
+                <Text style={styles.capText}>CAP</Text>
+              </View>
+            )}
+          </View>
         </View>
         <View style={styles.headerSpacer} />
       </View>
@@ -186,7 +204,15 @@ const styles = StyleSheet.create({
   },
   backBtn: { padding: 4 },
   headerCenter: { flex: 1, alignItems: 'center' },
+  headerNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   headerName: { fontFamily: font.sansBold, fontSize: 16, color: colors.cream },
+  capBadge: {
+    backgroundColor: 'rgba(222,219,200,0.12)',
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  capText: { fontFamily: font.sansBold, fontSize: 8.5, letterSpacing: 1, color: colors.cream70, textTransform: 'uppercase' },
   headerSpacer: { width: 30 },
 
   listContent: { padding: 18, gap: space.sm },

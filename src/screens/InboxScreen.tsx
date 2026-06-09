@@ -14,8 +14,12 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
+import { useMessages } from '../context/MessagesContext';
 import { getAllUserMessages } from '../services/messages';
-import { getMyTeam, getTeamMembers } from '../services/teams';
+import { getMyTeam, getTeamMembers, getTeamById, isTeamCaptain } from '../services/teams';
+import { getTeamMatches } from '../services/matches';
+import { getUpcomingAcceptedMatches } from '../services/notifications';
+import { getAllTeamMatchInterests } from '../services/playerRequests';
 import { Message, User } from '../types';
 import Monogram from '../components/ui/Monogram';
 import { colors, font, space, radius } from '../theme/tokens';
@@ -26,7 +30,7 @@ type NavProp = CompositeNavigationProp<
 >;
 
 type Teammate = Pick<User, 'id' | 'name' | 'lastName' | 'position' | 'skillLevel' | 'avatarUrl'>;
-type TeammateRow = Teammate & { lastMessage: Message | null };
+type TeammateRow = Teammate & { lastMessage: Message | null; unreadCount: number; isCaptain: boolean };
 
 function formatTimestamp(ts: string, locale: string): string {
   const date = new Date(ts);
@@ -41,6 +45,7 @@ export default function InboxScreen() {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<NavProp>();
   const { session } = useAuth();
+  const { refreshUnreadMessages } = useMessages();
 
   const [rows, setRows] = useState<TeammateRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,23 +55,60 @@ export default function InboxScreen() {
     if (!session) return;
     setLoading(true);
     try {
-      const [team, allMessages] = await Promise.all([
-        getMyTeam(session.user.id),
-        getAllUserMessages(session.user.id),
+      const myId = session.user.id;
+      const [team, allMessages, acceptedMatches] = await Promise.all([
+        getMyTeam(myId),
+        getAllUserMessages(myId),
+        getUpcomingAcceptedMatches().catch(() => []),
       ]);
 
-      if (!team) { setHasTeam(false); setRows([]); return; }
+      const peerIdSet = new Set<string>();
 
-      setHasTeam(true);
-      const peerIds = team.playerIds.filter((id) => id !== session.user.id);
-      const members = await getTeamMembers(peerIds);
-      const myId = session.user.id;
+      // Regular team members
+      if (team) {
+        team.playerIds.filter((id) => id !== myId).forEach((id) => peerIdSet.add(id));
 
-      const built: TeammateRow[] = members.map((m) => {
+        // Accepted guests for all upcoming team matches
+        const teamMatches = await getTeamMatches(team.id);
+        const now = new Date();
+        const upcoming = teamMatches.filter((m) => new Date(`${m.date}T${m.time}`) > now);
+        const guestResults = await Promise.all(
+          upcoming.map((m) => getAllTeamMatchInterests(team.id, m.id)),
+        );
+        guestResults.flat().forEach((id) => {
+          if (id !== myId && !team.playerIds.includes(id)) peerIdSet.add(id);
+        });
+      }
+
+      // If the user is a guest: show the team members of the match they were accepted for
+      if (acceptedMatches.length > 0) {
+        const teamIds = [...new Set(acceptedMatches.flatMap((m) => [m.homeTeamId, m.awayTeamId]))];
+        const matchTeams = await Promise.all(teamIds.map((id) => getTeamById(id)));
+        matchTeams.forEach((t) => {
+          if (t) t.playerIds.forEach((id) => { if (id !== myId) peerIdSet.add(id); });
+        });
+      }
+
+      // Always include anyone with a prior conversation, regardless of current
+      // team membership or whether a match has already passed
+      allMessages.forEach((msg) => {
+        const peer = msg.fromId === myId ? msg.toId : msg.fromId;
+        if (peer !== myId) peerIdSet.add(peer);
+      });
+
+      setHasTeam(!!team || acceptedMatches.length > 0 || peerIdSet.size > 0);
+
+      if (peerIdSet.size === 0) { setRows([]); return; }
+
+      const members = await getTeamMembers([...peerIdSet]);
+      const captainFlags = await Promise.all(members.map((m) => isTeamCaptain(m.id)));
+
+      const built: TeammateRow[] = members.map((m, i) => {
         const conversation = allMessages.filter(
           (msg) => (msg.fromId === myId && msg.toId === m.id) || (msg.fromId === m.id && msg.toId === myId),
         );
-        return { ...m, lastMessage: conversation[0] ?? null };
+        const unreadCount = conversation.filter((msg) => msg.fromId === m.id && !msg.read).length;
+        return { ...m, lastMessage: conversation[0] ?? null, unreadCount, isCaptain: captainFlags[i] };
       });
 
       built.sort((a, b) => {
@@ -86,7 +128,10 @@ export default function InboxScreen() {
     }
   }, [session]);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => {
+    load();
+    refreshUnreadMessages();
+  }, [load, refreshUnreadMessages]));
 
   const renderItem = ({ item }: { item: TeammateRow }) => {
     const fullName = `${item.name} ${item.lastName}`;
@@ -106,12 +151,24 @@ export default function InboxScreen() {
 
         <View style={styles.rowBody}>
           <View style={styles.rowTop}>
-            <Text style={styles.rowName} numberOfLines={1}>{fullName}</Text>
+            <View style={styles.nameRow}>
+              <Text style={[styles.rowName, item.unreadCount > 0 && styles.rowNameUnread]} numberOfLines={1}>{fullName}</Text>
+              {item.isCaptain && (
+                <View style={styles.capBadge}><Text style={styles.capText}>CAP</Text></View>
+              )}
+            </View>
             {item.lastMessage && (
               <Text style={styles.rowTime}>{formatTimestamp(item.lastMessage.timestamp, i18n.language)}</Text>
             )}
           </View>
-          <Text style={styles.rowSub} numberOfLines={1}>{preview}</Text>
+          <View style={styles.rowBottom}>
+            <Text style={[styles.rowSub, item.unreadCount > 0 && styles.rowSubUnread]} numberOfLines={1}>{preview}</Text>
+            {item.unreadCount > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadBadgeText}>{item.unreadCount > 9 ? '9+' : item.unreadCount}</Text>
+              </View>
+            )}
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -190,7 +247,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.sm,
   },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
+  capBadge: {
+    backgroundColor: 'rgba(222,219,200,0.12)',
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  capText: { fontFamily: font.sansBold, fontSize: 8.5, letterSpacing: 1, color: colors.cream70, textTransform: 'uppercase' },
+  rowBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
+  },
   rowName: { fontFamily: font.sansBold, fontSize: 15, color: colors.cream, flex: 1 },
+  rowNameUnread: { color: colors.cream },
   rowTime: { fontFamily: font.sans, fontSize: 11.5, color: colors.cream45, flexShrink: 0 },
-  rowSub: { fontFamily: font.sans, fontSize: 13, color: colors.cream70 },
+  rowSub: { fontFamily: font.sans, fontSize: 13, color: colors.cream70, flex: 1 },
+  rowSubUnread: { fontFamily: font.sansBold, color: colors.cream },
+  unreadBadge: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  unreadBadgeText: { fontFamily: font.sansBold, fontSize: 10, color: colors.cream, lineHeight: 12 },
 });

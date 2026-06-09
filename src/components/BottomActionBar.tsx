@@ -5,6 +5,7 @@ import { Calendar, Shield, Inbox, User } from 'lucide-react-native';
 import SoccerBallIcon from './ui/SoccerBallIcon';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
+import { useMessages } from '../context/MessagesContext';
 import { colors, font } from '../theme/tokens';
 
 const TABS = [
@@ -18,6 +19,7 @@ const TABS = [
 export default function BottomActionBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const { unreadMessageCount } = useMessages();
 
   const currentRoute = state.routes[state.index]?.name;
 
@@ -27,6 +29,7 @@ export default function BottomActionBar({ state, navigation }: BottomTabBarProps
         {TABS.map(({ route, Icon, labelKey }) => {
           const active = currentRoute === route;
           const iconColor = active ? colors.cream : colors.cream45;
+          const showBadge = route === 'Inbox' && unreadMessageCount > 0;
 
           return (
             <TouchableOpacity
@@ -35,7 +38,10 @@ export default function BottomActionBar({ state, navigation }: BottomTabBarProps
               onPress={() => navigation.navigate(route as never)}
               activeOpacity={0.75}
             >
-              <Icon size={20} color={iconColor} strokeWidth={2} />
+              <View style={styles.iconWrap}>
+                <Icon size={20} color={iconColor} strokeWidth={2} />
+                {showBadge && <View style={styles.badge} />}
+              </View>
               <Text style={[styles.label, active && styles.labelActive]}>{t(labelKey)}</Text>
             </TouchableOpacity>
           );
@@ -77,6 +83,16 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
     gap: 3,
+  },
+  iconWrap: { position: 'relative' },
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -4,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
   },
   tabActive: { backgroundColor: 'rgba(222,219,200,0.10)' },
   label: { fontFamily: font.sansBold, fontSize: 9.5, color: colors.cream45 },
