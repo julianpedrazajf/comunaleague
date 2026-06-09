@@ -134,8 +134,9 @@
     "format11": "Fútbol 11",
     "invitePlayers": "Invitar jugadores",
     "captain": "Capitán",
-    "confirmed": "Confirmado",
+    "confirmed": "Asistencia confirmada",
     "pending": "Pendiente",
+    "guestBadge": "1 PARTIDO",
     "noTeam": "Aún no perteneces a ningún equipo",
     "noTeamSub": "Crea el tuyo o únete a uno existente",
     "noTeamsAvailable": "No hay equipos disponibles para unirse",
@@ -159,13 +160,27 @@
     "leaveTeamOwnerTitle": "Eres el capitán",
     "leaveTeamOwnerMessage": "El capitán no puede dejar el equipo. Transfiere el liderazgo o elimina el equipo primero.",
     "makeCaptain": "Hacer capitán",
+    "makeCaptainOnlyTitle": "Solo el capitán",
+    "makeCaptainOnlyMessage": "Solo el capitán puede transferir el liderazgo a otro jugador.",
     "transferTitle": "¿Transferir liderazgo?",
     "transferMessage": "{{name}} será el nuevo capitán del equipo.",
     "deleteTeam": "Eliminar equipo",
     "deleteTeamTitle": "¿Eliminar equipo?",
     "deleteTeamMessage": "Esta acción es permanente y no se puede deshacer.",
     "deleteTeamHasMembers": "El equipo todavía tiene integrantes. Todos deben salir antes de que se pueda eliminar. Si necesitas ayuda, contáctanos en comunaleagueau@gmail.com.",
-    "captainSection": "Opciones del capitán"
+    "deleteTeamHasMatches": "El equipo no se puede eliminar porque tiene partidos programados. Por favor contáctanos en comunaleagueau@gmail.com para proceder.",
+    "captainSection": "Opciones del capitán",
+    "needPlayer": "Solicitar jugador para este partido",
+    "needPlayerTitle": "¿Abrir cupo de jugador?",
+    "needPlayerMessage": "Tu solicitud será visible para todos los jugadores que buscan jugar una sola jornada. Varios jugadores pueden aplicar.",
+    "postRequest": "Publicar solicitud",
+    "cancelPlayerRequest": "Cancelar solicitud",
+    "cancelPlayerRequestTitle": "¿Cancelar solicitud?",
+    "cancelPlayerRequestMessage": "La solicitud de jugador de tu equipo será eliminada.",
+    "needPlayerCaptainOnlyTitle": "Solo el capitán",
+    "needPlayerCaptainOnlyMessage": "Solo el capitán puede solicitar más jugadores para el partido.",
+    "cancelRequestHasPendingTitle": "No puedes cancelar aún",
+    "cancelRequestHasPendingMessage": "Hay un jugador esperando tu respuesta. Acepta o rechaza su solicitud antes de cancelar."
   },
   "match": {
     "title": "Partidos",
@@ -214,7 +229,18 @@
     "starts": "Inicio",
     "free": "Gratis",
     "confirmTitle": "¿Unirte a este partido?",
-    "confirmMsg": "Serás registrado como jugador individual."
+    "confirmMsg": "Serás registrado como jugador individual.",
+    "teamsLooking": "Equipos que buscan jugador",
+    "apply": "Postularse",
+    "applied": "Postulado",
+    "applyTitle": "¿Postularte a jugar?",
+    "applyMessage": "Después de aplicar no podrás cancelar la solicitud. ¿Estás seguro que deseas aplicar?",
+    "oneMatch": "1 jornada",
+    "statusAccepted": "¡Tu solicitud fue aceptada!",
+    "statusRejected": "Tu solicitud fue negada",
+    "alreadyMember": "Ya eres parte de este encuentro",
+    "alreadyInMatch": "Ya juegas en este encuentro",
+    "allDates": "Todos"
   },
   "nav": {
     "home": "Inicio",
@@ -229,7 +255,15 @@
   "notifications": {
     "title": "Notificaciones",
     "push": "Notificaciones push",
-    "pushDesc": "Recibe alertas de partidos y mensajes"
+    "pushDesc": "Recibe alertas de partidos y mensajes",
+    "empty": "No hay notificaciones aún",
+    "playerInterest": "{{name}} quiere jugar en tu próximo partido",
+    "playerAccepted": "¡Tu solicitud fue aceptada!",
+    "playerRejected": "Tu solicitud no fue aceptada esta vez.",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "accepted": "Aceptado",
+    "rejected": "Rechazado"
   },
   "preferences": {
     "title": "Preferencias"

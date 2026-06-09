@@ -38,6 +38,21 @@ export async function createTeam(
   if (error) throw error;
 }
 
+export async function isTeamCaptain(userId: string): Promise<boolean> {
+  const { count, error } = await supabase
+    .from('teams')
+    .select('*', { count: 'exact', head: true })
+    .eq('ownerId', userId);
+  if (error) return false;
+  return (count ?? 0) > 0;
+}
+
+export async function getTeamById(teamId: string): Promise<Team | null> {
+  const { data, error } = await supabase.from('teams').select('*').eq('id', teamId).limit(1);
+  if (error) throw error;
+  return (data?.[0] as Team) ?? null;
+}
+
 export async function getAvailableTeams(userId: string): Promise<Team[]> {
   const { data, error } = await supabase
     .from('teams')

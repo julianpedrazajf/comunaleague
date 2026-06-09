@@ -17,6 +17,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import { getMyTeam, getTeamMembers, leaveTeam, transferOwnership, deleteTeam, updateTeamBadge } from '../services/teams';
 import { getTeamStanding } from '../services/standings';
+import { getTeamMatches, MatchWithTeams } from '../services/matches';
+import { getAllTeamMatchInterests } from '../services/playerRequests';
 import { uploadTeamBadge } from '../services/storage';
 import { Team, User, Standing } from '../types';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
@@ -35,15 +37,18 @@ type NavProp = CompositeNavigationProp<
 >;
 
 type Member = Pick<User, 'id' | 'name' | 'lastName' | 'position' | 'skillLevel' | 'avatarUrl'>;
+type GuestEntry = { member: Member; matchDate: string; matchTime: string };
 
 export default function MyTeamScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { session } = useAuth();
   const navigation = useNavigation<NavProp>();
 
   const [team, setTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [standing, setStanding] = useState<Standing | null>(null);
+  const [nextMatch, setNextMatch] = useState<MatchWithTeams | null>(null);
+  const [guestEntries, setGuestEntries] = useState<GuestEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -56,12 +61,32 @@ export default function MyTeamScreen() {
       const found = await getMyTeam(session.user.id);
       setTeam(found);
       if (found) {
-        const [m, s] = await Promise.all([
+        const [m, s, matches] = await Promise.all([
           getTeamMembers(found.playerIds),
           getTeamStanding(found.id),
+          getTeamMatches(found.id),
         ]);
         setMembers(m);
         setStanding(s);
+        const now = new Date();
+        const next = matches.find((m) => new Date(`${m.date}T${m.time}`) > now) ?? null;
+        setNextMatch(next);
+        // Collect guests from ALL upcoming matches so they're visible
+        // regardless of which match is "next" for the team
+        const upcomingMatches = matches.filter((m) => new Date(`${m.date}T${m.time}`) > now);
+        const guestResults = await Promise.all(
+          upcomingMatches.map(async (match) => {
+            const interests = await getAllTeamMatchInterests(found.id, match.id);
+            const confirmedIds = match.confirmedPlayerIds ?? [];
+            const guestIds = interests.filter(
+              (id) => confirmedIds.includes(id) && !found.playerIds.includes(id),
+            );
+            if (guestIds.length === 0) return [];
+            const guests = await getTeamMembers(guestIds);
+            return guests.map((g) => ({ member: g, matchDate: match.date, matchTime: match.time }));
+          }),
+        );
+        setGuestEntries(guestResults.flat());
       }
     } catch (e: any) {
       setError(e?.message ?? t('common.error'));
@@ -100,6 +125,10 @@ export default function MyTeamScreen() {
     const otherMembers = members.filter((m) => m.id !== session.user.id);
     if (otherMembers.length > 0) {
       Alert.alert(t('team.deleteTeam'), t('team.deleteTeamHasMembers'));
+      return;
+    }
+    if (nextMatch) {
+      Alert.alert(t('team.deleteTeam'), t('team.deleteTeamHasMatches'));
       return;
     }
     Alert.alert(
@@ -276,8 +305,35 @@ export default function MyTeamScreen() {
                     position={t(`positions.${m.position}`)}
                     isCaptain={isCaptain}
                     avatarUrl={m.avatarUrl}
-                    actionLabel={viewerIsCaptain && !isCaptain ? t('team.makeCaptain') : undefined}
-                    onAction={viewerIsCaptain && !isCaptain ? () => handleTransferOwnership(m) : undefined}
+                    attendanceConfirmed={nextMatch ? (nextMatch.confirmedPlayerIds ?? []).includes(m.id) : undefined}
+                    actionLabel={!isCaptain ? t('team.makeCaptain') : undefined}
+                    onAction={!isCaptain ? () => {
+                      if (!viewerIsCaptain) {
+                        Alert.alert(t('team.makeCaptainOnlyTitle'), t('team.makeCaptainOnlyMessage'));
+                        return;
+                      }
+                      handleTransferOwnership(m);
+                    } : undefined}
+                  />
+                  <View style={styles.divider} />
+                </View>
+              );
+            })}
+            {guestEntries.map(({ member: m, matchDate, matchTime }) => {
+              const d = new Date(matchDate + 'T00:00:00').toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' });
+              const [h, min] = matchTime.split(':');
+              const hr = parseInt(h, 10);
+              const timeStr = `${hr % 12 || 12}:${min} ${hr >= 12 ? 'PM' : 'AM'}`;
+              return (
+                <View key={`guest-${m.id}-${matchDate}`}>
+                  <PlayerRow
+                    name={m.name}
+                    lastName={m.lastName}
+                    position={t(`positions.${m.position}`)}
+                    guestBadge
+                    avatarUrl={m.avatarUrl}
+                    attendanceConfirmed
+                    matchDate={`${d} · ${timeStr}`}
                   />
                   <View style={styles.divider} />
                 </View>

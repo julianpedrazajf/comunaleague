@@ -20,7 +20,8 @@ import SoccerBallIcon from '../components/ui/SoccerBallIcon';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { getDailyTournaments } from '../services/tournaments';
 import { getMyTeam } from '../services/teams';
-import { getTeamMatches, MatchWithTeams } from '../services/matches';
+import { getTeamMatches, confirmAttendance, MatchWithTeams } from '../services/matches';
+import { getUnreadCount, getUpcomingAcceptedMatches } from '../services/notifications';
 import { Tournament, Team } from '../types';
 import { useAuth } from '../context/AuthContext';
 import SectionHeader from '../components/ui/SectionHeader';
@@ -57,20 +58,46 @@ export default function HomeScreen() {
   const [myTeam, setMyTeam] = useState<Team | null>(null);
   const [nextMatch, setNextMatch] = useState<MatchWithTeams | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [isGuestMatch, setIsGuestMatch] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const load = useCallback(async () => {
     getDailyTournaments().then(setTournaments).catch(() => {});
+    getUnreadCount().then(setUnreadCount).catch(() => {});
     if (!session) return;
     try {
       const team = await getMyTeam(session.user.id);
       setMyTeam(team);
-      if (team) {
-        const matches = await getTeamMatches(team.id);
-        const next = matches[0] ?? null;
-        setNextMatch(next);
-        if (next) {
-          const saved = await AsyncStorage.getItem(`@confirmed_${next.id}`);
-          setConfirmed(saved === 'true');
+
+      // Combine team matches + accepted guest matches, pick the next one chronologically
+      const now = new Date();
+      const [teamMatches, guestMatches] = await Promise.all([
+        team ? getTeamMatches(team.id) : Promise.resolve([]),
+        getUpcomingAcceptedMatches().catch(() => []),
+      ]);
+      const seen = new Set<string>();
+      const allMatches = [...teamMatches, ...guestMatches].filter((m) => {
+        if (seen.has(m.id)) return false;
+        seen.add(m.id);
+        return new Date(`${m.date}T${m.time}`) > now;
+      });
+      allMatches.sort((a, b) =>
+        new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime(),
+      );
+      const resolvedMatch = allMatches[0] ?? null;
+
+      setNextMatch(resolvedMatch);
+
+      const isGuest = resolvedMatch ? guestMatches.some((m) => m.id === resolvedMatch.id) : false;
+      setIsGuestMatch(isGuest);
+
+      if (resolvedMatch) {
+        if (isGuest) {
+          setConfirmed(true);
+        } else {
+          const saved = await AsyncStorage.getItem(`@confirmed_${session.user.id}_${resolvedMatch.id}`);
+          const isAlreadyConfirmed = (resolvedMatch.confirmedPlayerIds ?? []).includes(session.user.id);
+          setConfirmed(saved !== null ? saved === 'true' : isAlreadyConfirmed);
         }
       }
     } catch { /* silently fail */ }
@@ -98,7 +125,16 @@ export default function HomeScreen() {
     }
     const next = !confirmed;
     setConfirmed(next);
-    await AsyncStorage.setItem(`@confirmed_${nextMatch.id}`, next.toString());
+    const storageKey = `@confirmed_${session!.user.id}_${nextMatch.id}`;
+    await AsyncStorage.setItem(storageKey, next.toString());
+    try {
+      await confirmAttendance(nextMatch.id, next);
+    } catch (e: any) {
+      Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+      // Revert local state if DB sync failed
+      setConfirmed(!next);
+      await AsyncStorage.setItem(storageKey, (!next).toString());
+    }
   };
 
   return (
@@ -123,9 +159,13 @@ export default function HomeScreen() {
           </View>
           <Text style={styles.wordmarkTagline}>pibes de barrio.</Text>
         </View>
-        <TouchableOpacity hitSlop={12} style={styles.bellWrap}>
+        <TouchableOpacity hitSlop={12} style={styles.bellWrap} onPress={() => navigation.navigate('Notifications')}>
           <Bell size={20} color={colors.cream45} strokeWidth={2} />
-          <View style={styles.bellDot} />
+          {unreadCount > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : String(unreadCount)}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -193,7 +233,12 @@ export default function HomeScreen() {
                 ) : null}
               </View>
 
-              {confirmed ? (
+              {isGuestMatch ? (
+                <View style={styles.confirmedPill}>
+                  <Check size={15} color={colors.black} strokeWidth={2.5} />
+                  <Text style={styles.confirmedText}>{t('home.attendanceConfirmed')}</Text>
+                </View>
+              ) : confirmed ? (
                 <TouchableOpacity style={styles.confirmedPill} onPress={handleConfirm} activeOpacity={0.8}>
                   <Check size={15} color={colors.black} strokeWidth={2.5} />
                   <Text style={styles.confirmedText}>{t('home.attendanceConfirmed')}</Text>
@@ -269,12 +314,21 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   bellWrap: { position: 'relative' },
-  bellDot: {
+  bellBadge: {
     position: 'absolute',
-    top: -1, right: -1,
-    width: 7, height: 7,
-    borderRadius: 999,
-    backgroundColor: colors.green,
+    top: -5, right: -7,
+    minWidth: 16, height: 16,
+    borderRadius: 8,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  bellBadgeText: {
+    fontFamily: font.sansBold,
+    fontSize: 9,
+    color: colors.cream,
+    lineHeight: 11,
   },
 
   content: { paddingHorizontal: 18, paddingTop: space.sm, flexGrow: 1, justifyContent: 'center' },

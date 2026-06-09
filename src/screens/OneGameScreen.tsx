@@ -1,10 +1,11 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  ScrollView,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -15,9 +16,15 @@ import { useFocusEffect } from '@react-navigation/native';
 import { X, MapPin, Calendar, Clock, Check } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getDailyTournaments, getUserRegistrations, registerForTournament } from '../services/tournaments';
-import { Tournament } from '../types';
+import { getOpenPlayerRequests, expressInterest, getMyInterests } from '../services/playerRequests';
+import { getMyTeam } from '../services/teams';
+import { getTeamMatches } from '../services/matches';
+import { getApplicationStatuses } from '../services/notifications';
+import { Tournament, PlayerRequest } from '../types';
 import { RootStackParamList } from '../navigation/types';
 import Chip from '../components/ui/Chip';
+import Monogram from '../components/ui/Monogram';
+import SectionHeader from '../components/ui/SectionHeader';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OneGame'>;
@@ -27,25 +34,84 @@ function formatDate(dateStr: string, locale: string): string {
   return date.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
+function formatTime(timeStr: string): string {
+  const [hours, minutes] = timeStr.split(':');
+  const h = parseInt(hours, 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${minutes} ${ampm}`;
+}
+
 export default function OneGameScreen({ navigation }: Props) {
   const { t, i18n } = useTranslation();
   const { session } = useAuth();
 
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [registeredIds, setRegisteredIds] = useState<Set<string>>(new Set());
+  const [playerRequests, setPlayerRequests] = useState<PlayerRequest[]>([]);
+  const [interestedIds, setInterestedIds] = useState<Set<string>>(new Set());
+  const [applicationStatuses, setApplicationStatuses] = useState<Map<string, 'accepted' | 'rejected'>>(new Map());
+  const [myTeamId, setMyTeamId] = useState<string | null>(null);
+  const [myMatchIds, setMyMatchIds] = useState<Set<string>>(new Set());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [registeringId, setRegisteringId] = useState<string | null>(null);
+
+  const requestDates = useMemo(() => {
+    const seen = new Set<string>();
+    const dates: string[] = [];
+    for (const r of playerRequests) {
+      if (r.match?.date && !seen.has(r.match.date)) {
+        seen.add(r.match.date);
+        dates.push(r.match.date);
+      }
+    }
+    return dates.sort();
+  }, [playerRequests]);
+
+  const filteredRequests = useMemo(
+    () => selectedDate ? playerRequests.filter((r) => r.match?.date === selectedDate) : playerRequests,
+    [playerRequests, selectedDate],
+  );
+
+  useEffect(() => {
+    if (selectedDate && !playerRequests.some((r) => r.match?.date === selectedDate)) {
+      setSelectedDate(null);
+    }
+  }, [playerRequests]);
 
   const load = useCallback(async () => {
     if (!session) return;
     setLoading(true);
     try {
-      const [data, regs] = await Promise.all([
+      const [data, regs, myTeam] = await Promise.all([
         getDailyTournaments(),
         getUserRegistrations(session.user.id),
+        getMyTeam(session.user.id),
       ]);
       setTournaments(data);
       setRegisteredIds(new Set(regs.map((r) => r.tournamentId)));
+      const teamId = myTeam?.id ?? null;
+      setMyTeamId(teamId);
+      if (teamId) {
+        getTeamMatches(teamId)
+          .then((matches) => setMyMatchIds(new Set(matches.map((m) => m.id))))
+          .catch(() => {});
+      } else {
+        setMyMatchIds(new Set());
+      }
+    } catch {
+      // silently fail
+    }
+    // Load separately so a failure here doesn't break the tournaments section
+    try {
+      const [requests, myInterests, statuses] = await Promise.all([
+        getOpenPlayerRequests(),
+        getMyInterests(),
+        getApplicationStatuses(),
+      ]);
+      setPlayerRequests(requests);
+      setInterestedIds(new Set(myInterests));
+      setApplicationStatuses(statuses);
     } catch {
       // silently fail
     } finally {
@@ -77,6 +143,124 @@ export default function OneGameScreen({ navigation }: Props) {
           },
         },
       ],
+    );
+  }
+
+  function handleApply(req: PlayerRequest) {
+    Alert.alert(
+      t('onegame.applyTitle'),
+      t('onegame.applyMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('onegame.apply'),
+          onPress: async () => {
+            if (!session) return;
+            try {
+              await expressInterest(req.id);
+              setInterestedIds((prev) => new Set([...prev, req.id]));
+            } catch (e: any) {
+              Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  function renderDateCell(dateStr: string) {
+    const date = new Date(dateStr + 'T00:00:00');
+    const isSelected = selectedDate === dateStr;
+    const dayName = date.toLocaleDateString(i18n.language, { weekday: 'short' });
+    const dayNum = date.getDate();
+    const month = date.toLocaleDateString(i18n.language, { month: 'short' });
+    return (
+      <TouchableOpacity
+        key={dateStr}
+        style={[styles.dateCell, isSelected && styles.dateCellSelected]}
+        onPress={() => setSelectedDate(isSelected ? null : dateStr)}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.dateDayName, isSelected && styles.dateDayNameSelected]}>{dayName}</Text>
+        <Text style={[styles.dateDayNum, isSelected && styles.dateDayNumSelected]}>{dayNum}</Text>
+        <Text style={[styles.dateMonth, isSelected && styles.dateMonthSelected]}>{month}</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  function renderRequestCard(req: PlayerRequest) {
+    const isInterested = interestedIds.has(req.id);
+    const appStatus = req.matchId ? applicationStatuses.get(req.matchId) : undefined;
+    const isOwnTeam = myTeamId !== null && req.teamId === myTeamId;
+    const isOpposingTeam = !isOwnTeam && myMatchIds.has(req.matchId);
+    const isPartOfMatch = isOwnTeam || isOpposingTeam;
+    const isAlreadyInMatch = !isPartOfMatch && !isInterested && applicationStatuses.get(req.matchId) === 'accepted';
+
+    return (
+      <View key={req.id} style={styles.card}>
+        <View style={styles.reqCardTop}>
+          <Monogram name={req.team?.name ?? ''} size={44} shape="square" imageUri={req.team?.badgeUrl} />
+          <Text style={[styles.cardName, { flex: 1 }]} numberOfLines={1}>{req.team?.name ?? ''}</Text>
+          {req.team && (
+            <Chip label={req.team.format === 5 ? t('team.format5') : t('team.format11')} />
+          )}
+        </View>
+
+        {req.match && (
+          <View style={styles.cardMeta}>
+            <View style={styles.metaRow}>
+              <Calendar size={11} color={colors.gray500} strokeWidth={2} />
+              <Text style={styles.metaText}>{formatDate(req.match.date, i18n.language)}</Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Clock size={11} color={colors.gray500} strokeWidth={2} />
+              <Text style={styles.metaText}>{formatTime(req.match.time)}</Text>
+            </View>
+            {req.match.location ? (
+              <View style={styles.metaRow}>
+                <MapPin size={11} color={colors.gray500} strokeWidth={2} />
+                <Text style={styles.metaText} numberOfLines={1}>{req.match.location}</Text>
+              </View>
+            ) : null}
+          </View>
+        )}
+
+        <View style={styles.hairline} />
+
+        <View style={styles.cardFooter}>
+          <Text style={styles.price}>{t('onegame.oneMatch')}</Text>
+          {isPartOfMatch ? (
+            <View style={styles.ownTeamBadge}>
+              <Text style={styles.ownTeamText}>{t('onegame.alreadyMember')}</Text>
+            </View>
+          ) : isAlreadyInMatch ? (
+            <View style={styles.alreadyInMatchBadge}>
+              <Text style={styles.alreadyInMatchText}>{t('onegame.alreadyInMatch')}</Text>
+            </View>
+          ) : isInterested ? (
+            appStatus === 'accepted' ? (
+              <View style={[styles.registeredBadge, styles.acceptedBadge]}>
+                <Check size={12} color={colors.green} strokeWidth={2.5} />
+                <Text style={styles.registeredText}>{t('onegame.statusAccepted')}</Text>
+              </View>
+            ) : appStatus === 'rejected' ? (
+              <View style={[styles.registeredBadge, styles.rejectedBadge]}>
+                <X size={12} color="#EF4444" strokeWidth={2.5} />
+                <Text style={styles.rejectedText}>{t('onegame.statusRejected')}</Text>
+              </View>
+            ) : (
+              <View style={styles.registeredBadge}>
+                <Check size={12} color={colors.green} strokeWidth={2.5} />
+                <Text style={styles.registeredText}>{t('onegame.applied')}</Text>
+              </View>
+            )
+          ) : (
+            <TouchableOpacity style={styles.registerBtn} onPress={() => handleApply(req)}>
+              <Text style={styles.registerBtnText}>{t('onegame.apply')}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
     );
   }
 
@@ -156,7 +340,35 @@ export default function OneGameScreen({ navigation }: Props) {
         <FlatList
           data={tournaments}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={tournaments.length === 0 ? styles.emptyContainer : styles.listContent}
+          contentContainerStyle={styles.listContent}
+          ListHeaderComponent={
+            playerRequests.length > 0 ? (
+              <View style={styles.requestsSection}>
+                <SectionHeader label={t('onegame.teamsLooking')} />
+                {requestDates.length > 1 && (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.dateStrip}
+                  >
+                    <TouchableOpacity
+                      style={[styles.allDatesBtn, selectedDate === null && styles.dateCellSelected]}
+                      onPress={() => setSelectedDate(null)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.allDatesText, selectedDate === null && styles.dateDayNameSelected]}>
+                        {t('onegame.allDates')}
+                      </Text>
+                    </TouchableOpacity>
+                    {requestDates.map(renderDateCell)}
+                  </ScrollView>
+                )}
+                <View style={styles.requestsList}>
+                  {filteredRequests.map(renderRequestCard)}
+                </View>
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View style={styles.centered}>
               <Text style={styles.emptyText}>{t('onegame.noGames')}</Text>
@@ -172,8 +384,7 @@ export default function OneGameScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center' },
+  emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center', padding: 24 },
 
   header: {
     flexDirection: 'row',
@@ -191,6 +402,9 @@ const styles = StyleSheet.create({
   closeBtn: { padding: 4, marginTop: 4 },
 
   listContent: { padding: 18, gap: space.md, paddingBottom: 40 },
+  requestsSection: { marginBottom: space.xl },
+  requestsList: { gap: space.md },
+  reqCardTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
 
   card: {
     backgroundColor: colors.surface1,
@@ -229,4 +443,88 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
   },
   registeredText: { fontFamily: font.sansBold, fontSize: 12, color: colors.green },
+  acceptedBadge: { backgroundColor: 'rgba(34,197,94,0.12)' },
+  rejectedBadge: { backgroundColor: 'rgba(239,68,68,0.12)' },
+  rejectedText: { fontFamily: font.sansBold, fontSize: 12, color: '#EF4444' },
+  ownTeamBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(222,219,200,0.08)',
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: space.md,
+  },
+  ownTeamText: { fontFamily: font.sansBold, fontSize: 12, color: colors.cream45 },
+  alreadyInMatchBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(73,115,115,0.20)',
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: space.md,
+  },
+  alreadyInMatchText: { fontFamily: font.sansBold, fontSize: 12, color: '#497373' },
+
+  dateStrip: {
+    flexDirection: 'row',
+    paddingBottom: space.md,
+    gap: 8,
+  },
+  allDatesBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: colors.surface1,
+    minHeight: 62,
+  },
+  allDatesText: {
+    fontFamily: font.sansBold,
+    fontSize: 12,
+    color: colors.cream45,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  dateCell: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: colors.surface1,
+    minWidth: 52,
+    gap: 2,
+  },
+  dateCellSelected: {
+    backgroundColor: '#F21D2F',
+  },
+  dateDayName: {
+    fontFamily: font.sans,
+    fontSize: 10,
+    color: colors.cream45,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  dateDayNameSelected: {
+    color: colors.cream,
+  },
+  dateDayNum: {
+    fontFamily: font.sansBold,
+    fontSize: 20,
+    color: colors.cream,
+    lineHeight: 24,
+  },
+  dateDayNumSelected: {
+    color: colors.cream,
+  },
+  dateMonth: {
+    fontFamily: font.sans,
+    fontSize: 10,
+    color: colors.cream45,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  dateMonthSelected: {
+    color: colors.cream,
+  },
 });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
+import { MessagesProvider } from '../context/MessagesContext';
 import { RootStackParamList } from './types';
 
 import AuthStack from './AuthStack';
@@ -21,7 +22,7 @@ export default function RootNavigator() {
 
   if (loading) return null;
 
-  return (
+  const navigator = (
     <Root.Navigator screenOptions={{ headerShown: false }}>
       {session ? (
         <>
@@ -43,4 +44,6 @@ export default function RootNavigator() {
       )}
     </Root.Navigator>
   );
+
+  return session ? <MessagesProvider>{navigator}</MessagesProvider> : navigator;
 }
