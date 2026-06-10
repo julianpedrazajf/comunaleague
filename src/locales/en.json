@@ -268,6 +268,8 @@
     "joinRequest": "{{name}} wants to join your team",
     "joinAccepted": "Your request to join the team was accepted!",
     "joinRejected": "Your request to join the team was not accepted this time.",
+    "joinCaptainOnlyTitle": "Captain only",
+    "joinCaptainOnlyMessage": "Only the captain can accept or reject this request.",
     "accept": "Accept",
     "reject": "Reject",
     "accepted": "Accepted",

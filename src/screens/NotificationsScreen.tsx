@@ -88,6 +88,10 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
     );
   };
 
+  const handleJoinInfoTap = () => {
+    Alert.alert(t('notifications.joinCaptainOnlyTitle'), t('notifications.joinCaptainOnlyMessage'));
+  };
+
   const renderItem = ({ item }: { item: AppNotification }) => {
     const isInterest = item.type === 'player_request_interest';
     const isJoinRequest = item.type === 'join_team_request';
@@ -159,6 +163,17 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
                 onPress={() => handleRespond(item, false, respondToJoinRequest, 'notifications.joinRequest')}
                 activeOpacity={0.8}
               >
+                <Text style={styles.rejectBtnText}>{t('notifications.reject')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {isJoinInfo && !resolution && (
+            <View style={styles.actionRow}>
+              <TouchableOpacity style={styles.acceptBtn} onPress={handleJoinInfoTap} activeOpacity={0.8}>
+                <Text style={styles.acceptBtnText}>{t('notifications.accept')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.rejectBtn} onPress={handleJoinInfoTap} activeOpacity={0.8}>
                 <Text style={styles.rejectBtnText}>{t('notifications.reject')}</Text>
               </TouchableOpacity>
             </View>
