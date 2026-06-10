@@ -41,7 +41,7 @@ export async function getUnreadCount(): Promise<number> {
   const { count, error } = await supabase
     .from('notifications')
     .select('*', { count: 'exact', head: true })
-    .or('read.eq.false,and(type.eq.player_request_interest,response.is.null)');
+    .or('read.eq.false,and(type.in.(player_request_interest,join_team_request),response.is.null)');
   if (error) throw error;
   return count ?? 0;
 }
@@ -82,6 +82,14 @@ export async function hasPendingApplicants(requestId: string): Promise<boolean> 
 
 export async function respondToInterest(notificationId: string, accept: boolean): Promise<void> {
   const { error } = await supabase.rpc('respond_to_interest', {
+    p_notification_id: notificationId,
+    p_accept: accept,
+  });
+  if (error) throw error;
+}
+
+export async function respondToJoinRequest(notificationId: string, accept: boolean): Promise<void> {
+  const { error } = await supabase.rpc('respond_to_join_request', {
     p_notification_id: notificationId,
     p_accept: accept,
   });

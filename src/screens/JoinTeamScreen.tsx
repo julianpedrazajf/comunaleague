@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import { X, Search } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { getAvailableTeams, getMyTeam, joinTeam } from '../services/teams';
+import { getAvailableTeams, getMyTeam, getPendingJoinRequestTeamIds, requestJoinTeam } from '../services/teams';
 import { RootStackParamList } from '../navigation/types';
 import { Team } from '../types';
 import Monogram from '../components/ui/Monogram';
@@ -30,6 +30,7 @@ export default function JoinTeamScreen({ navigation }: Props) {
 
   const [teams, setTeams] = useState<Team[]>([]);
   const [myTeam, setMyTeam] = useState<Team | null>(null);
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [joiningId, setJoiningId] = useState<string | null>(null);
@@ -45,12 +46,14 @@ export default function JoinTeamScreen({ navigation }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const [available, existing] = await Promise.all([
+      const [available, existing, pending] = await Promise.all([
         getAvailableTeams(session.user.id),
         getMyTeam(session.user.id),
+        getPendingJoinRequestTeamIds(session.user.id),
       ]);
       setTeams(available);
       setMyTeam(existing);
+      setPendingIds(pending);
     } catch (e: any) {
       setError(e?.message ?? t('common.error'));
     } finally {
@@ -65,20 +68,26 @@ export default function JoinTeamScreen({ navigation }: Props) {
       Alert.alert(t('team.alreadyMemberTitle'), t('team.alreadyMemberMessage', { name: myTeam.name }));
       return;
     }
+    if (pendingIds.has(team.id)) {
+      Alert.alert(t('team.alreadyRequestedTitle'), t('team.alreadyRequestedMessage', { name: team.name }));
+      return;
+    }
     Alert.alert(
-      t('team.joinTeam'),
+      t('team.requestConfirmTitle'),
       `${t('team.joinConfirm')} "${team.name}"?`,
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
-          text: t('team.join'),
+          text: t('team.request'),
           onPress: async () => {
             setJoiningId(team.id);
             try {
-              await joinTeam(team.id);
-              navigation.goBack();
+              await requestJoinTeam(team.id);
+              setPendingIds((prev) => new Set(prev).add(team.id));
+              Alert.alert(t('team.joinRequestSentTitle'), t('team.joinRequestSentMessage', { name: team.name }));
             } catch (e: any) {
               Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+            } finally {
               setJoiningId(null);
             }
           },
@@ -149,14 +158,19 @@ export default function JoinTeamScreen({ navigation }: Props) {
                 </View>
               </View>
               <TouchableOpacity
-                style={[styles.joinBtn, joiningId === item.id && styles.joinBtnDisabled]}
+                style={[
+                  styles.joinBtn,
+                  (joiningId === item.id || pendingIds.has(item.id)) && styles.joinBtnDisabled,
+                ]}
                 onPress={() => handleJoin(item)}
-                disabled={joiningId === item.id}
+                disabled={joiningId === item.id || pendingIds.has(item.id)}
               >
                 {joiningId === item.id ? (
                   <ActivityIndicator size="small" color={colors.black} />
                 ) : (
-                  <Text style={styles.joinBtnText}>{t('team.join')}</Text>
+                  <Text style={styles.joinBtnText}>
+                    {pendingIds.has(item.id) ? t('team.pending') : t('team.request')}
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>

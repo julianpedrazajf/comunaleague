@@ -124,7 +124,11 @@ export interface PlayerRequest {
 export type NotificationType =
   | 'player_request_interest'
   | 'player_request_accepted'
-  | 'player_request_rejected';
+  | 'player_request_rejected'
+  | 'join_team_request'
+  | 'join_team_request_info'
+  | 'join_team_accepted'
+  | 'join_team_rejected';
 
 export interface AppNotification {
   id: string;

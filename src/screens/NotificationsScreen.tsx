@@ -16,7 +16,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Check, X } from 'lucide-react-native';
 import { RootStackParamList } from '../navigation/types';
-import { getNotifications, markAllRead, respondToInterest, cleanupPastNotifications } from '../services/notifications';
+import { getNotifications, markAllRead, respondToInterest, respondToJoinRequest, cleanupPastNotifications } from '../services/notifications';
 import { AppNotification } from '../types';
 import Monogram from '../components/ui/Monogram';
 import { colors, font, space, radius } from '../theme/tokens';
@@ -54,13 +54,16 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
     await AsyncStorage.setItem(NOTIF_KEY, value.toString());
   };
 
-  const handleRespond = (notif: AppNotification, accept: boolean) => {
+  const handleRespond = (
+    notif: AppNotification,
+    accept: boolean,
+    responder: (notificationId: string, accept: boolean) => Promise<void>,
+    confirmMessageKey: string,
+  ) => {
     const label = accept ? t('notifications.accept') : t('notifications.reject');
     Alert.alert(
       label,
-      accept
-        ? t('notifications.playerInterest', { name: notif.fromName ?? '' })
-        : undefined,
+      accept ? t(confirmMessageKey, { name: notif.fromName ?? '' }) : undefined,
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -68,7 +71,7 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
           style: accept ? 'default' : 'destructive',
           onPress: async () => {
             try {
-              await respondToInterest(notif.id, accept);
+              await responder(notif.id, accept);
               setNotifications((prev) =>
                 prev.map((n) =>
                   n.id === notif.id
@@ -87,12 +90,16 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
 
   const renderItem = ({ item }: { item: AppNotification }) => {
     const isInterest = item.type === 'player_request_interest';
-    const isAccepted = item.type === 'player_request_accepted';
+    const isJoinRequest = item.type === 'join_team_request';
+    const isJoinInfo = item.type === 'join_team_request_info';
+    const isAccepted = item.type === 'player_request_accepted' || item.type === 'join_team_accepted';
+    const showAvatar = isInterest || isJoinRequest || isJoinInfo;
+    const showResolution = isInterest || isJoinRequest || isJoinInfo;
     const resolution = item.response;
 
     return (
       <View style={[styles.card, !item.read && !resolution && styles.cardUnread]}>
-        {isInterest ? (
+        {showAvatar ? (
           <Monogram name={item.fromName ?? '?'} size={40} />
         ) : (
           <View style={[styles.iconWrap, isAccepted ? styles.iconAccepted : styles.iconRejected]}>
@@ -109,7 +116,13 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
               ? t('notifications.playerInterest', { name: item.fromName ?? '' })
               : item.type === 'player_request_accepted'
               ? t('notifications.playerAccepted')
-              : t('notifications.playerRejected')
+              : item.type === 'player_request_rejected'
+              ? t('notifications.playerRejected')
+              : isJoinRequest || isJoinInfo
+              ? t('notifications.joinRequest', { name: item.fromName ?? '' })
+              : item.type === 'join_team_accepted'
+              ? t('notifications.joinAccepted')
+              : t('notifications.joinRejected')
             }
           </Text>
 
@@ -117,14 +130,14 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
             <View style={styles.actionRow}>
               <TouchableOpacity
                 style={styles.acceptBtn}
-                onPress={() => handleRespond(item, true)}
+                onPress={() => handleRespond(item, true, respondToInterest, 'notifications.playerInterest')}
                 activeOpacity={0.8}
               >
                 <Text style={styles.acceptBtnText}>{t('notifications.accept')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.rejectBtn}
-                onPress={() => handleRespond(item, false)}
+                onPress={() => handleRespond(item, false, respondToInterest, 'notifications.playerInterest')}
                 activeOpacity={0.8}
               >
                 <Text style={styles.rejectBtnText}>{t('notifications.reject')}</Text>
@@ -132,7 +145,26 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
             </View>
           )}
 
-          {isInterest && resolution && (
+          {isJoinRequest && !resolution && (
+            <View style={styles.actionRow}>
+              <TouchableOpacity
+                style={styles.acceptBtn}
+                onPress={() => handleRespond(item, true, respondToJoinRequest, 'notifications.joinRequest')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.acceptBtnText}>{t('notifications.accept')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.rejectBtn}
+                onPress={() => handleRespond(item, false, respondToJoinRequest, 'notifications.joinRequest')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.rejectBtnText}>{t('notifications.reject')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {showResolution && resolution && (
             <Text style={[styles.resolvedLabel, resolution === 'accepted' ? styles.resolvedAccepted : styles.resolvedRejected]}>
               {resolution === 'accepted' ? t('notifications.accepted') : t('notifications.rejected')}
             </Text>

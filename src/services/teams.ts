@@ -64,9 +64,19 @@ export async function getAvailableTeams(userId: string): Promise<Team[]> {
   );
 }
 
-export async function joinTeam(teamId: string): Promise<void> {
-  const { error } = await supabase.rpc('join_team', { team_id: teamId });
+export async function requestJoinTeam(teamId: string): Promise<void> {
+  const { error } = await supabase.rpc('request_join_team', { team_id: teamId });
   if (error) throw error;
+}
+
+export async function getPendingJoinRequestTeamIds(userId: string): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from('team_join_requests')
+    .select('teamId')
+    .eq('userId', userId)
+    .eq('status', 'pending');
+  if (error) throw error;
+  return new Set((data ?? []).map((r) => r.teamId as string));
 }
 
 export async function leaveTeam(teamId: string): Promise<void> {
