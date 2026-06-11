@@ -130,7 +130,7 @@
     "teamName": "Nombre del equipo",
     "badge": "Escudo del equipo",
     "format": "Formato de juego",
-    "format5": "Fútbol 5",
+    "format5": "Futsal (5-7 jugadores)",
     "format11": "Fútbol 11",
     "invitePlayers": "Invitar jugadores",
     "captain": "Capitán",
@@ -189,6 +189,7 @@
   },
   "match": {
     "title": "Partidos",
+    "soloMatches": "Mis Partidos Individuales",
     "schedule": "Calendario de partidos",
     "upcoming": "Próximos partidos",
     "location": "Lugar",
@@ -245,7 +246,11 @@
     "statusRejected": "Tu solicitud fue negada",
     "alreadyMember": "Ya eres parte de este encuentro",
     "alreadyInMatch": "Ya juegas en este encuentro",
-    "allDates": "Todos"
+    "allDates": "Todos",
+    "dailyMatchHeader": "Partido diario creado por Comuna League",
+    "noRequests": "No hay equipos buscando jugador",
+    "legendDaily": "Partido diario",
+    "legendRequest": "Equipo busca jugador"
   },
   "nav": {
     "home": "Inicio",

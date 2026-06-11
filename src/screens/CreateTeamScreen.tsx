@@ -24,10 +24,10 @@ import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateTeam'>;
 
-const FORMATS: TeamFormat[] = [5, 11];
+const FORMATS: TeamFormat[] = [5];
 
 type FormValues = { name: string; format: TeamFormat | null };
-const initialValues: FormValues = { name: '', format: null };
+const initialValues: FormValues = { name: '', format: 5 };
 
 export default function CreateTeamScreen({ navigation }: Props) {
   const { t } = useTranslation();

@@ -13,16 +13,20 @@ import { useTranslation } from 'react-i18next';
 import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Calendar, MapPin, Check } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getMyTeam } from '../services/teams';
 import { getTeamMatches, MatchWithTeams } from '../services/matches';
 import { createPlayerRequest, cancelPlayerRequest, getTeamOpenRequests } from '../services/playerRequests';
 import { hasPendingApplicants, getUpcomingAcceptedMatches } from '../services/notifications';
-import { Team, PlayerRequest } from '../types';
+import { getUserTournamentRegistrations } from '../services/tournaments';
+import { Team, PlayerRequest, Tournament } from '../types';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import MatchRow from '../components/ui/MatchRow';
 import CreamButton from '../components/ui/CreamButton';
+import MonthCalendar from '../components/ui/MonthCalendar';
+import Chip from '../components/ui/Chip';
+import SectionHeader from '../components/ui/SectionHeader';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type NavProp = CompositeNavigationProp<
@@ -42,22 +46,6 @@ function formatTime(timeStr: string): string {
   return `${h % 12 || 12}:${minutes} ${ampm}`;
 }
 
-function buildCalendarDays(year: number, month: number): (number | null)[] {
-  const firstWeekDay = (new Date(year, month, 1).getDay() + 6) % 7; // Mon=0
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells: (number | null)[] = Array(firstWeekDay).fill(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-  while (cells.length % 7 !== 0) cells.push(null);
-  return cells;
-}
-
-function toDateStr(year: number, month: number, day: number): string {
-  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
-const _today = new Date();
-const todayStr = toDateStr(_today.getFullYear(), _today.getMonth(), _today.getDate());
-
 export default function MatchScheduleScreen() {
   const { t, i18n } = useTranslation();
   const { session } = useAuth();
@@ -65,13 +53,13 @@ export default function MatchScheduleScreen() {
 
   const [team, setTeam] = useState<Team | null>(null);
   const [matches, setMatches] = useState<MatchWithTeams[]>([]);
+  const [soloMatches, setSoloMatches] = useState<Tournament[]>([]);
   const [requestMap, setRequestMap] = useState<Map<string, PlayerRequest>>(new Map());
   const [guestMatchIds, setGuestMatchIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [calMonth, setCalMonth] = useState({ year: _today.getFullYear(), month: _today.getMonth() });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -80,10 +68,11 @@ export default function MatchScheduleScreen() {
       if (session) {
         const found = await getMyTeam(session.user.id);
         setTeam(found);
-        const [teamMatches, guestMatches, openReqs] = await Promise.all([
+        const [teamMatches, guestMatches, openReqs, registeredTournaments] = await Promise.all([
           found ? getTeamMatches(found.id) : Promise.resolve([]),
           getUpcomingAcceptedMatches().catch(() => []),
           found ? getTeamOpenRequests(found.id) : Promise.resolve([]),
+          getUserTournamentRegistrations(session.user.id).catch(() => []),
         ]);
 
         // Combine team + guest matches, deduplicate, sort by date+time
@@ -97,6 +86,7 @@ export default function MatchScheduleScreen() {
           new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime(),
         );
         setMatches(combined);
+        setSoloMatches(registeredTournaments);
         setGuestMatchIds(new Set(guestMatches.map((m) => m.id)));
         setRequestMap(new Map(openReqs.map((r) => [r.matchId, r])));
       }
@@ -109,40 +99,20 @@ export default function MatchScheduleScreen() {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const matchDateSet = useMemo(() => new Set(matches.map(m => m.date)), [matches]);
+  const matchDateSet = useMemo(
+    () => new Set([...matches.map(m => m.date), ...soloMatches.map(m => m.startDate)]),
+    [matches, soloMatches],
+  );
 
   const filteredMatches = useMemo(() =>
     selectedDate ? matches.filter(m => m.date === selectedDate) : matches,
     [matches, selectedDate]
   );
 
-  const calDays = useMemo(() => buildCalendarDays(calMonth.year, calMonth.month), [calMonth]);
-
-  const monthLabel = useMemo(() =>
-    new Date(calMonth.year, calMonth.month, 1)
-      .toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' }),
-    [calMonth, i18n.language]
+  const filteredSoloMatches = useMemo(() =>
+    selectedDate ? soloMatches.filter(m => m.startDate === selectedDate) : soloMatches,
+    [soloMatches, selectedDate]
   );
-
-  const weekDayLabels = useMemo(() =>
-    Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(2025, 0, 6 + i); // Jan 6 2025 = Monday
-      return d.toLocaleDateString(i18n.language, { weekday: 'narrow' });
-    }),
-    [i18n.language]
-  );
-
-  const prevMonth = useCallback(() =>
-    setCalMonth(m => {
-      const d = new Date(m.year, m.month - 1, 1);
-      return { year: d.getFullYear(), month: d.getMonth() };
-    }), []);
-
-  const nextMonth = useCallback(() =>
-    setCalMonth(m => {
-      const d = new Date(m.year, m.month + 1, 1);
-      return { year: d.getFullYear(), month: d.getMonth() };
-    }), []);
 
   const handleTogglePlayerRequest = async (match: MatchWithTeams) => {
     if (!team || !session) return;
@@ -205,6 +175,31 @@ export default function MatchScheduleScreen() {
 
   const isCaptain = !!team && !!session && session.user.id === team.ownerId;
 
+  const renderSoloMatch = (item: Tournament) => (
+    <View key={item.id} style={styles.soloCard}>
+      <View style={styles.soloCardTop}>
+        <Text style={styles.soloCardName} numberOfLines={2}>{item.name}</Text>
+        <Chip label={item.format === 5 ? t('team.format5') : t('team.format11')} />
+      </View>
+      <View style={styles.soloCardMeta}>
+        <View style={styles.metaRow}>
+          <Calendar size={11} color={colors.gray500} strokeWidth={2} />
+          <Text style={styles.metaText}>{formatDate(item.startDate, i18n.language)}</Text>
+        </View>
+        {item.location ? (
+          <View style={styles.metaRow}>
+            <MapPin size={11} color={colors.gray500} strokeWidth={2} />
+            <Text style={styles.metaText} numberOfLines={1}>{item.location}</Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.registeredBadge}>
+        <Check size={12} color={colors.green} strokeWidth={2.5} />
+        <Text style={styles.registeredText}>{t('onegame.registered')}</Text>
+      </View>
+    </View>
+  );
+
   const renderMatch = ({ item }: { item: MatchWithTeams }) => {
     const hasRequest = requestMap.has(item.id);
     const isUpcoming = !item.result;
@@ -238,54 +233,12 @@ export default function MatchScheduleScreen() {
       </View>
 
       {/* Calendar — always visible */}
-      <View style={styles.calendar}>
-        <View style={styles.calHeader}>
-          <TouchableOpacity hitSlop={12} onPress={prevMonth}>
-            <ChevronLeft size={18} color={colors.cream45} strokeWidth={2} />
-          </TouchableOpacity>
-          <Text style={styles.calMonthLabel}>{monthLabel}</Text>
-          <TouchableOpacity hitSlop={12} onPress={nextMonth}>
-            <ChevronRight size={18} color={colors.cream45} strokeWidth={2} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.calWeekRow}>
-          {weekDayLabels.map((d, i) => (
-            <Text key={i} style={styles.calWeekDay}>{d}</Text>
-          ))}
-        </View>
-
-        <View style={styles.calGrid}>
-          {calDays.map((day, idx) => {
-            if (!day) return <View key={`e-${idx}`} style={styles.calCell} />;
-            const dateStr = toDateStr(calMonth.year, calMonth.month, day);
-            const isSelected = selectedDate === dateStr;
-            const isToday = dateStr === todayStr;
-            const hasMatch = matchDateSet.has(dateStr);
-            return (
-              <TouchableOpacity
-                key={dateStr}
-                style={styles.calCell}
-                onPress={() => setSelectedDate(isSelected ? null : dateStr)}
-                activeOpacity={0.7}
-              >
-                <View style={[
-                  styles.calCellCircle,
-                  isSelected && styles.calCellCircleActive,
-                  isToday && !isSelected && styles.calCellCircleToday,
-                ]}>
-                  <Text style={[styles.calDayText, isSelected && styles.calDayTextActive]}>
-                    {day}
-                  </Text>
-                </View>
-                {hasMatch
-                  ? <View style={[styles.calDot, isSelected && styles.calDotActive]} />
-                  : <View style={styles.calDotEmpty} />
-                }
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+      <View style={styles.calendarWrap}>
+        <MonthCalendar
+          markedDates={matchDateSet}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
       </View>
 
       {/* Content below calendar */}
@@ -300,7 +253,7 @@ export default function MatchScheduleScreen() {
             <Text style={styles.retryText}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
-      ) : !team && matches.length === 0 ? (
+      ) : !team && matches.length === 0 && soloMatches.length === 0 ? (
         <View style={styles.centered}>
           <Text style={styles.emptyTitle}>{t('match.noTeamForSchedule')}</Text>
           <View style={{ marginTop: space.lg }}>
@@ -315,12 +268,26 @@ export default function MatchScheduleScreen() {
           data={filteredMatches}
           keyExtractor={(item) => item.id}
           contentContainerStyle={
-            filteredMatches.length === 0 ? styles.emptyContainer : styles.listContent
+            filteredMatches.length === 0 && filteredSoloMatches.length === 0
+              ? styles.emptyContainer
+              : styles.listContent
+          }
+          ListHeaderComponent={
+            filteredSoloMatches.length > 0 ? (
+              <View style={styles.soloSection}>
+                <SectionHeader label={t('match.soloMatches')} />
+                <View style={styles.soloList}>
+                  {filteredSoloMatches.map(renderSoloMatch)}
+                </View>
+              </View>
+            ) : null
           }
           ListEmptyComponent={
-            <View style={styles.centered}>
-              <Text style={styles.emptyTitle}>{t('match.noMatches')}</Text>
-            </View>
+            filteredSoloMatches.length === 0 ? (
+              <View style={styles.centered}>
+                <Text style={styles.emptyTitle}>{t('match.noMatches')}</Text>
+              </View>
+            ) : null
           }
           renderItem={renderMatch}
         />
@@ -344,82 +311,33 @@ const styles = StyleSheet.create({
 
   listContent: { padding: 18, gap: space.md, paddingBottom: 120 },
 
-  calendar: {
-    backgroundColor: colors.surface1,
-    borderRadius: radius.card,
+  calendarWrap: {
     marginHorizontal: 18,
     marginBottom: space.md,
-    padding: 16,
   },
-  calHeader: {
+
+  soloSection: { marginBottom: space.xl },
+  soloList: { gap: space.md },
+  soloCard: {
+    backgroundColor: colors.surface1,
+    borderRadius: radius.card,
+    padding: space.lg,
+    gap: space.md,
+  },
+  soloCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space.sm },
+  soloCardName: { fontFamily: font.sansBold, fontSize: 16, color: colors.cream, flex: 1, lineHeight: 22 },
+  soloCardMeta: { gap: 6 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  metaText: { fontFamily: font.sans, fontSize: 12, color: colors.gray500 },
+  registeredBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
+    alignSelf: 'flex-start',
+    gap: 5,
+    backgroundColor: 'rgba(34,197,94,0.12)',
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: space.md,
   },
-  calMonthLabel: {
-    fontFamily: font.sansBold,
-    fontSize: 14,
-    color: colors.cream,
-    textTransform: 'capitalize',
-  },
-  calWeekRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  calWeekDay: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: font.sansBold,
-    fontSize: 10,
-    color: colors.cream45,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  calGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  calCell: {
-    width: '14.2857%',
-    alignItems: 'center',
-    paddingVertical: 3,
-    gap: 2,
-  },
-  calCellCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  calCellCircleActive: {
-    backgroundColor: colors.cream,
-  },
-  calCellCircleToday: {
-    borderWidth: 1,
-    borderColor: 'rgba(222,219,200,0.35)',
-  },
-  calDayText: {
-    fontFamily: font.sans,
-    fontSize: 13,
-    color: colors.cream70,
-  },
-  calDayTextActive: {
-    fontFamily: font.sansBold,
-    color: colors.black,
-  },
-  calDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.green,
-  },
-  calDotActive: {
-    backgroundColor: colors.black,
-  },
-  calDotEmpty: {
-    width: 4,
-    height: 4,
-  },
+  registeredText: { fontFamily: font.sansBold, fontSize: 12, color: colors.green },
 });

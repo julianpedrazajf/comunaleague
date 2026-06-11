@@ -18,15 +18,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Bell, Zap, Users, Plus, Check } from 'lucide-react-native';
 import SoccerBallIcon from '../components/ui/SoccerBallIcon';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
-import { getDailyTournaments } from '../services/tournaments';
 import { getMyTeam } from '../services/teams';
 import { getTeamMatches, confirmAttendance, MatchWithTeams } from '../services/matches';
 import { getUnreadCount, getUpcomingAcceptedMatches } from '../services/notifications';
-import { Tournament, Team } from '../types';
+import { Team } from '../types';
 import { useAuth } from '../context/AuthContext';
-import SectionHeader from '../components/ui/SectionHeader';
 import Monogram from '../components/ui/Monogram';
-import TournamentCard from '../components/ui/TournamentCard';
 import CreamButton from '../components/ui/CreamButton';
 import { colors, font, space, radius } from '../theme/tokens';
 
@@ -54,7 +51,6 @@ export default function HomeScreen() {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<NavProp>();
   const { session } = useAuth();
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [myTeam, setMyTeam] = useState<Team | null>(null);
   const [nextMatch, setNextMatch] = useState<MatchWithTeams | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -62,7 +58,6 @@ export default function HomeScreen() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const load = useCallback(async () => {
-    getDailyTournaments().then(setTournaments).catch(() => {});
     getUnreadCount().then(setUnreadCount).catch(() => {});
     if (!session) return;
     try {
@@ -252,29 +247,6 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* Torneos abiertos */}
-        {tournaments.length > 0 && (
-          <View style={styles.section}>
-            <SectionHeader label={t('home.openTournaments')} />
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.hList}
-            >
-              {tournaments.map((tournament) => (
-                <TournamentCard
-                  key={tournament.id}
-                  name={tournament.name}
-                  format={tournament.format === 5 ? 'Fútbol 5' : 'Fútbol 11'}
-                  location={tournament.location}
-                  price={tournament.price}
-                  onRegister={() => navigation.navigate('OneGame')}
-                />
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
         {/* Spacer for floating tab bar */}
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -375,9 +347,6 @@ const styles = StyleSheet.create({
     gap: space.sm,
   },
   confirmedText: { fontFamily: font.sansBold, fontSize: 15, color: colors.black },
-
-  section: { marginBottom: space.xl },
-  hList: { gap: space.md, paddingRight: 18 },
 
   quickActions: {
     flexDirection: 'row',

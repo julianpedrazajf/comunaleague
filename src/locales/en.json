@@ -130,7 +130,7 @@
     "teamName": "Team Name",
     "badge": "Team Badge",
     "format": "Match Format",
-    "format5": "Fútbol 5",
+    "format5": "Futsal (5-7 players)",
     "format11": "Fútbol 11",
     "invitePlayers": "Invite Players",
     "captain": "Captain",
@@ -189,6 +189,7 @@
   },
   "match": {
     "title": "Matches",
+    "soloMatches": "My Solo Matches",
     "schedule": "Match Schedule",
     "upcoming": "Upcoming Matches",
     "location": "Location",
@@ -245,7 +246,11 @@
     "statusRejected": "Your request was not accepted",
     "alreadyMember": "You're already in this match",
     "alreadyInMatch": "You're already playing in this match",
-    "allDates": "All"
+    "allDates": "All",
+    "dailyMatchHeader": "Daily match created by Comuna League",
+    "noRequests": "No teams looking for a player",
+    "legendDaily": "Daily match",
+    "legendRequest": "Team looking for a player"
   },
   "nav": {
     "home": "Home",

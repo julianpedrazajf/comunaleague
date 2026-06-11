@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
-  ScrollView,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -25,6 +24,7 @@ import { RootStackParamList } from '../navigation/types';
 import Chip from '../components/ui/Chip';
 import Monogram from '../components/ui/Monogram';
 import SectionHeader from '../components/ui/SectionHeader';
+import MonthCalendar from '../components/ui/MonthCalendar';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OneGame'>;
@@ -73,11 +73,32 @@ export default function OneGameScreen({ navigation }: Props) {
     [playerRequests, selectedDate],
   );
 
+  const tournamentDates = useMemo(() => {
+    const seen = new Set<string>();
+    const dates: string[] = [];
+    for (const tournament of tournaments) {
+      if (tournament.startDate && !seen.has(tournament.startDate)) {
+        seen.add(tournament.startDate);
+        dates.push(tournament.startDate);
+      }
+    }
+    return dates.sort();
+  }, [tournaments]);
+
+  const filteredTournaments = useMemo(
+    () => selectedDate ? tournaments.filter((t) => t.startDate === selectedDate) : tournaments,
+    [tournaments, selectedDate],
+  );
+
   useEffect(() => {
-    if (selectedDate && !playerRequests.some((r) => r.match?.date === selectedDate)) {
+    if (
+      selectedDate &&
+      !tournaments.some((t) => t.startDate === selectedDate) &&
+      !playerRequests.some((r) => r.match?.date === selectedDate)
+    ) {
       setSelectedDate(null);
     }
-  }, [playerRequests]);
+  }, [tournaments, playerRequests]);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -168,26 +189,6 @@ export default function OneGameScreen({ navigation }: Props) {
     );
   }
 
-  function renderDateCell(dateStr: string) {
-    const date = new Date(dateStr + 'T00:00:00');
-    const isSelected = selectedDate === dateStr;
-    const dayName = date.toLocaleDateString(i18n.language, { weekday: 'short' });
-    const dayNum = date.getDate();
-    const month = date.toLocaleDateString(i18n.language, { month: 'short' });
-    return (
-      <TouchableOpacity
-        key={dateStr}
-        style={[styles.dateCell, isSelected && styles.dateCellSelected]}
-        onPress={() => setSelectedDate(isSelected ? null : dateStr)}
-        activeOpacity={0.7}
-      >
-        <Text style={[styles.dateDayName, isSelected && styles.dateDayNameSelected]}>{dayName}</Text>
-        <Text style={[styles.dateDayNum, isSelected && styles.dateDayNumSelected]}>{dayNum}</Text>
-        <Text style={[styles.dateMonth, isSelected && styles.dateMonthSelected]}>{month}</Text>
-      </TouchableOpacity>
-    );
-  }
-
   function renderRequestCard(req: PlayerRequest) {
     const isInterested = interestedIds.has(req.id);
     const appStatus = req.matchId ? applicationStatuses.get(req.matchId) : undefined;
@@ -198,6 +199,7 @@ export default function OneGameScreen({ navigation }: Props) {
 
     return (
       <View key={req.id} style={styles.card}>
+        <View style={styles.cardDotRed} />
         <View style={styles.reqCardTop}>
           <Monogram name={req.team?.name ?? ''} size={44} shape="square" imageUri={req.team?.badgeUrl} />
           <Text style={[styles.cardName, { flex: 1 }]} numberOfLines={1}>{req.team?.name ?? ''}</Text>
@@ -271,6 +273,7 @@ export default function OneGameScreen({ navigation }: Props) {
 
     return (
       <View style={styles.card}>
+        <View style={styles.cardDotGreen} />
         <View style={styles.cardTop}>
           <Text style={styles.cardName} numberOfLines={2}>{item.name}</Text>
           <Chip label={item.format === 5 ? t('team.format5') : t('team.format11')} />
@@ -280,10 +283,6 @@ export default function OneGameScreen({ navigation }: Props) {
           <View style={styles.metaRow}>
             <Calendar size={11} color={colors.gray500} strokeWidth={2} />
             <Text style={styles.metaText}>{t('onegame.starts')}: {formatDate(item.startDate, i18n.language)}</Text>
-          </View>
-          <View style={styles.metaRow}>
-            <Clock size={11} color={colors.gray500} strokeWidth={2} />
-            <Text style={styles.metaText}>{t('onegame.deadline')}: {formatDate(item.registrationDeadline, i18n.language)}</Text>
           </View>
           {item.location ? (
             <View style={styles.metaRow}>
@@ -332,42 +331,48 @@ export default function OneGameScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.calendarWrap}>
+        <MonthCalendar
+          markedDates={new Set(tournamentDates)}
+          secondaryMarkedDates={new Set(requestDates)}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
+        <View style={styles.legendRow}>
+          <View style={styles.legendItem}>
+            <View style={styles.legendDotGreen} />
+            <Text style={styles.legendText}>{t('onegame.legendDaily')}</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={styles.legendDotRed} />
+            <Text style={styles.legendText}>{t('onegame.legendRequest')}</Text>
+          </View>
+        </View>
+      </View>
+
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.cream45} />
         </View>
       ) : (
         <FlatList
-          data={tournaments}
+          data={filteredTournaments}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
-            playerRequests.length > 0 ? (
+            <>
               <View style={styles.requestsSection}>
                 <SectionHeader label={t('onegame.teamsLooking')} />
-                {requestDates.length > 1 && (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.dateStrip}
-                  >
-                    <TouchableOpacity
-                      style={[styles.allDatesBtn, selectedDate === null && styles.dateCellSelected]}
-                      onPress={() => setSelectedDate(null)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.allDatesText, selectedDate === null && styles.dateDayNameSelected]}>
-                        {t('onegame.allDates')}
-                      </Text>
-                    </TouchableOpacity>
-                    {requestDates.map(renderDateCell)}
-                  </ScrollView>
+                {filteredRequests.length > 0 ? (
+                  <View style={styles.requestsList}>
+                    {filteredRequests.map(renderRequestCard)}
+                  </View>
+                ) : (
+                  <Text style={styles.emptyText}>{t('onegame.noRequests')}</Text>
                 )}
-                <View style={styles.requestsList}>
-                  {filteredRequests.map(renderRequestCard)}
-                </View>
               </View>
-            ) : null
+              <SectionHeader label={t('onegame.dailyMatchHeader')} />
+            </>
           }
           ListEmptyComponent={
             <View style={styles.centered}>
@@ -403,6 +408,12 @@ const styles = StyleSheet.create({
 
   listContent: { padding: 18, gap: space.md, paddingBottom: 40 },
   requestsSection: { marginBottom: space.xl },
+  calendarWrap: { marginHorizontal: 18, marginTop: space.md, marginBottom: space.md },
+  legendRow: { flexDirection: 'row', gap: space.lg, marginTop: space.md, paddingHorizontal: 4 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendDotGreen: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.green },
+  legendDotRed: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444' },
+  legendText: { fontFamily: font.sans, fontSize: 11.5, color: colors.cream45 },
   requestsList: { gap: space.md },
   reqCardTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
 
@@ -411,6 +422,25 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
     padding: space.lg,
     gap: space.md,
+    position: 'relative',
+  },
+  cardDotGreen: {
+    position: 'absolute',
+    top: space.md,
+    left: space.md,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: colors.green,
+  },
+  cardDotRed: {
+    position: 'absolute',
+    top: space.md,
+    left: space.md,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#EF4444',
   },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space.sm },
   cardName: { fontFamily: font.sansBold, fontSize: 16, color: colors.cream, flex: 1, lineHeight: 22 },
@@ -464,67 +494,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
   },
   alreadyInMatchText: { fontFamily: font.sansBold, fontSize: 12, color: '#497373' },
-
-  dateStrip: {
-    flexDirection: 'row',
-    paddingBottom: space.md,
-    gap: 8,
-  },
-  allDatesBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    backgroundColor: colors.surface1,
-    minHeight: 62,
-  },
-  allDatesText: {
-    fontFamily: font.sansBold,
-    fontSize: 12,
-    color: colors.cream45,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  dateCell: {
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    backgroundColor: colors.surface1,
-    minWidth: 52,
-    gap: 2,
-  },
-  dateCellSelected: {
-    backgroundColor: '#F21D2F',
-  },
-  dateDayName: {
-    fontFamily: font.sans,
-    fontSize: 10,
-    color: colors.cream45,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  dateDayNameSelected: {
-    color: colors.cream,
-  },
-  dateDayNum: {
-    fontFamily: font.sansBold,
-    fontSize: 20,
-    color: colors.cream,
-    lineHeight: 24,
-  },
-  dateDayNumSelected: {
-    color: colors.cream,
-  },
-  dateMonth: {
-    fontFamily: font.sans,
-    fontSize: 10,
-    color: colors.cream45,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  dateMonthSelected: {
-    color: colors.cream,
-  },
 });

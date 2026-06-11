@@ -30,3 +30,17 @@ export async function registerForTournament(tournamentId: string, userId: string
   });
   if (error) throw error;
 }
+
+export async function getUserTournamentRegistrations(userId: string): Promise<Tournament[]> {
+  const today = new Date().toISOString().split('T')[0];
+  const { data, error } = await supabase
+    .from('registrations')
+    .select('tournament:tournamentId(*)')
+    .eq('userId', userId);
+  if (error) throw error;
+  const tournaments = (data ?? [])
+    .map((r: any) => r.tournament as Tournament | null)
+    .filter((t): t is Tournament => !!t && t.type === 'daily' && t.startDate >= today);
+  tournaments.sort((a, b) => a.startDate.localeCompare(b.startDate));
+  return tournaments;
+}
