@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Check, X } from 'lucide-react-native';
+import { Check, X, Calendar } from 'lucide-react-native';
 import { RootStackParamList } from '../navigation/types';
 import { getNotifications, markAllRead, respondToInterest, respondToJoinRequest, cleanupPastNotifications } from '../services/notifications';
 import { AppNotification } from '../types';
@@ -25,7 +25,7 @@ const NOTIF_KEY = '@push_notifications';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Notifications'>;
 
-export default function NotificationsScreen({ navigation: _ }: Props) {
+export default function NotificationsScreen({ navigation }: Props) {
   const { t } = useTranslation();
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -96,15 +96,20 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
     const isInterest = item.type === 'player_request_interest';
     const isJoinRequest = item.type === 'join_team_request';
     const isJoinInfo = item.type === 'join_team_request_info';
+    const isNewMatch = item.type === 'new_daily_match';
     const isAccepted = item.type === 'player_request_accepted' || item.type === 'join_team_accepted';
     const showAvatar = isInterest || isJoinRequest || isJoinInfo;
     const showResolution = isInterest || isJoinRequest || isJoinInfo;
     const resolution = item.response;
 
-    return (
+    const content = (
       <View style={[styles.card, !item.read && !resolution && styles.cardUnread]}>
         {showAvatar ? (
           <Monogram name={item.fromName ?? '?'} size={40} />
+        ) : isNewMatch ? (
+          <View style={[styles.iconWrap, styles.iconAccepted]}>
+            <Calendar size={18} color={colors.black} strokeWidth={2.5} />
+          </View>
         ) : (
           <View style={[styles.iconWrap, isAccepted ? styles.iconAccepted : styles.iconRejected]}>
             {isAccepted
@@ -122,6 +127,8 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
               ? t('notifications.playerAccepted')
               : item.type === 'player_request_rejected'
               ? t('notifications.playerRejected')
+              : isNewMatch
+              ? t('notifications.newDailyMatch', { name: item.fromName ?? '' })
               : isJoinRequest || isJoinInfo
               ? t('notifications.joinRequest', { name: item.fromName ?? '' })
               : item.type === 'join_team_accepted'
@@ -187,6 +194,16 @@ export default function NotificationsScreen({ navigation: _ }: Props) {
         </View>
       </View>
     );
+
+    if (isNewMatch) {
+      return (
+        <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('OneGame')}>
+          {content}
+        </TouchableOpacity>
+      );
+    }
+
+    return content;
   };
 
   return (

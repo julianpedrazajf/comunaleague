@@ -128,7 +128,8 @@ export type NotificationType =
   | 'join_team_request'
   | 'join_team_request_info'
   | 'join_team_accepted'
-  | 'join_team_rejected';
+  | 'join_team_rejected'
+  | 'new_daily_match';
 
 export interface AppNotification {
   id: string;

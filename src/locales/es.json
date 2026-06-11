@@ -273,6 +273,7 @@
     "joinRequest": "{{name}} quiere unirse a tu equipo",
     "joinAccepted": "¡Tu solicitud para unirte al equipo fue aceptada!",
     "joinRejected": "Tu solicitud para unirte al equipo no fue aceptada esta vez.",
+    "newDailyMatch": "Nuevo partido diario creado: {{name}}",
     "joinCaptainOnlyTitle": "Solo el capitán",
     "joinCaptainOnlyMessage": "Solo el capitán puede aceptar o rechazar esta solicitud.",
     "accept": "Aceptar",
