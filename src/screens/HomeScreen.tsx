@@ -167,12 +167,12 @@ export default function HomeScreen() {
       {/* Quick actions */}
       <View style={styles.quickActions}>
         <TouchableOpacity
-          style={[styles.quickBtn, styles.quickBtnHighlight, styles.quickBtnFull]}
+          style={[styles.quickBtn, styles.ctaBtn]}
           onPress={() => navigation.navigate('JoinTeam')}
           activeOpacity={0.75}
         >
-          <Users size={18} color={colors.cream} strokeWidth={2} />
-          <Text style={styles.quickBtnLabel}>{t('home.joinTeamCta')}</Text>
+          <Users size={17} color={colors.cream} strokeWidth={2} />
+          <Text style={styles.ctaLabel}>{t('home.joinTeamCta')}</Text>
         </TouchableOpacity>
 
         <View style={styles.quickActionsRow}>
@@ -378,13 +378,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(222,219,200,0.08)',
   },
-  quickBtnHighlight: {
+  ctaBtn: {
+    flex: 0,
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: space.sm,
+    paddingVertical: 14,
     borderWidth: 1.5,
     borderColor: colors.green,
   },
-  quickBtnFull: {
-    flex: 0,
-    alignSelf: 'stretch',
+  ctaLabel: {
+    fontFamily: font.sansBold,
+    fontSize: 12.5,
+    letterSpacing: 0.2,
+    color: colors.cream,
   },
   quickBtnLabel: {
     fontFamily: font.sansBold,

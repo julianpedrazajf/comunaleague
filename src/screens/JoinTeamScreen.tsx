@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 13,
+    paddingVertical: 14,
     fontFamily: font.sans,
     fontSize: 15,
     color: colors.cream,
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   joinBtn: {
     backgroundColor: colors.cream2,
     borderRadius: 999,
-    paddingVertical: 8,
+    paddingVertical: 9,
     paddingHorizontal: space.md,
     minWidth: 68,
     alignItems: 'center',

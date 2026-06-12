@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   iconAccepted: { backgroundColor: colors.green },
   iconRejected: { backgroundColor: '#EF4444' },
 
-  actionRow: { flexDirection: 'row', gap: space.sm, marginTop: 2 },
+  actionRow: { flexDirection: 'row', gap: space.sm, marginTop: space.xs },
   acceptBtn: {
     flex: 1,
     backgroundColor: colors.green,

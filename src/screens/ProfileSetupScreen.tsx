@@ -325,8 +325,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.hairline,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontFamily: font.sans,
     fontSize: 15,
     color: colors.cream,
@@ -335,10 +335,10 @@ const styles = StyleSheet.create({
   fieldError: { fontFamily: font.sans, fontSize: 11.5, color: '#EF4444' },
   apiError: { fontFamily: font.sans, fontSize: 13, color: '#EF4444', textAlign: 'center' },
 
-  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
+  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   chip: {
     paddingHorizontal: space.md,
-    paddingVertical: 7,
+    paddingVertical: 8,
     borderRadius: radius.chip,
     borderWidth: 1,
     borderColor: colors.hairline,
@@ -348,10 +348,10 @@ const styles = StyleSheet.create({
   chipText: { fontFamily: font.sans, fontSize: 12.5, color: colors.cream70 },
   chipTextSelected: { fontFamily: font.sansBold, color: colors.black },
 
-  toggleRow: { flexDirection: 'row', gap: space.sm },
+  toggleRow: { flexDirection: 'row', gap: space.md },
   toggleBtn: {
     flex: 1,
-    paddingVertical: 11,
+    paddingVertical: 13,
     borderRadius: radius.chip,
     borderWidth: 1,
     borderColor: colors.hairline,
