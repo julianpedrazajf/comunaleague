@@ -18,6 +18,21 @@ export type AppTabParamList = {
   Profile: undefined;
 };
 
+export type PaymentKind = 'create_team' | 'join_team' | 'daily_match' | 'one_match';
+
+export type PaymentParams = {
+  kind: PaymentKind;
+  amount: number;
+  title: string;
+  payload: {
+    name?: string;
+    format?: 5 | 11;
+    teamId?: string;
+    tournamentId?: string;
+    requestId?: string;
+  };
+};
+
 // Modal / nested stacks reachable from tabs
 export type RootStackParamList = {
   Auth: undefined;        // unauthenticated branch (AuthStack)
@@ -30,6 +45,13 @@ export type RootStackParamList = {
   Language: undefined;
   Notifications: undefined;
   Preferences: undefined;
+  Payment: PaymentParams;
+  DailyMatchPlayers: {
+    tournamentName: string;
+    tournamentId?: string;  // daily match: list registered players
+    requestId?: string;     // player request: team roster + accepted guests
+    matchId?: string;       // guest match in My Matches: same list via match id
+  };
 };
 
 export type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;

@@ -18,6 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { getAvailableTeams, getMyTeam, getPendingJoinRequestTeamIds, requestJoinTeam } from '../services/teams';
 import { RootStackParamList } from '../navigation/types';
 import { Team } from '../types';
+import { PRICES, TEAM_CAPACITY, formatCOP } from '../utils/prices';
 import Monogram from '../components/ui/Monogram';
 import Chip from '../components/ui/Chip';
 import { colors, font, space, radius } from '../theme/tokens';
@@ -72,9 +73,13 @@ export default function JoinTeamScreen({ navigation }: Props) {
       Alert.alert(t('team.alreadyRequestedTitle'), t('team.alreadyRequestedMessage', { name: team.name }));
       return;
     }
+    if (team.playerIds.length >= TEAM_CAPACITY) {
+      Alert.alert(t('team.fullTitle'), t('team.fullMessage', { name: team.name }));
+      return;
+    }
     Alert.alert(
       t('team.requestConfirmTitle'),
-      `${t('team.joinConfirm')} "${team.name}"?`,
+      t('team.joinFlowNotice', { name: team.name, price: formatCOP(PRICES.joinTeam) }),
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -145,36 +150,42 @@ export default function JoinTeamScreen({ navigation }: Props) {
               <Text style={styles.emptyText}>{t('team.noTeamsAvailable')}</Text>
             </View>
           }
-          renderItem={({ item }) => (
-            <View style={styles.teamCard}>
-              <Monogram name={item.name} size={46} shape="square" />
-              <View style={styles.teamInfo}>
-                <Text style={styles.teamName} numberOfLines={1}>{item.name}</Text>
-                <View style={styles.metaRow}>
-                  <Chip label={item.format === 5 ? t('team.format5') : t('team.format11')} />
-                  <Text style={styles.playerCount}>
-                    {item.playerIds.length} {t('team.players')}
-                  </Text>
+          renderItem={({ item }) => {
+            const spotsLeft = Math.max(TEAM_CAPACITY - item.playerIds.length, 0);
+            const isFull = spotsLeft === 0;
+            return (
+              <View style={styles.teamCard}>
+                <Monogram name={item.name} size={46} shape="square" />
+                <View style={styles.teamInfo}>
+                  <Text style={styles.teamName} numberOfLines={1}>{item.name}</Text>
+                  <View style={styles.metaRow}>
+                    <Chip label={item.format === 5 ? t('team.format5') : t('team.format11')} />
+                    <Text style={[styles.playerCount, isFull && styles.playerCountFull]}>
+                      {isFull
+                        ? t('team.fullLabel')
+                        : t('team.spotsLeft', { count: spotsLeft })}
+                    </Text>
+                  </View>
                 </View>
+                <TouchableOpacity
+                  style={[
+                    styles.joinBtn,
+                    (joiningId === item.id || pendingIds.has(item.id) || isFull) && styles.joinBtnDisabled,
+                  ]}
+                  onPress={() => handleJoin(item)}
+                  disabled={joiningId === item.id || pendingIds.has(item.id) || isFull}
+                >
+                  {joiningId === item.id ? (
+                    <ActivityIndicator size="small" color={colors.black} />
+                  ) : (
+                    <Text style={styles.joinBtnText}>
+                      {pendingIds.has(item.id) ? t('team.pending') : t('team.request')}
+                    </Text>
+                  )}
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={[
-                  styles.joinBtn,
-                  (joiningId === item.id || pendingIds.has(item.id)) && styles.joinBtnDisabled,
-                ]}
-                onPress={() => handleJoin(item)}
-                disabled={joiningId === item.id || pendingIds.has(item.id)}
-              >
-                {joiningId === item.id ? (
-                  <ActivityIndicator size="small" color={colors.black} />
-                ) : (
-                  <Text style={styles.joinBtnText}>
-                    {pendingIds.has(item.id) ? t('team.pending') : t('team.request')}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
+            );
+          }}
         />
       )}
     </SafeAreaView>
@@ -239,6 +250,7 @@ const styles = StyleSheet.create({
   teamName: { fontFamily: font.sansBold, fontSize: 15, color: colors.cream },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   playerCount: { fontFamily: font.sans, fontSize: 11.5, color: colors.gray500 },
+  playerCountFull: { fontFamily: font.sansBold, color: '#EF4444' },
 
   joinBtn: {
     backgroundColor: colors.cream2,

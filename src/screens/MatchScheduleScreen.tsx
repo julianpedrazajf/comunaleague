@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Calendar, Clock, MapPin, Check } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, Check, Users, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getMyTeam } from '../services/teams';
 import { getTeamMatches, MatchWithTeams } from '../services/matches';
@@ -180,7 +180,15 @@ export default function MatchScheduleScreen() {
   const isCaptain = !!team && !!session && session.user.id === team.ownerId;
 
   const renderSoloMatch = (item: Tournament) => (
-    <View key={item.id} style={styles.soloCard}>
+    <TouchableOpacity
+      key={item.id}
+      style={styles.soloCard}
+      activeOpacity={0.8}
+      onPress={() => navigation.navigate('DailyMatchPlayers', {
+        tournamentId: item.id,
+        tournamentName: item.name,
+      })}
+    >
       <View style={styles.soloCardTop}>
         <Text style={styles.soloCardName} numberOfLines={2}>{item.name}</Text>
         <Chip label={item.format === 5 ? t('team.format5') : t('team.format11')} />
@@ -203,11 +211,18 @@ export default function MatchScheduleScreen() {
           </View>
         ) : null}
       </View>
-      <View style={styles.registeredBadge}>
-        <Check size={12} color={colors.green} strokeWidth={2.5} />
-        <Text style={styles.registeredText}>{t('onegame.registered')}</Text>
+      <View style={styles.soloCardFooter}>
+        <View style={styles.registeredBadge}>
+          <Check size={12} color={colors.green} strokeWidth={2.5} />
+          <Text style={styles.registeredText}>{t('onegame.registered')}</Text>
+        </View>
+        <View style={styles.viewPlayersRow}>
+          <Users size={12} color={colors.cream45} strokeWidth={2} />
+          <Text style={styles.viewPlayersText}>{t('dailyplayers.viewPlayers')}</Text>
+          <ChevronRight size={13} color={colors.cream45} strokeWidth={2} />
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderMatch = ({ item }: { item: MatchWithTeams }) => {
@@ -230,6 +245,10 @@ export default function MatchScheduleScreen() {
           active: hasRequest,
           onPress: () => handleTogglePlayerRequest(item),
         } : undefined}
+        onViewPlayers={guestMatchIds.has(item.id) ? () => navigation.navigate('DailyMatchPlayers', {
+          matchId: item.id,
+          tournamentName: `${item.homeTeam.name} vs ${item.awayTeam.name}`,
+        }) : undefined}
       />
     );
   };
@@ -353,4 +372,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
   },
   registeredText: { fontFamily: font.sansBold, fontSize: 12, color: colors.green },
+  soloCardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  viewPlayersRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  viewPlayersText: { fontFamily: font.sansBold, fontSize: 12, color: colors.cream45 },
 });

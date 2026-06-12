@@ -12,15 +12,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
-import { X, MapPin, Calendar, Clock, Check } from 'lucide-react-native';
+import { X, MapPin, Calendar, Clock, Check, Users, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { getDailyTournaments, getUserRegistrations, registerForTournament } from '../services/tournaments';
-import { getOpenPlayerRequests, expressInterest, getMyInterests } from '../services/playerRequests';
+import { getDailyTournaments, getUserRegistrations, registerForDaily, getRegistrationCounts } from '../services/tournaments';
+import { getOpenPlayerRequests, getMyInterests } from '../services/playerRequests';
 import { getMyTeam } from '../services/teams';
 import { getTeamMatches } from '../services/matches';
 import { getApplicationStatuses } from '../services/notifications';
 import { Tournament, PlayerRequest } from '../types';
 import { RootStackParamList } from '../navigation/types';
+import { PRICES, DAILY_MATCH_CAPACITY, formatCOP } from '../utils/prices';
 import Chip from '../components/ui/Chip';
 import Monogram from '../components/ui/Monogram';
 import SectionHeader from '../components/ui/SectionHeader';
@@ -47,6 +48,7 @@ export default function OneGameScreen({ navigation }: Props) {
 
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [registeredIds, setRegisteredIds] = useState<Set<string>>(new Set());
+  const [registrationCounts, setRegistrationCounts] = useState<Map<string, number>>(new Map());
   const [playerRequests, setPlayerRequests] = useState<PlayerRequest[]>([]);
   const [interestedIds, setInterestedIds] = useState<Set<string>>(new Set());
   const [applicationStatuses, setApplicationStatuses] = useState<Map<string, 'accepted' | 'rejected'>>(new Map());
@@ -111,6 +113,9 @@ export default function OneGameScreen({ navigation }: Props) {
       ]);
       setTournaments(data);
       setRegisteredIds(new Set(regs.map((r) => r.tournamentId)));
+      getRegistrationCounts(data.map((tournament) => tournament.id))
+        .then(setRegistrationCounts)
+        .catch(() => {});
       const teamId = myTeam?.id ?? null;
       setMyTeamId(teamId);
       if (teamId) {
@@ -143,18 +148,30 @@ export default function OneGameScreen({ navigation }: Props) {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   function handleRegister(tournament: Tournament) {
+    const message = tournament.price > 0
+      ? `${tournament.name}\n${t('onegame.confirmMsg')}\n\n${t('onegame.paymentNote', { price: formatCOP(tournament.price) })}`
+      : `${tournament.name}\n${t('onegame.confirmMsg')}`;
     Alert.alert(
       t('onegame.confirmTitle'),
-      `${tournament.name}\n${t('onegame.confirmMsg')}`,
+      message,
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('onegame.register'),
           onPress: async () => {
             if (!session) return;
+            if (tournament.price > 0) {
+              navigation.navigate('Payment', {
+                kind: 'daily_match',
+                amount: tournament.price,
+                title: tournament.name,
+                payload: { tournamentId: tournament.id },
+              });
+              return;
+            }
             setRegisteringId(tournament.id);
             try {
-              await registerForTournament(tournament.id, session.user.id);
+              await registerForDaily(tournament.id);
               setRegisteredIds((prev) => new Set([...prev, tournament.id]));
             } catch (e: any) {
               Alert.alert(t('common.error'), e?.message ?? t('common.error'));
@@ -170,19 +187,19 @@ export default function OneGameScreen({ navigation }: Props) {
   function handleApply(req: PlayerRequest) {
     Alert.alert(
       t('onegame.applyTitle'),
-      t('onegame.applyMessage'),
+      `${t('onegame.applyMessage')}\n\n${t('onegame.paymentNote', { price: formatCOP(PRICES.oneMatch) })}`,
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('onegame.apply'),
-          onPress: async () => {
+          onPress: () => {
             if (!session) return;
-            try {
-              await expressInterest(req.id);
-              setInterestedIds((prev) => new Set([...prev, req.id]));
-            } catch (e: any) {
-              Alert.alert(t('common.error'), e?.message ?? t('common.error'));
-            }
+            navigation.navigate('Payment', {
+              kind: 'one_match',
+              amount: PRICES.oneMatch,
+              title: req.team?.name ?? t('onegame.oneMatch'),
+              payload: { requestId: req.id },
+            });
           },
         },
       ],
@@ -262,6 +279,21 @@ export default function OneGameScreen({ navigation }: Props) {
             </TouchableOpacity>
           )}
         </View>
+
+        {(isInterested || isOwnTeam) && (
+          <TouchableOpacity
+            style={styles.viewPlayersRow}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('DailyMatchPlayers', {
+              requestId: req.id,
+              tournamentName: req.team?.name ?? '',
+            })}
+          >
+            <Users size={12} color={colors.cream45} strokeWidth={2} />
+            <Text style={styles.viewPlayersText}>{t('dailyplayers.viewPlayers')}</Text>
+            <ChevronRight size={13} color={colors.cream45} strokeWidth={2} />
+          </TouchableOpacity>
+        )}
       </View>
     );
   }
@@ -270,6 +302,9 @@ export default function OneGameScreen({ navigation }: Props) {
     const isRegistered = registeredIds.has(item.id);
     const isRegistering = registeringId === item.id;
     const priceLabel = item.price === 0 ? t('onegame.free') : `$${item.price.toLocaleString('es-CO')}`;
+    const registeredCount = registrationCounts.get(item.id) ?? 0;
+    const spotsLeft = Math.max(DAILY_MATCH_CAPACITY - registeredCount, 0);
+    const isFull = !isRegistered && spotsLeft === 0;
 
     return (
       <View style={styles.card}>
@@ -296,6 +331,14 @@ export default function OneGameScreen({ navigation }: Props) {
               <Text style={styles.metaText} numberOfLines={1}>{item.location}</Text>
             </View>
           ) : null}
+          <View style={styles.metaRow}>
+            <Users size={11} color={isFull ? '#EF4444' : colors.gray500} strokeWidth={2} />
+            <Text style={[styles.metaText, isFull && styles.metaTextFull]}>
+              {isFull
+                ? t('onegame.full')
+                : t('onegame.spotsLeft', { count: spotsLeft, max: DAILY_MATCH_CAPACITY })}
+            </Text>
+          </View>
         </View>
 
         <View style={styles.hairline} />
@@ -306,6 +349,10 @@ export default function OneGameScreen({ navigation }: Props) {
             <View style={styles.registeredBadge}>
               <Check size={12} color={colors.green} strokeWidth={2.5} />
               <Text style={styles.registeredText}>{t('onegame.registered')}</Text>
+            </View>
+          ) : isFull ? (
+            <View style={styles.fullBadge}>
+              <Text style={styles.fullBadgeText}>{t('onegame.full')}</Text>
             </View>
           ) : (
             <TouchableOpacity
@@ -479,6 +526,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
   },
   registeredText: { fontFamily: font.sansBold, fontSize: 12, color: colors.green },
+  metaTextFull: { fontFamily: font.sansBold, color: '#EF4444' },
+  viewPlayersRow: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
+  viewPlayersText: { fontFamily: font.sansBold, fontSize: 12, color: colors.cream45 },
+  fullBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(239,68,68,0.12)',
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: space.md,
+  },
+  fullBadgeText: { fontFamily: font.sansBold, fontSize: 12, color: '#EF4444' },
   acceptedBadge: { backgroundColor: 'rgba(34,197,94,0.12)' },
   rejectedBadge: { backgroundColor: 'rgba(239,68,68,0.12)' },
   rejectedText: { fontFamily: font.sansBold, fontSize: 12, color: '#EF4444' },

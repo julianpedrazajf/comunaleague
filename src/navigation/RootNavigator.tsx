@@ -14,6 +14,8 @@ import ChatScreen from '../screens/ChatScreen';
 import LanguageScreen from '../screens/LanguageScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import PreferencesScreen from '../screens/PreferencesScreen';
+import PaymentScreen from '../screens/PaymentScreen';
+import DailyMatchPlayersScreen from '../screens/DailyMatchPlayersScreen';
 
 const Root = createNativeStackNavigator<RootStackParamList>();
 
@@ -37,6 +39,8 @@ export default function RootNavigator() {
           <Root.Screen name="Language" component={LanguageScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="Notifications" component={NotificationsScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="Preferences" component={PreferencesScreen} options={{ presentation: 'modal' }} />
+          <Root.Screen name="Payment" component={PaymentScreen} options={{ presentation: 'modal', gestureEnabled: false }} />
+          <Root.Screen name="DailyMatchPlayers" component={DailyMatchPlayersScreen} options={{ presentation: 'modal' }} />
         </>
       ) : (
         // Different name ("Auth") so React Navigation doesn't confuse it with the authenticated "AppTabs" screen

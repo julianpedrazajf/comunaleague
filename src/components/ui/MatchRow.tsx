@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { MapPin } from 'lucide-react-native';
+import { MapPin, Users, ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import Chip from './Chip';
 import Monogram from './Monogram';
@@ -30,9 +30,10 @@ interface MatchRowProps {
   status: MatchStatus;
   attendanceConfirmed?: boolean;
   captainAction?: CaptainAction;
+  onViewPlayers?: () => void;
 }
 
-export default function MatchRow({ homeTeam, awayTeam, date, time, location, status, attendanceConfirmed, captainAction }: MatchRowProps) {
+export default function MatchRow({ homeTeam, awayTeam, date, time, location, status, attendanceConfirmed, captainAction, onViewPlayers }: MatchRowProps) {
   const { t } = useTranslation();
   const chipVariant = status === 'live' ? 'live' : status === 'final' ? 'final' : 'default';
   const chipLabel = status === 'live' ? t('match.live') : status === 'final' ? t('match.final') : t('match.upcoming_chip');
@@ -98,6 +99,17 @@ export default function MatchRow({ homeTeam, awayTeam, date, time, location, sta
           </TouchableOpacity>
         </>
       )}
+
+      {onViewPlayers && (
+        <>
+          <View style={styles.hairline} />
+          <TouchableOpacity style={styles.viewPlayersRow} onPress={onViewPlayers} activeOpacity={0.7}>
+            <Users size={12} color={colors.cream45} strokeWidth={2} />
+            <Text style={styles.viewPlayersText}>{t('dailyplayers.viewPlayers')}</Text>
+            <ChevronRight size={13} color={colors.cream45} strokeWidth={2} />
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
@@ -146,4 +158,6 @@ const styles = StyleSheet.create({
   captainBtnTextActive: {
     color: '#F2B366',
   },
+  viewPlayersRow: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
+  viewPlayersText: { fontFamily: font.sansBold, fontSize: 12, color: colors.cream45 },
 });

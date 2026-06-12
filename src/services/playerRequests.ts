@@ -1,5 +1,27 @@
 import { supabase } from './supabase';
 import { PlayerRequest } from '../types';
+import { DailyMatchPlayer } from './tournaments';
+
+export type RequestMatchPlayer = DailyMatchPlayer & { isGuest: boolean };
+
+// Roster of the requesting team + accepted one-match guests.
+// Only applicants to the request and team members can see it (DB-enforced).
+export async function getRequestMatchPlayers(requestId: string): Promise<RequestMatchPlayer[]> {
+  const { data, error } = await supabase.rpc('get_request_match_players', {
+    p_request_id: requestId,
+  });
+  if (error) throw error;
+  return (data ?? []) as RequestMatchPlayer[];
+}
+
+// Same list looked up from the match — for accepted guests in My Matches.
+export async function getGuestMatchPlayers(matchId: string): Promise<RequestMatchPlayer[]> {
+  const { data, error } = await supabase.rpc('get_guest_match_players', {
+    p_match_id: matchId,
+  });
+  if (error) throw error;
+  return (data ?? []) as RequestMatchPlayer[];
+}
 
 export async function createPlayerRequest(teamId: string, matchId: string): Promise<string> {
   const { data, error } = await supabase.rpc('create_player_request', { team_id: teamId, match_id: matchId });

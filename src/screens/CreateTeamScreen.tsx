@@ -16,9 +16,9 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { X } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { createTeam } from '../services/teams';
 import { RootStackParamList } from '../navigation/types';
 import { TeamFormat } from '../types';
+import { PRICES, formatCOP } from '../utils/prices';
 import CreamButton from '../components/ui/CreamButton';
 import { colors, font, space, radius } from '../theme/tokens';
 
@@ -59,15 +59,15 @@ export default function CreateTeamScreen({ navigation }: Props) {
           <Formik
             initialValues={initialValues}
             validationSchema={schema}
-            onSubmit={async (values, { setSubmitting, setStatus }) => {
+            onSubmit={(values, { setSubmitting }) => {
               if (!session || !values.format) return;
-              try {
-                await createTeam(values.name.trim(), values.format, session.user.id);
-                navigation.goBack();
-              } catch (e: any) {
-                setStatus(e?.message ?? t('common.error'));
-                setSubmitting(false);
-              }
+              setSubmitting(false);
+              navigation.navigate('Payment', {
+                kind: 'create_team',
+                amount: PRICES.createTeam,
+                title: values.name.trim(),
+                payload: { name: values.name.trim(), format: values.format },
+              });
             }}
           >
             {({ handleChange, handleBlur, handleSubmit, setFieldValue, values, errors, touched, isSubmitting, status }) => (
@@ -107,6 +107,10 @@ export default function CreateTeamScreen({ navigation }: Props) {
                   </View>
                   {touched.format && errors.format ? <Text style={styles.fieldError}>{errors.format as string}</Text> : null}
                 </View>
+
+                <Text style={styles.priceNote}>
+                  {t('team.createPriceNote', { price: formatCOP(PRICES.createTeam) })}
+                </Text>
 
                 <CreamButton
                   label={t('team.createTeam')}
@@ -156,6 +160,7 @@ const styles = StyleSheet.create({
   inputError: { borderColor: 'rgba(239,68,68,0.6)' },
   fieldError: { fontFamily: font.sans, fontSize: 11.5, color: '#EF4444' },
   apiError: { fontFamily: font.sans, fontSize: 13, color: '#EF4444', textAlign: 'center' },
+  priceNote: { fontFamily: font.sans, fontSize: 12.5, color: colors.cream45, textAlign: 'center' },
 
   toggleRow: { flexDirection: 'row', gap: space.md },
   toggleBtn: {

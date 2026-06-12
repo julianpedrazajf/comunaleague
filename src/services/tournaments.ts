@@ -43,6 +43,43 @@ export async function registerForTournament(tournamentId: string, userId: string
   if (error) throw error;
 }
 
+// Capacity-checked registration for daily matches (max 18 players, DB-enforced)
+export async function registerForDaily(tournamentId: string): Promise<void> {
+  const { error } = await supabase.rpc('register_for_daily', { p_tournament_id: tournamentId });
+  if (error) throw error;
+}
+
+export async function getRegistrationCounts(tournamentIds: string[]): Promise<Map<string, number>> {
+  if (!tournamentIds.length) return new Map();
+  const { data, error } = await supabase.rpc('get_registration_counts', {
+    p_tournament_ids: tournamentIds,
+  });
+  if (error) throw error;
+  const map = new Map<string, number>();
+  for (const row of (data ?? []) as { tournamentId: string; count: number }[]) {
+    map.set(row.tournamentId, Number(row.count));
+  }
+  return map;
+}
+
+export interface DailyMatchPlayer {
+  id: string;
+  name: string;
+  lastName: string;
+  position: string;
+  skillLevel: string;
+  avatarUrl?: string;
+}
+
+// Only players registered in the daily match can see the list (DB-enforced)
+export async function getDailyMatchPlayers(tournamentId: string): Promise<DailyMatchPlayer[]> {
+  const { data, error } = await supabase.rpc('get_daily_match_players', {
+    p_tournament_id: tournamentId,
+  });
+  if (error) throw error;
+  return (data ?? []) as DailyMatchPlayer[];
+}
+
 export async function getUserTournamentRegistrations(userId: string): Promise<Tournament[]> {
   const { data, error } = await supabase
     .from('registrations')

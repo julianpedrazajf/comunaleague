@@ -17,6 +17,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Check, X, Calendar } from 'lucide-react-native';
 import { RootStackParamList } from '../navigation/types';
 import { getNotifications, markAllRead, respondToInterest, respondToJoinRequest, cleanupPastNotifications } from '../services/notifications';
+import { getMyTeam, getTeamById } from '../services/teams';
+import { useAuth } from '../context/AuthContext';
+import { PRICES, formatCOP } from '../utils/prices';
 import { AppNotification } from '../types';
 import Monogram from '../components/ui/Monogram';
 import { colors, font, space, radius } from '../theme/tokens';
@@ -27,16 +30,23 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Notifications'>;
 
 export default function NotificationsScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const { session } = useAuth();
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [pushEnabled, setPushEnabled] = useState(true);
+  const [myTeamId, setMyTeamId] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       AsyncStorage.getItem(NOTIF_KEY).then((val) => {
         if (val !== null) setPushEnabled(val === 'true');
       });
+      if (session) {
+        getMyTeam(session.user.id)
+          .then((team) => setMyTeamId(team?.id ?? null))
+          .catch(() => {});
+      }
       setLoading(true);
       cleanupPastNotifications()
         .then(() => getNotifications())
@@ -46,8 +56,23 @@ export default function NotificationsScreen({ navigation }: Props) {
         })
         .catch(() => {})
         .finally(() => setLoading(false));
-    }, []),
+    }, [session]),
   );
+
+  const handlePayToJoin = async (notif: AppNotification) => {
+    if (!notif.relatedId) return;
+    try {
+      const team = await getTeamById(notif.relatedId);
+      navigation.navigate('Payment', {
+        kind: 'join_team',
+        amount: PRICES.joinTeam,
+        title: team?.name ?? t('payment.conceptJoinTeam'),
+        payload: { teamId: notif.relatedId },
+      });
+    } catch (e: any) {
+      Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+    }
+  };
 
   const handlePushToggle = async (value: boolean) => {
     setPushEnabled(value);
@@ -132,10 +157,20 @@ export default function NotificationsScreen({ navigation }: Props) {
               : isJoinRequest || isJoinInfo
               ? t('notifications.joinRequest', { name: item.fromName ?? '' })
               : item.type === 'join_team_accepted'
-              ? t('notifications.joinAccepted')
+              ? (myTeamId === item.relatedId
+                  ? t('notifications.joinAccepted')
+                  : t('notifications.joinAcceptedPay', { price: formatCOP(PRICES.joinTeam) }))
               : t('notifications.joinRejected')
             }
           </Text>
+
+          {item.type === 'join_team_accepted' && myTeamId !== item.relatedId && (
+            <View style={styles.actionRow}>
+              <TouchableOpacity style={styles.acceptBtn} onPress={() => handlePayToJoin(item)} activeOpacity={0.8}>
+                <Text style={styles.acceptBtnText}>{t('notifications.payNow')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {isInterest && !resolution && (
             <View style={styles.actionRow}>
