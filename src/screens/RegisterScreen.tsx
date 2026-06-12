@@ -16,20 +16,35 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { AuthStackParamList } from '../navigation/types';
 import { supabase } from '../services/supabase';
 import CreamButton from '../components/ui/CreamButton';
 import { colors, font, space } from '../theme/tokens';
+
+const MIN_AGE = 13;
+const MAX_AGE = 80;
+
+function getAge(birthDate: Date): number {
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
 
 const loginBg = require('../../assets/textures/login-bg.png');
 const grain   = require('../../assets/textures/grain.png');
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
-const initialValues = { email: '', password: '', confirmPassword: '' };
+const initialValues = { email: '', password: '', confirmPassword: '', birthDate: null as Date | null };
 
 export default function RegisterScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const [showDatePicker, setShowDatePicker] = React.useState(false);
 
   const schema = Yup.object({
     email: Yup.string().email(t('errors.emailInvalid')).required(t('errors.required')),
@@ -37,6 +52,11 @@ export default function RegisterScreen({ navigation }: Props) {
     confirmPassword: Yup.string()
       .oneOf([Yup.ref('password')], t('errors.passwordMismatch'))
       .required(t('errors.required')),
+    birthDate: Yup.date()
+      .typeError(t('errors.required'))
+      .required(t('errors.required'))
+      .test('age-min', t('errors.ageMin'), (value) => !value || getAge(value) >= MIN_AGE)
+      .test('age-max', t('errors.ageMax'), (value) => !value || getAge(value) <= MAX_AGE),
   });
 
   return (
@@ -69,6 +89,9 @@ export default function RegisterScreen({ navigation }: Props) {
               const { error } = await supabase.auth.signUp({
                 email: values.email,
                 password: values.password,
+                options: {
+                  data: { birthDate: values.birthDate?.toISOString().slice(0, 10) },
+                },
               });
               if (error) {
                 setStatus(error.message);
@@ -76,7 +99,7 @@ export default function RegisterScreen({ navigation }: Props) {
               }
             }}
           >
-            {({ handleChange, handleBlur, handleSubmit, values, errors, touched, isSubmitting, status }) => (
+            {({ handleChange, handleBlur, handleSubmit, setFieldValue, setFieldTouched, values, errors, touched, isSubmitting, status }) => (
               <View style={styles.form}>
                 {status ? <Text style={styles.apiError}>{status}</Text> : null}
 
@@ -96,6 +119,37 @@ export default function RegisterScreen({ navigation }: Props) {
                     keyboardAppearance="dark"
                   />
                   {touched.email && errors.email ? <Text style={styles.fieldError}>{errors.email}</Text> : null}
+                </View>
+
+                <View style={styles.field}>
+                  <Text style={styles.label}>{t('auth.birthDate')}</Text>
+                  <TouchableOpacity
+                    style={[styles.input, touched.birthDate && errors.birthDate && styles.inputError]}
+                    onPress={() => setShowDatePicker(true)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={values.birthDate ? styles.dateText : styles.dateTextPlaceholder}>
+                      {values.birthDate ? values.birthDate.toLocaleDateString() : t('auth.birthDatePlaceholder')}
+                    </Text>
+                  </TouchableOpacity>
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={values.birthDate ?? new Date(2000, 0, 1)}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      themeVariant="dark"
+                      textColor={colors.cream}
+                      maximumDate={new Date()}
+                      onChange={(_event, date) => {
+                        setShowDatePicker(Platform.OS === 'ios');
+                        setFieldTouched('birthDate', true);
+                        if (date) setFieldValue('birthDate', date);
+                      }}
+                    />
+                  )}
+                  {touched.birthDate && errors.birthDate ? (
+                    <Text style={styles.fieldError}>{errors.birthDate as string}</Text>
+                  ) : null}
                 </View>
 
                 <View style={styles.field}>
@@ -184,6 +238,8 @@ const styles = StyleSheet.create({
   },
   inputError: { borderColor: 'rgba(239,68,68,0.6)' },
   fieldError: { fontFamily: font.sans, fontSize: 12, color: '#EF4444' },
+  dateText: { fontFamily: font.sans, fontSize: 15, color: colors.cream },
+  dateTextPlaceholder: { fontFamily: font.sans, fontSize: 15, color: colors.cream45 },
   apiError: { fontFamily: font.sans, fontSize: 13, color: '#EF4444', textAlign: 'center' },
 
   loginRow: { alignItems: 'center', marginTop: space.sm },

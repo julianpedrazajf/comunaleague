@@ -31,7 +31,9 @@
     "welcomeTitle": "Bienvenido",
     "welcomeSubtitle": "Inicia sesión para continuar",
     "createAccountTitle": "Crear cuenta",
-    "joinLeague": "Únete a la liga"
+    "joinLeague": "Únete a la liga",
+    "birthDate": "Fecha de nacimiento",
+    "birthDatePlaceholder": "Selecciona tu fecha de nacimiento"
   },
   "errors": {
     "required": "Campo requerido",
@@ -39,7 +41,7 @@
     "passwordTooShort": "Mínimo 6 caracteres",
     "passwordMismatch": "Las contraseñas no coinciden",
     "mustBeNumber": "Debe ser un número",
-    "ageMin": "Edad mínima: 10",
+    "ageMin": "Edad mínima: 13",
     "ageMax": "Edad máxima: 80",
     "heightMin": "Altura mínima: 100 cm",
     "heightMax": "Altura máxima: 230 cm"
@@ -114,6 +116,7 @@
     "inbox": "Mensajes",
     "playSolo": "Jugar solo",
     "joinTeam": "Unirse a un equipo",
+    "joinTeamCta": "Únete a un equipo y empieza tu liga",
     "createTeam": "Crear equipo",
     "profile": "Perfil",
     "topScorers": "Goleadores",
@@ -184,12 +187,16 @@
     "cancelPlayerRequestMessage": "La solicitud de jugador de tu equipo será eliminada.",
     "needPlayerCaptainOnlyTitle": "Solo el capitán",
     "needPlayerCaptainOnlyMessage": "Solo el capitán puede solicitar más jugadores para el partido.",
+    "cancelPlayerRequestCaptainOnlyTitle": "Solo el capitán",
+    "cancelPlayerRequestCaptainOnlyMessage": "Solo el capitán puede cancelar esta solicitud.",
     "cancelRequestHasPendingTitle": "No puedes cancelar aún",
     "cancelRequestHasPendingMessage": "Hay un jugador esperando tu respuesta. Acepta o rechaza su solicitud antes de cancelar."
   },
   "match": {
     "title": "Partidos",
+    "myMatches": "Mis Partidos",
     "soloMatches": "Mis Partidos Individuales",
+    "teamMatches": "Mis Partidos de Equipo",
     "schedule": "Calendario de partidos",
     "upcoming": "Próximos partidos",
     "location": "Lugar",
@@ -235,7 +242,7 @@
     "starts": "Inicio",
     "free": "Gratis",
     "confirmTitle": "¿Unirte a este partido?",
-    "confirmMsg": "Serás registrado como jugador individual.",
+    "confirmMsg": "Una vez que te inscribas no podrás cancelar tu cupo. ¿Estás seguro que deseas unirte?",
     "teamsLooking": "Equipos que buscan jugador",
     "apply": "Postularse",
     "applied": "Postulado",

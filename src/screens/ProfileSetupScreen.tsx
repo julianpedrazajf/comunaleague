@@ -42,19 +42,32 @@ type FormValues = {
   favoriteTeam: string;
 };
 
-const initialValues: FormValues = {
-  name: '', lastName: '', age: '', country: '', city: '',
-  position: '', foot: '', height: '', skillLevel: '', favoriteTeam: '',
-};
+function getAge(birthDate: Date): number {
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
 
 export default function ProfileSetupScreen() {
   const { t } = useTranslation();
   const { session, setProfileComplete } = useAuth();
 
+  const birthDateStr = session?.user.user_metadata?.birthDate as string | undefined;
+  const initialAge = birthDateStr ? String(getAge(new Date(birthDateStr))) : '';
+
+  const initialValues: FormValues = {
+    name: '', lastName: '', age: initialAge, country: '', city: '',
+    position: '', foot: '', height: '', skillLevel: '', favoriteTeam: '',
+  };
+
   const schema = Yup.object({
     name: Yup.string().required(t('errors.required')),
     lastName: Yup.string().required(t('errors.required')),
-    age: Yup.number().typeError(t('errors.mustBeNumber')).min(10, t('errors.ageMin')).max(80, t('errors.ageMax')).required(t('errors.required')),
+    age: Yup.number().typeError(t('errors.mustBeNumber')).min(13, t('errors.ageMin')).max(80, t('errors.ageMax')).required(t('errors.required')),
     country: Yup.string().required(t('errors.required')),
     city: Yup.string().required(t('errors.required')),
     position: Yup.string().required(t('errors.required')),

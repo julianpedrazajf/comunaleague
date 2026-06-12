@@ -1,6 +1,18 @@
 import { supabase } from './supabase';
 import { Tournament, Registration } from '../types';
 
+function isPastTournament(t: Pick<Tournament, 'startDate' | 'startTime'>): boolean {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  if (t.startDate < today) return true;
+  if (t.startDate > today) return false;
+  if (!t.startTime) return false;
+  const [hours, minutes] = t.startTime.split(':').map(Number);
+  const matchTime = new Date();
+  matchTime.setHours(hours, minutes, 0, 0);
+  return now > matchTime;
+}
+
 export async function getDailyTournaments(): Promise<Tournament[]> {
   const today = new Date().toISOString().split('T')[0];
   const { data, error } = await supabase
@@ -10,7 +22,7 @@ export async function getDailyTournaments(): Promise<Tournament[]> {
     .gte('startDate', today)
     .order('startDate', { ascending: true });
   if (error) throw error;
-  return (data ?? []) as Tournament[];
+  return ((data ?? []) as Tournament[]).filter((t) => !isPastTournament(t));
 }
 
 export async function getUserRegistrations(userId: string): Promise<Registration[]> {
@@ -32,7 +44,6 @@ export async function registerForTournament(tournamentId: string, userId: string
 }
 
 export async function getUserTournamentRegistrations(userId: string): Promise<Tournament[]> {
-  const today = new Date().toISOString().split('T')[0];
   const { data, error } = await supabase
     .from('registrations')
     .select('tournament:tournamentId(*)')
@@ -40,7 +51,7 @@ export async function getUserTournamentRegistrations(userId: string): Promise<To
   if (error) throw error;
   const tournaments = (data ?? [])
     .map((r: any) => r.tournament as Tournament | null)
-    .filter((t): t is Tournament => !!t && t.type === 'daily' && t.startDate >= today);
+    .filter((t): t is Tournament => !!t && t.type === 'daily' && !isPastTournament(t));
   tournaments.sort((a, b) => a.startDate.localeCompare(b.startDate));
   return tournaments;
 }

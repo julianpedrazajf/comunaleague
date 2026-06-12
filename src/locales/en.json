@@ -31,7 +31,9 @@
     "welcomeTitle": "Welcome back",
     "welcomeSubtitle": "Sign in to continue",
     "createAccountTitle": "Create account",
-    "joinLeague": "Join the league"
+    "joinLeague": "Join the league",
+    "birthDate": "Date of Birth",
+    "birthDatePlaceholder": "Select your date of birth"
   },
   "errors": {
     "required": "Field required",
@@ -39,7 +41,7 @@
     "passwordTooShort": "Minimum 6 characters",
     "passwordMismatch": "Passwords don't match",
     "mustBeNumber": "Must be a number",
-    "ageMin": "Minimum age: 10",
+    "ageMin": "Minimum age: 13",
     "ageMax": "Maximum age: 80",
     "heightMin": "Minimum height: 100 cm",
     "heightMax": "Maximum height: 230 cm"
@@ -114,6 +116,7 @@
     "inbox": "Inbox",
     "playSolo": "Play Solo",
     "joinTeam": "Join a Team",
+    "joinTeamCta": "Join a Team and start a league",
     "createTeam": "Create a Team",
     "profile": "Profile",
     "topScorers": "Top Scorers",
@@ -184,12 +187,16 @@
     "cancelPlayerRequestMessage": "Your team's player request will be removed.",
     "needPlayerCaptainOnlyTitle": "Captain only",
     "needPlayerCaptainOnlyMessage": "Only the captain can request extra players for a match.",
+    "cancelPlayerRequestCaptainOnlyTitle": "Captain only",
+    "cancelPlayerRequestCaptainOnlyMessage": "Only the captain can cancel this request.",
     "cancelRequestHasPendingTitle": "Can't cancel yet",
     "cancelRequestHasPendingMessage": "There's a player waiting for your response. Accept or reject their application before cancelling the request."
   },
   "match": {
     "title": "Matches",
+    "myMatches": "My Matches",
     "soloMatches": "My Solo Matches",
+    "teamMatches": "My Team Matches",
     "schedule": "Match Schedule",
     "upcoming": "Upcoming Matches",
     "location": "Location",
@@ -235,7 +242,7 @@
     "starts": "Starts",
     "free": "Free",
     "confirmTitle": "Join this match?",
-    "confirmMsg": "You will be registered as a solo player.",
+    "confirmMsg": "Once you register you won't be able to cancel your spot. Are you sure you want to join?",
     "teamsLooking": "Teams looking for a player",
     "apply": "Apply",
     "applied": "Applied",

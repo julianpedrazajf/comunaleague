@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Calendar, MapPin, Check } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, Check } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getMyTeam } from '../services/teams';
 import { getTeamMatches, MatchWithTeams } from '../services/matches';
@@ -116,11 +116,15 @@ export default function MatchScheduleScreen() {
 
   const handleTogglePlayerRequest = async (match: MatchWithTeams) => {
     if (!team || !session) return;
+    const existingReq = requestMap.get(match.id);
     if (session.user.id !== team.ownerId) {
-      Alert.alert(t('team.needPlayerCaptainOnlyTitle'), t('team.needPlayerCaptainOnlyMessage'));
+      if (existingReq) {
+        Alert.alert(t('team.cancelPlayerRequestCaptainOnlyTitle'), t('team.cancelPlayerRequestCaptainOnlyMessage'));
+      } else {
+        Alert.alert(t('team.needPlayerCaptainOnlyTitle'), t('team.needPlayerCaptainOnlyMessage'));
+      }
       return;
     }
-    const existingReq = requestMap.get(match.id);
     if (existingReq) {
       const pending = await hasPendingApplicants(existingReq.id);
       if (pending) {
@@ -186,6 +190,12 @@ export default function MatchScheduleScreen() {
           <Calendar size={11} color={colors.gray500} strokeWidth={2} />
           <Text style={styles.metaText}>{formatDate(item.startDate, i18n.language)}</Text>
         </View>
+        {item.startTime ? (
+          <View style={styles.metaRow}>
+            <Clock size={11} color={colors.gray500} strokeWidth={2} />
+            <Text style={styles.metaText}>{formatTime(item.startTime)}</Text>
+          </View>
+        ) : null}
         {item.location ? (
           <View style={styles.metaRow}>
             <MapPin size={11} color={colors.gray500} strokeWidth={2} />
@@ -228,8 +238,7 @@ export default function MatchScheduleScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       {/* Nav bar */}
       <View style={styles.navBar}>
-        <Text style={styles.pageTitle}>{t('match.title')}</Text>
-        {team && <Text style={styles.teamName}>{team.name}</Text>}
+        <Text style={styles.pageTitle}>{t('match.myMatches')}</Text>
       </View>
 
       {/* Calendar — always visible */}
@@ -273,14 +282,19 @@ export default function MatchScheduleScreen() {
               : styles.listContent
           }
           ListHeaderComponent={
-            filteredSoloMatches.length > 0 ? (
-              <View style={styles.soloSection}>
-                <SectionHeader label={t('match.soloMatches')} />
-                <View style={styles.soloList}>
-                  {filteredSoloMatches.map(renderSoloMatch)}
+            <>
+              {filteredSoloMatches.length > 0 ? (
+                <View style={styles.soloSection}>
+                  <SectionHeader label={t('match.soloMatches')} />
+                  <View style={styles.soloList}>
+                    {filteredSoloMatches.map(renderSoloMatch)}
+                  </View>
                 </View>
-              </View>
-            ) : null
+              ) : null}
+              {filteredMatches.length > 0 ? (
+                <SectionHeader label={t('match.teamMatches')} />
+              ) : null}
+            </>
           }
           ListEmptyComponent={
             filteredSoloMatches.length === 0 ? (
@@ -303,7 +317,6 @@ const styles = StyleSheet.create({
 
   navBar: { paddingHorizontal: 18, paddingVertical: space.md, gap: 4 },
   pageTitle: { fontFamily: font.sansXBold, fontSize: 27, letterSpacing: -0.5, color: colors.cream },
-  teamName: { fontFamily: font.sans, fontSize: 13, color: colors.cream70 },
 
   errorText: { fontFamily: font.sans, fontSize: 13, color: '#EF4444', textAlign: 'center', marginBottom: space.md },
   retryText: { fontFamily: font.sansBold, fontSize: 13, color: colors.cream70 },

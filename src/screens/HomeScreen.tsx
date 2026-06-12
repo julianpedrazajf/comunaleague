@@ -166,21 +166,31 @@ export default function HomeScreen() {
 
       {/* Quick actions */}
       <View style={styles.quickActions}>
-        {([
-          { Icon: Zap,   labelKey: 'home.playSolo',   route: 'OneGame'    },
-          { Icon: Users, labelKey: 'home.joinTeam',   route: 'JoinTeam'   },
-          { Icon: Plus,  labelKey: 'home.createTeam', route: 'CreateTeam' },
-        ] as const).map(({ Icon, labelKey, route }) => (
-          <TouchableOpacity
-            key={route}
-            style={styles.quickBtn}
-            onPress={() => route === 'CreateTeam' ? handleCreateTeam() : navigation.navigate(route as never)}
-            activeOpacity={0.75}
-          >
-            <Icon size={18} color={colors.cream} strokeWidth={2} />
-            <Text style={styles.quickBtnLabel}>{t(labelKey)}</Text>
-          </TouchableOpacity>
-        ))}
+        <TouchableOpacity
+          style={[styles.quickBtn, styles.quickBtnHighlight, styles.quickBtnFull]}
+          onPress={() => navigation.navigate('JoinTeam')}
+          activeOpacity={0.75}
+        >
+          <Users size={18} color={colors.cream} strokeWidth={2} />
+          <Text style={styles.quickBtnLabel}>{t('home.joinTeamCta')}</Text>
+        </TouchableOpacity>
+
+        <View style={styles.quickActionsRow}>
+          {([
+            { Icon: Zap,  labelKey: 'home.playSolo',   route: 'OneGame'    },
+            { Icon: Plus, labelKey: 'home.createTeam', route: 'CreateTeam' },
+          ] as const).map(({ Icon, labelKey, route }) => (
+            <TouchableOpacity
+              key={route}
+              style={styles.quickBtn}
+              onPress={() => route === 'CreateTeam' ? handleCreateTeam() : navigation.navigate(route as never)}
+              activeOpacity={0.75}
+            >
+              <Icon size={18} color={colors.cream} strokeWidth={2} />
+              <Text style={styles.quickBtnLabel}>{t(labelKey)}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       <ScrollView
@@ -349,10 +359,13 @@ const styles = StyleSheet.create({
   confirmedText: { fontFamily: font.sansBold, fontSize: 15, color: colors.black },
 
   quickActions: {
-    flexDirection: 'row',
     paddingHorizontal: 18,
     paddingTop: space.md,
     paddingBottom: space.sm,
+    gap: space.sm,
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
     gap: space.sm,
   },
   quickBtn: {
@@ -364,6 +377,14 @@ const styles = StyleSheet.create({
     gap: space.xs,
     borderWidth: 1,
     borderColor: 'rgba(222,219,200,0.08)',
+  },
+  quickBtnHighlight: {
+    borderWidth: 1.5,
+    borderColor: colors.green,
+  },
+  quickBtnFull: {
+    flex: 0,
+    alignSelf: 'stretch',
   },
   quickBtnLabel: {
     fontFamily: font.sansBold,

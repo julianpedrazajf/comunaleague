@@ -55,6 +55,7 @@ export interface Tournament {
   type: TournamentType;
   format: TeamFormat;
   startDate: string;
+  startTime?: string;
   location: string;
   registrationDeadline: string;
   price: number;

@@ -284,6 +284,12 @@ export default function OneGameScreen({ navigation }: Props) {
             <Calendar size={11} color={colors.gray500} strokeWidth={2} />
             <Text style={styles.metaText}>{t('onegame.starts')}: {formatDate(item.startDate, i18n.language)}</Text>
           </View>
+          {item.startTime ? (
+            <View style={styles.metaRow}>
+              <Clock size={11} color={colors.gray500} strokeWidth={2} />
+              <Text style={styles.metaText}>{formatTime(item.startTime)}</Text>
+            </View>
+          ) : null}
           {item.location ? (
             <View style={styles.metaRow}>
               <MapPin size={11} color={colors.gray500} strokeWidth={2} />
