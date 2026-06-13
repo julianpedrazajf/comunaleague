@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import { X, Search } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { getAvailableTeams, getMyTeam, getPendingJoinRequestTeamIds, requestJoinTeam } from '../services/teams';
+import { getAvailableTeams, getMyTeam, getPendingJoinRequestTeamIds } from '../services/teams';
 import { RootStackParamList } from '../navigation/types';
 import { Team } from '../types';
 import { PRICES, TEAM_CAPACITY, formatCOP } from '../utils/prices';
@@ -34,7 +34,6 @@ export default function JoinTeamScreen({ navigation }: Props) {
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [joiningId, setJoiningId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const filtered = useMemo(
@@ -84,17 +83,13 @@ export default function JoinTeamScreen({ navigation }: Props) {
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('team.request'),
-          onPress: async () => {
-            setJoiningId(team.id);
-            try {
-              await requestJoinTeam(team.id);
-              setPendingIds((prev) => new Set(prev).add(team.id));
-              Alert.alert(t('team.joinRequestSentTitle'), t('team.joinRequestSentMessage', { name: team.name }));
-            } catch (e: any) {
-              Alert.alert(t('common.error'), e?.message ?? t('common.error'));
-            } finally {
-              setJoiningId(null);
-            }
+          onPress: () => {
+            navigation.navigate('Payment', {
+              kind: 'join_team',
+              amount: PRICES.joinTeam,
+              title: team.name,
+              payload: { teamId: team.id },
+            });
           },
         },
       ],
@@ -170,18 +165,14 @@ export default function JoinTeamScreen({ navigation }: Props) {
                 <TouchableOpacity
                   style={[
                     styles.joinBtn,
-                    (joiningId === item.id || pendingIds.has(item.id) || isFull) && styles.joinBtnDisabled,
+                    (pendingIds.has(item.id) || isFull) && styles.joinBtnDisabled,
                   ]}
                   onPress={() => handleJoin(item)}
-                  disabled={joiningId === item.id || pendingIds.has(item.id) || isFull}
+                  disabled={pendingIds.has(item.id) || isFull}
                 >
-                  {joiningId === item.id ? (
-                    <ActivityIndicator size="small" color={colors.black} />
-                  ) : (
-                    <Text style={styles.joinBtnText}>
-                      {pendingIds.has(item.id) ? t('team.pending') : t('team.request')}
-                    </Text>
-                  )}
+                  <Text style={styles.joinBtnText}>
+                    {pendingIds.has(item.id) ? t('team.pending') : t('team.request')}
+                  </Text>
                 </TouchableOpacity>
               </View>
             );

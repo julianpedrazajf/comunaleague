@@ -117,7 +117,11 @@ export default function ChatScreen({ route, navigation }: Props) {
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} hitSlop={8}>
           <ArrowLeft size={22} color={colors.cream70} strokeWidth={2} />
         </TouchableOpacity>
-        <View style={styles.headerCenter}>
+        <TouchableOpacity
+          style={styles.headerCenter}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('UserProfile', { userId: peerId })}
+        >
           <View style={styles.headerNameRow}>
             <Text style={styles.headerName} numberOfLines={1}>{peerName}</Text>
             {peerIsCaptain && (
@@ -126,7 +130,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               </View>
             )}
           </View>
-        </View>
+        </TouchableOpacity>
         <View style={styles.headerSpacer} />
       </View>
 

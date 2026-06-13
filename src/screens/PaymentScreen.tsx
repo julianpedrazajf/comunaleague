@@ -11,7 +11,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { X, Check, CreditCard } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { createTeam, completeTeamJoin } from '../services/teams';
+import { createTeam, requestJoinTeam } from '../services/teams';
 import { registerForDaily } from '../services/tournaments';
 import { expressInterest } from '../services/playerRequests';
 import { RootStackParamList } from '../navigation/types';
@@ -47,7 +47,7 @@ export default function PaymentScreen({ navigation, route }: Props) {
       await createTeam(payload.name, payload.format, session.user.id);
     } else if (kind === 'join_team') {
       if (!payload.teamId) throw new Error(t('common.error'));
-      await completeTeamJoin(payload.teamId);
+      await requestJoinTeam(payload.teamId);
     } else if (kind === 'daily_match') {
       if (!payload.tournamentId) throw new Error(t('common.error'));
       await registerForDaily(payload.tournamentId);

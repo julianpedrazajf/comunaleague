@@ -16,14 +16,16 @@ interface PlayerRowProps {
   avatarUrl?: string | null;
   actionLabel?: string;
   onAction?: () => void;
+  onPress?: () => void;
   attendanceConfirmed?: boolean;
   matchDate?: string;
 }
 
-export default function PlayerRow({ name, lastName, position, foot, isCaptain, guestBadge, memberBadge, number, avatarUrl, actionLabel, onAction, attendanceConfirmed, matchDate }: PlayerRowProps) {
+export default function PlayerRow({ name, lastName, position, foot, isCaptain, guestBadge, memberBadge, number, avatarUrl, actionLabel, onAction, onPress, attendanceConfirmed, matchDate }: PlayerRowProps) {
   const { t } = useTranslation();
+  const Container: React.ComponentType<any> = onPress ? TouchableOpacity : View;
   return (
-    <View style={styles.row}>
+    <Container style={styles.row} onPress={onPress} activeOpacity={onPress ? 0.7 : undefined}>
       <Monogram name={name} lastName={lastName} size={44} imageUri={avatarUrl} />
 
       <View style={styles.body}>
@@ -57,7 +59,7 @@ export default function PlayerRow({ name, lastName, position, foot, isCaptain, g
       ) : number !== undefined ? (
         <Text style={styles.number}>{number}</Text>
       ) : null}
-    </View>
+    </Container>
   );
 }
 

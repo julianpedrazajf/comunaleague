@@ -306,6 +306,7 @@ export default function MyTeamScreen() {
                     isCaptain={isCaptain}
                     avatarUrl={m.avatarUrl}
                     attendanceConfirmed={nextMatch ? (nextMatch.confirmedPlayerIds ?? []).includes(m.id) : undefined}
+                    onPress={() => navigation.navigate('UserProfile', { userId: m.id })}
                     actionLabel={!isCaptain ? t('team.makeCaptain') : undefined}
                     onAction={!isCaptain ? () => {
                       if (!viewerIsCaptain) {
@@ -334,6 +335,7 @@ export default function MyTeamScreen() {
                     avatarUrl={m.avatarUrl}
                     attendanceConfirmed
                     matchDate={`${d} · ${timeStr}`}
+                    onPress={() => navigation.navigate('UserProfile', { userId: m.id })}
                   />
                   <View style={styles.divider} />
                 </View>

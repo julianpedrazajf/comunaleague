@@ -52,6 +52,7 @@ export type RootStackParamList = {
     requestId?: string;     // player request: team roster + accepted guests
     matchId?: string;       // guest match in My Matches: same list via match id
   };
+  UserProfile: { userId: string };
 };
 
 export type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;

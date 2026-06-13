@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
-import { X } from 'lucide-react-native';
+import { X, ChevronRight } from 'lucide-react-native';
 import { getDailyMatchPlayers, DailyMatchPlayer } from '../services/tournaments';
 import { getRequestMatchPlayers, getGuestMatchPlayers, RequestMatchPlayer } from '../services/playerRequests';
 import { RootStackParamList } from '../navigation/types';
@@ -94,7 +94,11 @@ export default function DailyMatchPlayersScreen({ navigation, route }: Props) {
             </View>
           }
           renderItem={({ item }) => (
-            <View style={styles.playerCard}>
+            <TouchableOpacity
+              style={styles.playerCard}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('UserProfile', { userId: item.id })}
+            >
               <Monogram
                 name={`${item.name} ${item.lastName}`}
                 size={42}
@@ -113,7 +117,8 @@ export default function DailyMatchPlayersScreen({ navigation, route }: Props) {
                   ) : null}
                 </View>
               </View>
-            </View>
+              <ChevronRight size={16} color={colors.cream25} strokeWidth={2} />
+            </TouchableOpacity>
           )}
         />
       )}

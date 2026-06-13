@@ -25,6 +25,22 @@ export async function getFeaturedPlayers(): Promise<FeaturedPlayer[]> {
   return (data ?? []) as FeaturedPlayer[];
 }
 
+export type PublicProfile = Pick<
+  User,
+  'id' | 'name' | 'lastName' | 'position' | 'foot' | 'height' | 'skillLevel' | 'favoriteTeam' | 'avatarUrl' | 'city' | 'country'
+>;
+
+// Public-facing profile fields only (no email/age) for viewing other players.
+export async function getPublicProfile(userId: string): Promise<PublicProfile | null> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, name, lastName, position, foot, height, skillLevel, favoriteTeam, avatarUrl, city, country')
+    .eq('id', userId)
+    .single();
+  if (error) throw error;
+  return data as PublicProfile;
+}
+
 export async function getFullProfile(userId: string): Promise<User | null> {
   const { data, error } = await supabase
     .from('users')

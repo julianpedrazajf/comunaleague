@@ -69,11 +69,6 @@ export async function requestJoinTeam(teamId: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function completeTeamJoin(teamId: string): Promise<void> {
-  const { error } = await supabase.rpc('complete_team_join', { team_id: teamId });
-  if (error) throw error;
-}
-
 export async function getPendingJoinRequestTeamIds(userId: string): Promise<Set<string>> {
   const { data, error } = await supabase
     .from('team_join_requests')
