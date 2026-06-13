@@ -15,14 +15,16 @@ import { useFocusEffect } from '@react-navigation/native';
 import { X, MapPin, Calendar, Clock, Check, Users, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getDailyTournaments, getUserRegistrations, registerForDaily, getRegistrationCounts } from '../services/tournaments';
-import { getOpenPlayerRequests, getMyInterests } from '../services/playerRequests';
+import { getOpenPlayerRequests, getMyInterests, expressInterest } from '../services/playerRequests';
 import { getMyTeam } from '../services/teams';
 import { getTeamMatches } from '../services/matches';
 import { getApplicationStatuses } from '../services/notifications';
 import { Tournament, PlayerRequest } from '../types';
 import { RootStackParamList } from '../navigation/types';
-import { PRICES, DAILY_MATCH_CAPACITY, formatCOP } from '../utils/prices';
+import { COIN_COSTS, DAILY_MATCH_CAPACITY } from '../utils/prices';
+import { showInsufficientCoins, isInsufficientCoinsError } from '../utils/coins';
 import Chip from '../components/ui/Chip';
+import CoinIcon from '../components/ui/CoinIcon';
 import Monogram from '../components/ui/Monogram';
 import SectionHeader from '../components/ui/SectionHeader';
 import MonthCalendar from '../components/ui/MonthCalendar';
@@ -148,33 +150,25 @@ export default function OneGameScreen({ navigation }: Props) {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   function handleRegister(tournament: Tournament) {
-    const message = tournament.price > 0
-      ? `${tournament.name}\n${t('onegame.confirmMsg')}\n\n${t('onegame.paymentNote', { price: formatCOP(tournament.price) })}`
-      : `${tournament.name}\n${t('onegame.confirmMsg')}`;
     Alert.alert(
       t('onegame.confirmTitle'),
-      message,
+      `${tournament.name}\n${t('onegame.confirmMsg')}\n\n${t('onegame.coinNote', { coins: COIN_COSTS.dailyMatch })}`,
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('onegame.register'),
           onPress: async () => {
             if (!session) return;
-            if (tournament.price > 0) {
-              navigation.navigate('Payment', {
-                kind: 'daily_match',
-                amount: tournament.price,
-                title: tournament.name,
-                payload: { tournamentId: tournament.id },
-              });
-              return;
-            }
             setRegisteringId(tournament.id);
             try {
               await registerForDaily(tournament.id);
               setRegisteredIds((prev) => new Set([...prev, tournament.id]));
             } catch (e: any) {
-              Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+              if (isInsufficientCoinsError(e)) {
+                showInsufficientCoins(t, () => navigation.navigate('BuyCoins'));
+              } else {
+                Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+              }
             } finally {
               setRegisteringId(null);
             }
@@ -187,19 +181,23 @@ export default function OneGameScreen({ navigation }: Props) {
   function handleApply(req: PlayerRequest) {
     Alert.alert(
       t('onegame.applyTitle'),
-      `${t('onegame.applyMessage')}\n\n${t('onegame.paymentNote', { price: formatCOP(PRICES.oneMatch) })}`,
+      `${t('onegame.applyMessage')}\n\n${t('onegame.coinNote', { coins: COIN_COSTS.oneMatch })}`,
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('onegame.apply'),
-          onPress: () => {
+          onPress: async () => {
             if (!session) return;
-            navigation.navigate('Payment', {
-              kind: 'one_match',
-              amount: PRICES.oneMatch,
-              title: req.team?.name ?? t('onegame.oneMatch'),
-              payload: { requestId: req.id },
-            });
+            try {
+              await expressInterest(req.id);
+              setInterestedIds((prev) => new Set([...prev, req.id]));
+            } catch (e: any) {
+              if (isInsufficientCoinsError(e)) {
+                showInsufficientCoins(t, () => navigation.navigate('BuyCoins'));
+              } else {
+                Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+              }
+            }
           },
         },
       ],
@@ -247,7 +245,10 @@ export default function OneGameScreen({ navigation }: Props) {
         <View style={styles.hairline} />
 
         <View style={styles.cardFooter}>
-          <Text style={styles.price}>{t('onegame.oneMatch')}</Text>
+          <View style={styles.coinCostRow}>
+            <CoinIcon size={18} />
+            <Text style={styles.coinCostText}>{COIN_COSTS.oneMatch}</Text>
+          </View>
           {isPartOfMatch ? (
             <View style={styles.ownTeamBadge}>
               <Text style={styles.ownTeamText}>{t('onegame.alreadyMember')}</Text>
@@ -301,7 +302,6 @@ export default function OneGameScreen({ navigation }: Props) {
   const renderItem = ({ item }: { item: Tournament }) => {
     const isRegistered = registeredIds.has(item.id);
     const isRegistering = registeringId === item.id;
-    const priceLabel = item.price === 0 ? t('onegame.free') : `$${item.price.toLocaleString('es-CO')}`;
     const registeredCount = registrationCounts.get(item.id) ?? 0;
     const spotsLeft = Math.max(DAILY_MATCH_CAPACITY - registeredCount, 0);
     const isFull = !isRegistered && spotsLeft === 0;
@@ -344,7 +344,10 @@ export default function OneGameScreen({ navigation }: Props) {
         <View style={styles.hairline} />
 
         <View style={styles.cardFooter}>
-          <Text style={styles.price}>{priceLabel}</Text>
+          <View style={styles.coinCostRow}>
+            <CoinIcon size={18} />
+            <Text style={styles.coinCostText}>{COIN_COSTS.dailyMatch}</Text>
+          </View>
           {isRegistered ? (
             <View style={styles.registeredBadge}>
               <Check size={12} color={colors.green} strokeWidth={2.5} />
@@ -505,7 +508,8 @@ const styles = StyleSheet.create({
   hairline: { height: 1, backgroundColor: colors.hairline },
 
   cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  price: { fontFamily: font.serifItalic, fontSize: 22, color: colors.cream },
+  coinCostRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  coinCostText: { fontFamily: font.sansXBold, fontSize: 18, color: colors.cream },
 
   registerBtn: {
     backgroundColor: colors.cream2,

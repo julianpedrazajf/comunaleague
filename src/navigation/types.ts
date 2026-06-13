@@ -18,18 +18,14 @@ export type AppTabParamList = {
   Profile: undefined;
 };
 
-export type PaymentKind = 'create_team' | 'join_team' | 'daily_match' | 'one_match';
+export type PaymentKind = 'buy_coins';
 
 export type PaymentParams = {
   kind: PaymentKind;
   amount: number;
   title: string;
   payload: {
-    name?: string;
-    format?: 5 | 11;
-    teamId?: string;
-    tournamentId?: string;
-    requestId?: string;
+    coins?: number;
   };
 };
 
@@ -46,6 +42,7 @@ export type RootStackParamList = {
   Notifications: undefined;
   Preferences: undefined;
   Payment: PaymentParams;
+  BuyCoins: undefined;
   DailyMatchPlayers: {
     tournamentName: string;
     tournamentId?: string;  // daily match: list registered players

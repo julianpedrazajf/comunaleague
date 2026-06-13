@@ -10,10 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { X, Check, CreditCard } from 'lucide-react-native';
-import { useAuth } from '../context/AuthContext';
-import { createTeam, requestJoinTeam } from '../services/teams';
-import { registerForDaily } from '../services/tournaments';
-import { expressInterest } from '../services/playerRequests';
+import { addCoins } from '../services/wallet';
 import { RootStackParamList } from '../navigation/types';
 import { formatCOP } from '../utils/prices';
 import CreamButton from '../components/ui/CreamButton';
@@ -23,46 +20,21 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Payment'>;
 
 export default function PaymentScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
-  const { session } = useAuth();
-  const { kind, amount, title, payload } = route.params;
+  const { amount, title, payload } = route.params;
+  const coins = payload.coins ?? 0;
 
   const [processing, setProcessing] = useState(false);
   const [paid, setPaid] = useState(false);
 
-  const conceptLabel =
-    kind === 'create_team' ? t('payment.conceptCreateTeam')
-    : kind === 'join_team' ? t('payment.conceptJoinTeam')
-    : kind === 'daily_match' ? t('payment.conceptDailyMatch')
-    : t('payment.conceptOneMatch');
-
-  const successMessage =
-    kind === 'create_team' ? t('payment.successCreateTeam')
-    : kind === 'join_team' ? t('payment.successJoinTeam')
-    : kind === 'daily_match' ? t('payment.successDailyMatch')
-    : t('payment.successOneMatch');
-
-  const executeAction = async () => {
-    if (kind === 'create_team') {
-      if (!session || !payload.name || !payload.format) throw new Error(t('common.error'));
-      await createTeam(payload.name, payload.format, session.user.id);
-    } else if (kind === 'join_team') {
-      if (!payload.teamId) throw new Error(t('common.error'));
-      await requestJoinTeam(payload.teamId);
-    } else if (kind === 'daily_match') {
-      if (!payload.tournamentId) throw new Error(t('common.error'));
-      await registerForDaily(payload.tournamentId);
-    } else {
-      if (!payload.requestId) throw new Error(t('common.error'));
-      await expressInterest(payload.requestId);
-    }
-  };
+  const conceptLabel = t('payment.conceptCoins');
+  const successMessage = t('payment.successCoins', { coins });
 
   const handlePay = async () => {
     setProcessing(true);
     try {
       // Simulated payment — replace with MercadoPago when credentials are ready
       await new Promise((resolve) => setTimeout(resolve, 1400));
-      await executeAction();
+      await addCoins(coins);
       setPaid(true);
     } catch (e: any) {
       Alert.alert(t('payment.failed'), e?.message ?? t('common.error'));
@@ -72,11 +44,7 @@ export default function PaymentScreen({ navigation, route }: Props) {
   };
 
   const handleDone = () => {
-    if (kind === 'create_team') {
-      navigation.navigate('AppTabs');
-    } else {
-      navigation.goBack();
-    }
+    navigation.goBack();
   };
 
   return (

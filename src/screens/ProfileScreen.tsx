@@ -18,11 +18,13 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import { getFullProfile, updateAvatarUrl } from '../services/users';
 import { getPlayerStats } from '../services/player_stats';
+import { getMyCoins } from '../services/wallet';
 import { uploadAvatar } from '../services/storage';
 import { User, PlayerStats } from '../types';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import Monogram from '../components/ui/Monogram';
 import StatTriple from '../components/ui/StatTriple';
+import CoinIcon from '../components/ui/CoinIcon';
 import GhostButton from '../components/ui/GhostButton';
 import { colors, font, space, radius } from '../theme/tokens';
 
@@ -37,6 +39,7 @@ export default function ProfileScreen() {
   const navigation = useNavigation<NavProp>();
   const [profile, setProfile] = useState<User | null>(null);
   const [stats, setStats] = useState<PlayerStats | null>(null);
+  const [coins, setCoins] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
 
@@ -50,6 +53,7 @@ export default function ProfileScreen() {
       ]);
       setProfile(data);
       setStats(playerStats);
+      getMyCoins().then(setCoins).catch(() => {});
     } catch {
       // silently fail
     } finally {
@@ -146,6 +150,22 @@ export default function ProfileScreen() {
             ]}
           />
 
+          {/* Wallet card */}
+          <TouchableOpacity
+            style={styles.walletCard}
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('BuyCoins')}
+          >
+            <CoinIcon size={32} />
+            <View style={styles.walletInfo}>
+              <Text style={styles.walletLabel}>{t('coins.balance')}</Text>
+              <Text style={styles.walletValue}>{coins ?? '—'}</Text>
+            </View>
+            <View style={styles.walletBtn}>
+              <Text style={styles.walletBtnText}>{t('coins.buyCoins')}</Text>
+            </View>
+          </TouchableOpacity>
+
           {/* Attributes card */}
           {attrRows.length > 0 && (
             <View style={styles.infoCard}>
@@ -213,6 +233,31 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.cream70,
   },
+
+  walletCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    backgroundColor: colors.surface1,
+    borderRadius: radius.card,
+    padding: space.lg,
+  },
+  walletInfo: { flex: 1, gap: 2 },
+  walletLabel: {
+    fontFamily: font.sansBold,
+    fontSize: 10,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    color: colors.cream45,
+  },
+  walletValue: { fontFamily: font.sansXBold, fontSize: 22, color: colors.cream },
+  walletBtn: {
+    backgroundColor: colors.cream2,
+    borderRadius: radius.pill,
+    paddingHorizontal: space.md,
+    paddingVertical: 8,
+  },
+  walletBtnText: { fontFamily: font.sansBold, fontSize: 12.5, color: colors.black },
 
   infoCard: {
     backgroundColor: colors.surface1,

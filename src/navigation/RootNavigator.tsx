@@ -15,6 +15,7 @@ import LanguageScreen from '../screens/LanguageScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import PreferencesScreen from '../screens/PreferencesScreen';
 import PaymentScreen from '../screens/PaymentScreen';
+import BuyCoinsScreen from '../screens/BuyCoinsScreen';
 import DailyMatchPlayersScreen from '../screens/DailyMatchPlayersScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 
@@ -41,6 +42,7 @@ export default function RootNavigator() {
           <Root.Screen name="Notifications" component={NotificationsScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="Preferences" component={PreferencesScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="Payment" component={PaymentScreen} options={{ presentation: 'modal', gestureEnabled: false }} />
+          <Root.Screen name="BuyCoins" component={BuyCoinsScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="DailyMatchPlayers" component={DailyMatchPlayersScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="UserProfile" component={UserProfileScreen} options={{ presentation: 'modal' }} />
         </>

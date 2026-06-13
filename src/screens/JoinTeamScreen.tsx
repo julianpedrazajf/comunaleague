@@ -15,10 +15,11 @@ import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import { X, Search } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { getAvailableTeams, getMyTeam, getPendingJoinRequestTeamIds } from '../services/teams';
+import { getAvailableTeams, getMyTeam, getPendingJoinRequestTeamIds, requestJoinTeam } from '../services/teams';
 import { RootStackParamList } from '../navigation/types';
 import { Team } from '../types';
-import { PRICES, TEAM_CAPACITY, formatCOP } from '../utils/prices';
+import { COIN_COSTS, TEAM_CAPACITY } from '../utils/prices';
+import { showInsufficientCoins, isInsufficientCoinsError } from '../utils/coins';
 import Monogram from '../components/ui/Monogram';
 import Chip from '../components/ui/Chip';
 import { colors, font, space, radius } from '../theme/tokens';
@@ -78,18 +79,23 @@ export default function JoinTeamScreen({ navigation }: Props) {
     }
     Alert.alert(
       t('team.requestConfirmTitle'),
-      t('team.joinFlowNotice', { name: team.name, price: formatCOP(PRICES.joinTeam) }),
+      t('team.joinFlowNotice', { name: team.name, coins: COIN_COSTS.joinTeam }),
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('team.request'),
-          onPress: () => {
-            navigation.navigate('Payment', {
-              kind: 'join_team',
-              amount: PRICES.joinTeam,
-              title: team.name,
-              payload: { teamId: team.id },
-            });
+          onPress: async () => {
+            try {
+              await requestJoinTeam(team.id);
+              setPendingIds((prev) => new Set(prev).add(team.id));
+              Alert.alert(t('team.joinRequestSentTitle'), t('team.joinRequestSentMessage', { name: team.name }));
+            } catch (e: any) {
+              if (isInsufficientCoinsError(e)) {
+                showInsufficientCoins(t, () => navigation.navigate('BuyCoins'));
+              } else {
+                Alert.alert(t('common.error'), e?.message ?? t('common.error'));
+              }
+            }
           },
         },
       ],

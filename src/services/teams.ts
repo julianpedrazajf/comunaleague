@@ -23,18 +23,9 @@ export async function getTeamMembers(playerIds: string[]): Promise<Member[]> {
   return (data ?? []) as Member[];
 }
 
-export async function createTeam(
-  name: string,
-  format: TeamFormat,
-  ownerId: string,
-): Promise<void> {
-  const { error } = await supabase.from('teams').insert({
-    name,
-    format,
-    playerIds: [ownerId],
-    ownerId,
-    createdAt: new Date().toISOString(),
-  });
+// Creates the team and spends the coin cost atomically (server-side).
+export async function createTeam(name: string, format: TeamFormat): Promise<void> {
+  const { error } = await supabase.rpc('create_team', { p_name: name, p_format: format });
   if (error) throw error;
 }
 
