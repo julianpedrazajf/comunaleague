@@ -59,6 +59,7 @@ export interface Tournament {
   location: string;
   registrationDeadline: string;
   price: number;
+  coinCost?: number; // per-match coin price for daily matches (null = standard)
 }
 
 export interface Match {

@@ -150,9 +150,10 @@ export default function OneGameScreen({ navigation }: Props) {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   function handleRegister(tournament: Tournament) {
+    const cost = tournament.coinCost ?? COIN_COSTS.dailyMatch;
     Alert.alert(
       t('onegame.confirmTitle'),
-      `${tournament.name}\n${t('onegame.confirmMsg')}\n\n${t('onegame.coinNote', { coins: COIN_COSTS.dailyMatch })}`,
+      `${tournament.name}\n${t('onegame.confirmMsg')}\n\n${t('onegame.coinNote', { coins: cost })}`,
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -305,6 +306,8 @@ export default function OneGameScreen({ navigation }: Props) {
     const registeredCount = registrationCounts.get(item.id) ?? 0;
     const spotsLeft = Math.max(DAILY_MATCH_CAPACITY - registeredCount, 0);
     const isFull = !isRegistered && spotsLeft === 0;
+    const cost = item.coinCost ?? COIN_COSTS.dailyMatch;
+    const isDiscounted = item.coinCost != null && item.coinCost < COIN_COSTS.dailyMatch;
 
     return (
       <View style={styles.card}>
@@ -346,7 +349,10 @@ export default function OneGameScreen({ navigation }: Props) {
         <View style={styles.cardFooter}>
           <View style={styles.coinCostRow}>
             <CoinIcon size={18} />
-            <Text style={styles.coinCostText}>{COIN_COSTS.dailyMatch}</Text>
+            <Text style={styles.coinCostText}>{cost}</Text>
+            {isDiscounted ? (
+              <Text style={styles.coinCostOriginal}>{COIN_COSTS.dailyMatch}</Text>
+            ) : null}
           </View>
           {isRegistered ? (
             <View style={styles.registeredBadge}>
@@ -510,6 +516,13 @@ const styles = StyleSheet.create({
   cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   coinCostRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   coinCostText: { fontFamily: font.sansXBold, fontSize: 18, color: colors.cream },
+  coinCostOriginal: {
+    fontFamily: font.sans,
+    fontSize: 13,
+    color: colors.cream45,
+    textDecorationLine: 'line-through',
+    marginLeft: 2,
+  },
 
   registerBtn: {
     backgroundColor: colors.cream2,
