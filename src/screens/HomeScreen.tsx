@@ -21,11 +21,17 @@ import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { getMyTeam } from '../services/teams';
 import { getTeamMatches, confirmAttendance, MatchWithTeams } from '../services/matches';
 import { getUnreadCount, getUpcomingAcceptedMatches } from '../services/notifications';
-import { Team } from '../types';
+import { getUserTournamentRegistrations } from '../services/tournaments';
+import { Team, Tournament } from '../types';
 import { useAuth } from '../context/AuthContext';
 import Monogram from '../components/ui/Monogram';
 import CreamButton from '../components/ui/CreamButton';
 import { colors, font, space, radius } from '../theme/tokens';
+
+// The next upcoming event can be a team/guest match or a registered daily match.
+type NextEvent =
+  | { kind: 'match'; match: MatchWithTeams; isGuest: boolean }
+  | { kind: 'daily'; tournament: Tournament };
 
 const homeBg = require('../../assets/textures/Night_Pitch_Dew_Bokeh.png');
 const grain   = require('../../assets/textures/grain.png');
@@ -52,9 +58,8 @@ export default function HomeScreen() {
   const navigation = useNavigation<NavProp>();
   const { session } = useAuth();
   const [myTeam, setMyTeam] = useState<Team | null>(null);
-  const [nextMatch, setNextMatch] = useState<MatchWithTeams | null>(null);
+  const [nextEvent, setNextEvent] = useState<NextEvent | null>(null);
   const [confirmed, setConfirmed] = useState(false);
-  const [isGuestMatch, setIsGuestMatch] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const load = useCallback(async () => {
@@ -64,34 +69,43 @@ export default function HomeScreen() {
       const team = await getMyTeam(session.user.id);
       setMyTeam(team);
 
-      // Combine team matches + accepted guest matches, pick the next one chronologically
+      // Gather every upcoming event the user has — team matches, accepted
+      // one-match guest spots, and registered daily matches — then pick the
+      // soonest one by date and time.
       const now = new Date();
-      const [teamMatches, guestMatches] = await Promise.all([
+      const [teamMatches, guestMatches, dailyTournaments] = await Promise.all([
         team ? getTeamMatches(team.id) : Promise.resolve([]),
         getUpcomingAcceptedMatches().catch(() => []),
+        getUserTournamentRegistrations(session.user.id).catch(() => []),
       ]);
+
+      const guestIds = new Set(guestMatches.map((m) => m.id));
       const seen = new Set<string>();
-      const allMatches = [...teamMatches, ...guestMatches].filter((m) => {
-        if (seen.has(m.id)) return false;
+      const entries: { time: number; event: NextEvent }[] = [];
+
+      for (const m of [...teamMatches, ...guestMatches]) {
+        if (seen.has(m.id)) continue;
         seen.add(m.id);
-        return new Date(`${m.date}T${m.time}`) > now;
-      });
-      allMatches.sort((a, b) =>
-        new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime(),
-      );
-      const resolvedMatch = allMatches[0] ?? null;
+        const dt = new Date(`${m.date}T${m.time}`);
+        if (dt <= now) continue;
+        entries.push({ time: dt.getTime(), event: { kind: 'match', match: m, isGuest: guestIds.has(m.id) } });
+      }
+      for (const tour of dailyTournaments) {
+        const dt = new Date(`${tour.startDate}T${tour.startTime ?? '00:00'}`);
+        if (dt <= now) continue;
+        entries.push({ time: dt.getTime(), event: { kind: 'daily', tournament: tour } });
+      }
 
-      setNextMatch(resolvedMatch);
+      entries.sort((a, b) => a.time - b.time);
+      const next = entries[0]?.event ?? null;
+      setNextEvent(next);
 
-      const isGuest = resolvedMatch ? guestMatches.some((m) => m.id === resolvedMatch.id) : false;
-      setIsGuestMatch(isGuest);
-
-      if (resolvedMatch) {
-        if (isGuest) {
+      if (next?.kind === 'match') {
+        if (next.isGuest) {
           setConfirmed(true);
         } else {
-          const saved = await AsyncStorage.getItem(`@confirmed_${session.user.id}_${resolvedMatch.id}`);
-          const isAlreadyConfirmed = (resolvedMatch.confirmedPlayerIds ?? []).includes(session.user.id);
+          const saved = await AsyncStorage.getItem(`@confirmed_${session.user.id}_${next.match.id}`);
+          const isAlreadyConfirmed = (next.match.confirmedPlayerIds ?? []).includes(session.user.id);
           setConfirmed(saved !== null ? saved === 'true' : isAlreadyConfirmed);
         }
       }
@@ -109,9 +123,10 @@ export default function HomeScreen() {
   };
 
   const handleConfirm = async () => {
-    if (!nextMatch) return;
+    if (nextEvent?.kind !== 'match') return;
+    const match = nextEvent.match;
     if (confirmed) {
-      const matchDateTime = new Date(`${nextMatch.date}T${nextMatch.time}`);
+      const matchDateTime = new Date(`${match.date}T${match.time}`);
       const hoursUntilMatch = (matchDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
       if (hoursUntilMatch <= 24) {
         Alert.alert(t('home.cancelLockTitle'), t('home.cancelLockMessage'));
@@ -120,10 +135,10 @@ export default function HomeScreen() {
     }
     const next = !confirmed;
     setConfirmed(next);
-    const storageKey = `@confirmed_${session!.user.id}_${nextMatch.id}`;
+    const storageKey = `@confirmed_${session!.user.id}_${match.id}`;
     await AsyncStorage.setItem(storageKey, next.toString());
     try {
-      await confirmAttendance(nextMatch.id, next);
+      await confirmAttendance(match.id, next);
     } catch (e: any) {
       Alert.alert(t('common.error'), e?.message ?? t('common.error'));
       // Revert local state if DB sync failed
@@ -201,44 +216,44 @@ export default function HomeScreen() {
         <View style={styles.nextMatchCard}>
           <Text style={styles.nextMatchEyebrow}>{t('home.nextMatch').toUpperCase()}</Text>
 
-          {nextMatch ? (
+          {nextEvent?.kind === 'match' ? (
             <>
               <View style={styles.teamsRow}>
                 <View style={styles.teamCol}>
                   <Monogram
-                    name={nextMatch.homeTeam.name}
+                    name={nextEvent.match.homeTeam.name}
                     size={52}
                     shape="square"
-                    imageUri={nextMatch.homeTeam.badgeUrl}
+                    imageUri={nextEvent.match.homeTeam.badgeUrl}
                   />
                   <Text style={styles.teamName} numberOfLines={2}>
-                    {nextMatch.homeTeam.name}
+                    {nextEvent.match.homeTeam.name}
                   </Text>
                 </View>
                 <Text style={styles.vsText}>vs</Text>
                 <View style={styles.teamCol}>
                   <Monogram
-                    name={nextMatch.awayTeam.name}
+                    name={nextEvent.match.awayTeam.name}
                     size={52}
                     shape="square"
-                    imageUri={nextMatch.awayTeam.badgeUrl}
+                    imageUri={nextEvent.match.awayTeam.badgeUrl}
                   />
                   <Text style={styles.teamName} numberOfLines={2}>
-                    {nextMatch.awayTeam.name}
+                    {nextEvent.match.awayTeam.name}
                   </Text>
                 </View>
               </View>
 
               <View style={styles.matchMeta}>
                 <Text style={styles.matchMetaText}>
-                  {formatMatchDate(nextMatch.date, i18n.language)} · {formatMatchTime(nextMatch.time)}
+                  {formatMatchDate(nextEvent.match.date, i18n.language)} · {formatMatchTime(nextEvent.match.time)}
                 </Text>
-                {nextMatch.location ? (
-                  <Text style={styles.matchMetaLocation}>{nextMatch.location}</Text>
+                {nextEvent.match.location ? (
+                  <Text style={styles.matchMetaLocation}>{nextEvent.match.location}</Text>
                 ) : null}
               </View>
 
-              {isGuestMatch ? (
+              {nextEvent.isGuest ? (
                 <View style={styles.confirmedPill}>
                   <Check size={15} color={colors.black} strokeWidth={2.5} />
                   <Text style={styles.confirmedText}>{t('home.attendanceConfirmed')}</Text>
@@ -251,6 +266,25 @@ export default function HomeScreen() {
               ) : (
                 <CreamButton label={t('home.confirmAttendance')} full onPress={handleConfirm} />
               )}
+            </>
+          ) : nextEvent?.kind === 'daily' ? (
+            <>
+              <Text style={styles.dailyName} numberOfLines={2}>{nextEvent.tournament.name}</Text>
+
+              <View style={styles.matchMeta}>
+                <Text style={styles.matchMetaText}>
+                  {formatMatchDate(nextEvent.tournament.startDate, i18n.language)}
+                  {nextEvent.tournament.startTime ? ` · ${formatMatchTime(nextEvent.tournament.startTime)}` : ''}
+                </Text>
+                {nextEvent.tournament.location ? (
+                  <Text style={styles.matchMetaLocation}>{nextEvent.tournament.location}</Text>
+                ) : null}
+              </View>
+
+              <View style={styles.confirmedPill}>
+                <Check size={15} color={colors.black} strokeWidth={2.5} />
+                <Text style={styles.confirmedText}>{t('onegame.registered')}</Text>
+              </View>
             </>
           ) : (
             <Text style={styles.noMatchText}>{t('match.noMatches')}</Text>
@@ -340,6 +374,7 @@ const styles = StyleSheet.create({
   },
   teamCol: { alignItems: 'center', gap: space.xs, flex: 1 },
   teamName: { fontFamily: font.sansBold, fontSize: 12, color: colors.cream70, textAlign: 'center' },
+  dailyName: { fontFamily: font.sansXBold, fontSize: 18, color: colors.cream, textAlign: 'center', alignSelf: 'stretch', lineHeight: 24 },
   vsText: { fontFamily: font.serifItalic, fontSize: 22, color: colors.cream45, textAlign: 'center' },
   matchMeta: { alignItems: 'center', alignSelf: 'stretch', gap: 4 },
   matchMetaText: { fontFamily: font.sans, fontSize: 12.5, color: colors.cream45 },
