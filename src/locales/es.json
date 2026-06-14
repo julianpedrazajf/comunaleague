@@ -194,7 +194,7 @@
     "fullTitle": "Equipo lleno",
     "fullMessage": "\"{{name}}\" no tiene cupos disponibles.",
     "fullLabel": "Lleno",
-    "spotsLeft": "Cupos disponibles: {{count}}",
+    "spotsLeft": "{{count}} cupos",
     "cancelPlayerRequestCaptainOnlyTitle": "Solo el capitán",
     "cancelPlayerRequestCaptainOnlyMessage": "Solo el capitán puede cancelar esta solicitud.",
     "cancelRequestHasPendingTitle": "No puedes cancelar aún",

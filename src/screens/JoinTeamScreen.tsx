@@ -161,7 +161,10 @@ export default function JoinTeamScreen({ navigation }: Props) {
                   <Text style={styles.teamName} numberOfLines={1}>{item.name}</Text>
                   <View style={styles.metaRow}>
                     <Chip label={item.format === 5 ? t('team.format5') : t('team.format11')} />
-                    <Text style={[styles.playerCount, isFull && styles.playerCountFull]}>
+                    <Text
+                      style={[styles.playerCount, isFull && styles.playerCountFull]}
+                      numberOfLines={1}
+                    >
                       {isFull
                         ? t('team.fullLabel')
                         : t('team.spotsLeft', { count: spotsLeft })}
@@ -246,7 +249,7 @@ const styles = StyleSheet.create({
   teamInfo: { flex: 1, gap: 6 },
   teamName: { fontFamily: font.sansBold, fontSize: 15, color: colors.cream },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  playerCount: { fontFamily: font.sans, fontSize: 11.5, color: colors.gray500 },
+  playerCount: { fontFamily: font.sans, fontSize: 11.5, color: colors.gray500, flexShrink: 1 },
   playerCountFull: { fontFamily: font.sansBold, color: '#EF4444' },
 
   joinBtn: {
@@ -256,6 +259,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
     minWidth: 68,
     alignItems: 'center',
+    flexShrink: 0,
   },
   joinBtnDisabled: { opacity: 0.45 },
   joinBtnText: { fontFamily: font.sansBold, fontSize: 13, color: colors.black },

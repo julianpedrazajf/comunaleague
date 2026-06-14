@@ -194,7 +194,7 @@
     "fullTitle": "Team full",
     "fullMessage": "\"{{name}}\" has no spots left.",
     "fullLabel": "Full",
-    "spotsLeft": "Spots left: {{count}}",
+    "spotsLeft": "{{count}} spots",
     "cancelPlayerRequestCaptainOnlyTitle": "Captain only",
     "cancelPlayerRequestCaptainOnlyMessage": "Only the captain can cancel this request.",
     "cancelRequestHasPendingTitle": "Can't cancel yet",
