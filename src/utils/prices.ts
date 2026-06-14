@@ -5,7 +5,7 @@
 // Coin cost per action.
 export const COIN_COSTS = {
   createTeam: 50,
-  joinTeam: 30,
+  joinTeam: 200,
   dailyMatch: 20,
   oneMatch: 10,
 };
