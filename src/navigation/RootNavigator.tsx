@@ -10,6 +10,7 @@ import ProfileSetupScreen from '../screens/ProfileSetupScreen';
 import JoinTeamScreen from '../screens/JoinTeamScreen';
 import CreateTeamScreen from '../screens/CreateTeamScreen';
 import OneGameScreen from '../screens/OneGameScreen';
+import TournamentScreen from '../screens/TournamentScreen';
 import ChatScreen from '../screens/ChatScreen';
 import LanguageScreen from '../screens/LanguageScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
@@ -37,6 +38,7 @@ export default function RootNavigator() {
           <Root.Screen name="JoinTeam" component={JoinTeamScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="CreateTeam" component={CreateTeamScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="OneGame" component={OneGameScreen} options={{ presentation: 'modal' }} />
+          <Root.Screen name="Tournaments" component={TournamentScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="Chat" component={ChatScreen} />
           <Root.Screen name="Language" component={LanguageScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="Notifications" component={NotificationsScreen} options={{ presentation: 'modal' }} />

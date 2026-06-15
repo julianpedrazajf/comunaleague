@@ -15,7 +15,7 @@ import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-n
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Bell, Zap, Users, Plus, Check } from 'lucide-react-native';
+import { Bell, Zap, Users, Plus, Check, Trophy, ChevronRight } from 'lucide-react-native';
 import SoccerBallIcon from '../components/ui/SoccerBallIcon';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { getMyTeam } from '../services/teams';
@@ -291,6 +291,22 @@ export default function HomeScreen() {
           )}
         </View>
 
+        {/* League window entry point */}
+        <TouchableOpacity
+          style={styles.leagueBtn}
+          onPress={() => navigation.navigate('Tournaments')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.leagueBtnIcon}>
+            <Trophy size={20} color={colors.cream} strokeWidth={2} />
+          </View>
+          <View style={styles.leagueBtnText}>
+            <Text style={styles.leagueBtnTitle}>{t('home.leagueTitle')}</Text>
+            <Text style={styles.leagueBtnSub}>{t('home.leagueSub')}</Text>
+          </View>
+          <ChevronRight size={18} color={colors.cream45} strokeWidth={2} />
+        </TouchableOpacity>
+
         {/* Spacer for floating tab bar */}
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -392,6 +408,28 @@ const styles = StyleSheet.create({
     gap: space.sm,
   },
   confirmedText: { fontFamily: font.sansBold, fontSize: 15, color: colors.black },
+
+  leagueBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    backgroundColor: colors.surface1,
+    borderRadius: radius.card,
+    padding: space.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(242,179,102,0.30)',
+  },
+  leagueBtnIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.cardSm,
+    backgroundColor: colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  leagueBtnText: { flex: 1, gap: 2 },
+  leagueBtnTitle: { fontFamily: font.sansXBold, fontSize: 15, color: colors.cream },
+  leagueBtnSub: { fontFamily: font.sans, fontSize: 12, color: colors.cream45 },
 
   quickActions: {
     paddingHorizontal: 18,
