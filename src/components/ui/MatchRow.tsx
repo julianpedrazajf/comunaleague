@@ -28,12 +28,13 @@ interface MatchRowProps {
   time: string;
   location?: string;
   status: MatchStatus;
+  label?: string;
   attendanceConfirmed?: boolean;
   captainAction?: CaptainAction;
   onViewPlayers?: () => void;
 }
 
-export default function MatchRow({ homeTeam, awayTeam, date, time, location, status, attendanceConfirmed, captainAction, onViewPlayers }: MatchRowProps) {
+export default function MatchRow({ homeTeam, awayTeam, date, time, location, status, label, attendanceConfirmed, captainAction, onViewPlayers }: MatchRowProps) {
   const { t } = useTranslation();
   const chipVariant = status === 'live' ? 'live' : status === 'final' ? 'final' : 'default';
   const chipLabel = status === 'live' ? t('match.live') : status === 'final' ? t('match.final') : t('match.upcoming_chip');
@@ -42,8 +43,9 @@ export default function MatchRow({ homeTeam, awayTeam, date, time, location, sta
 
   return (
     <View style={styles.card}>
+      {label && <Text style={styles.label}>{label}</Text>}
       <View style={styles.topRow}>
-        <Text style={styles.dateText}>{date} · {time}</Text>
+        <Text style={styles.dateText}>{time ? `${date} · ${time}` : date}</Text>
         <Chip label={chipLabel} variant={chipVariant} />
       </View>
 
@@ -121,6 +123,7 @@ const styles = StyleSheet.create({
     padding: space.lg,
     gap: space.md,
   },
+  label: { fontFamily: font.sansBold, fontSize: 9.5, letterSpacing: 0.8, color: '#F2B366', textTransform: 'uppercase' },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   dateText: { fontFamily: font.sansBold, fontSize: 10, letterSpacing: 0.8, color: colors.cream70, textTransform: 'uppercase' },
   teamsRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },

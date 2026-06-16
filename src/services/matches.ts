@@ -2,7 +2,12 @@ import { supabase } from './supabase';
 import { Match } from '../types';
 
 type TeamInfo = { id: string; name: string; badgeUrl?: string };
-export type MatchWithTeams = Match & { homeTeam: TeamInfo; awayTeam: TeamInfo };
+// `leagueMatchId` is set when this row mirrors a league fixture (see 035).
+export type MatchWithTeams = Match & {
+  homeTeam: TeamInfo;
+  awayTeam: TeamInfo;
+  leagueMatchId?: string | null;
+};
 
 export async function confirmAttendance(matchId: string, attending: boolean): Promise<void> {
   const { error } = await supabase.rpc('confirm_attendance', { match_id: matchId, attending });

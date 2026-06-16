@@ -251,6 +251,78 @@ async function rpc(fn: string, args: Record<string, unknown>): Promise<void> {
   if (error) throw error;
 }
 
+// ─── My league matches (for the "My Matches" calendar) ───────────────────────
+
+export interface LeagueMatchView {
+  id: string;
+  phase: 'regular' | 'semifinal' | 'final';
+  matchday: number | null;
+  seriesId: string | null;
+  leg: number | null;
+  date: string; // 'YYYY-MM-DD' — only scheduled matches are returned
+  time: string | null; // 'HH:MM:SS'
+  location: string | null;
+  matchId: string | null; // mirror match row (drives the social/attendance layer)
+  confirmedPlayerIds: string[]; // attendance, from the mirror match
+  homeTeam: { id: string; name: string; badgeUrl?: string };
+  awayTeam: { id: string; name: string; badgeUrl?: string };
+  homeGoals: number | null;
+  awayGoals: number | null;
+  played: boolean;
+}
+
+/**
+ * Scheduled league matches the user's team plays (home or away), across the
+ * whole season, so they can be browsed on the My Matches calendar. Matches the
+ * admin hasn't scheduled yet (no date) are omitted.
+ */
+export async function getMyLeagueMatches(userId: string): Promise<LeagueMatchView[]> {
+  const team = await getMyTeam(userId);
+  if (!team) return [];
+
+  const { data, error } = await supabase
+    .from('league_matches')
+    .select(
+      'id, phase, matchday, seriesId, leg, date, time, location, homeGoals, awayGoals, played, matchId, ' +
+        'mirror:matchId(confirmedPlayerIds), ' +
+        'homeTeam:homeTeamId(id, name, badgeUrl), awayTeam:awayTeamId(id, name, badgeUrl)',
+    )
+    .or(`homeTeamId.eq.${team.id},awayTeamId.eq.${team.id}`)
+    .not('date', 'is', null)
+    .order('date', { ascending: true })
+    .order('time', { ascending: true });
+  if (error) throw error;
+
+  return (data ?? []).map((m: any) => ({
+    id: m.id,
+    phase: m.phase,
+    matchday: m.matchday,
+    seriesId: m.seriesId,
+    leg: m.leg,
+    date: m.date,
+    time: m.time,
+    location: m.location,
+    matchId: m.matchId ?? null,
+    confirmedPlayerIds: (m.mirror?.confirmedPlayerIds ?? []) as string[],
+    homeTeam: { id: m.homeTeam.id, name: m.homeTeam.name, badgeUrl: m.homeTeam.badgeUrl ?? undefined },
+    awayTeam: { id: m.awayTeam.id, name: m.awayTeam.name, badgeUrl: m.awayTeam.badgeUrl ?? undefined },
+    homeGoals: m.homeGoals,
+    awayGoals: m.awayGoals,
+    played: m.played,
+  }));
+}
+
+/** Label for a league match, e.g. "League · Matchday 3" or "League · Semifinal · 1st leg". */
+export function leagueMatchLabel(
+  m: Pick<LeagueMatchView, 'phase' | 'matchday' | 'leg'>,
+  t: (k: string, o?: Record<string, unknown>) => string,
+): string {
+  if (m.phase === 'regular') return `${t('match.leagueTag')} · ${t('league.fecha', { n: m.matchday })}`;
+  const round = m.phase === 'final' ? t('league.finalRound') : t('league.semifinalLabel');
+  const leg = m.leg === 1 ? t('league.ida') : m.leg === 2 ? t('league.vuelta') : '';
+  return `${t('match.leagueTag')} · ${round}${leg ? ` · ${leg}` : ''}`;
+}
+
 // ─── Result entry (admin / backend) ──────────────────────────────────────────
 
 /**

@@ -20,6 +20,7 @@ import { getTeamMatches, MatchWithTeams } from '../services/matches';
 import { createPlayerRequest, cancelPlayerRequest, getTeamOpenRequests } from '../services/playerRequests';
 import { hasPendingApplicants, getUpcomingAcceptedMatches } from '../services/notifications';
 import { getUserTournamentRegistrations } from '../services/tournaments';
+import { getMyLeagueMatches, leagueMatchLabel, LeagueMatchView } from '../services/league';
 import { Team, PlayerRequest, Tournament } from '../types';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import MatchRow from '../components/ui/MatchRow';
@@ -46,6 +47,7 @@ function formatTime(timeStr: string): string {
   return `${h % 12 || 12}:${minutes} ${ampm}`;
 }
 
+
 export default function MatchScheduleScreen() {
   const { t, i18n } = useTranslation();
   const { session } = useAuth();
@@ -54,6 +56,7 @@ export default function MatchScheduleScreen() {
   const [team, setTeam] = useState<Team | null>(null);
   const [matches, setMatches] = useState<MatchWithTeams[]>([]);
   const [soloMatches, setSoloMatches] = useState<Tournament[]>([]);
+  const [leagueMatches, setLeagueMatches] = useState<LeagueMatchView[]>([]);
   const [requestMap, setRequestMap] = useState<Map<string, PlayerRequest>>(new Map());
   const [guestMatchIds, setGuestMatchIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -68,16 +71,19 @@ export default function MatchScheduleScreen() {
       if (session) {
         const found = await getMyTeam(session.user.id);
         setTeam(found);
-        const [teamMatches, guestMatches, openReqs, registeredTournaments] = await Promise.all([
+        const [teamMatches, guestMatches, openReqs, registeredTournaments, leagueData] = await Promise.all([
           found ? getTeamMatches(found.id) : Promise.resolve([]),
           getUpcomingAcceptedMatches().catch(() => []),
           found ? getTeamOpenRequests(found.id) : Promise.resolve([]),
           getUserTournamentRegistrations(session.user.id).catch(() => []),
+          getMyLeagueMatches(session.user.id).catch(() => []),
         ]);
 
         // Combine team + guest matches, deduplicate, sort by date+time
+        // The team's own league fixtures are shown in the league section below,
+        // so keep them out of the team-matches list (guest league matches stay).
         const seen = new Set<string>();
-        const combined = [...teamMatches, ...guestMatches].filter((m) => {
+        const combined = [...teamMatches.filter((m) => !m.leagueMatchId), ...guestMatches].filter((m) => {
           if (seen.has(m.id)) return false;
           seen.add(m.id);
           return true;
@@ -87,6 +93,7 @@ export default function MatchScheduleScreen() {
         );
         setMatches(combined);
         setSoloMatches(registeredTournaments);
+        setLeagueMatches(leagueData);
         setGuestMatchIds(new Set(guestMatches.map((m) => m.id)));
         setRequestMap(new Map(openReqs.map((r) => [r.matchId, r])));
       }
@@ -100,8 +107,12 @@ export default function MatchScheduleScreen() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const matchDateSet = useMemo(
-    () => new Set([...matches.map(m => m.date), ...soloMatches.map(m => m.startDate)]),
-    [matches, soloMatches],
+    () => new Set([
+      ...matches.map(m => m.date),
+      ...soloMatches.map(m => m.startDate),
+      ...leagueMatches.map(m => m.date),
+    ]),
+    [matches, soloMatches, leagueMatches],
   );
 
   const filteredMatches = useMemo(() =>
@@ -114,9 +125,14 @@ export default function MatchScheduleScreen() {
     [soloMatches, selectedDate]
   );
 
-  const handleTogglePlayerRequest = async (match: MatchWithTeams) => {
+  const filteredLeagueMatches = useMemo(() =>
+    selectedDate ? leagueMatches.filter(m => m.date === selectedDate) : leagueMatches,
+    [leagueMatches, selectedDate]
+  );
+
+  const handleTogglePlayerRequest = async (matchId: string) => {
     if (!team || !session) return;
-    const existingReq = requestMap.get(match.id);
+    const existingReq = requestMap.get(matchId);
     if (session.user.id !== team.ownerId) {
       if (existingReq) {
         Alert.alert(t('team.cancelPlayerRequestCaptainOnlyTitle'), t('team.cancelPlayerRequestCaptainOnlyMessage'));
@@ -144,7 +160,7 @@ export default function MatchScheduleScreen() {
                 await cancelPlayerRequest(existingReq.id);
                 setRequestMap((prev) => {
                   const next = new Map(prev);
-                  next.delete(match.id);
+                  next.delete(matchId);
                   return next;
                 });
               } catch (e: any) {
@@ -164,9 +180,9 @@ export default function MatchScheduleScreen() {
             text: t('team.postRequest'),
             onPress: async () => {
               try {
-                const id = await createPlayerRequest(team.id, match.id);
-                const newReq: PlayerRequest = { id, teamId: team.id, matchId: match.id, createdAt: new Date().toISOString(), status: 'open' };
-                setRequestMap((prev) => new Map(prev).set(match.id, newReq));
+                const id = await createPlayerRequest(team.id, matchId);
+                const newReq: PlayerRequest = { id, teamId: team.id, matchId, createdAt: new Date().toISOString(), status: 'open' };
+                setRequestMap((prev) => new Map(prev).set(matchId, newReq));
               } catch (e: any) {
                 Alert.alert(t('common.error'), e?.message ?? t('common.error'));
               }
@@ -225,6 +241,30 @@ export default function MatchScheduleScreen() {
     </TouchableOpacity>
   );
 
+  const renderLeagueMatch = (m: LeagueMatchView) => {
+    const isUpcoming = !m.played;
+    const hasRequest = m.matchId ? requestMap.has(m.matchId) : false;
+    const userConfirmed = session ? m.confirmedPlayerIds.includes(session.user.id) : undefined;
+    return (
+      <MatchRow
+        key={m.id}
+        label={leagueMatchLabel(m, t)}
+        homeTeam={{ name: m.homeTeam.name, badgeUrl: m.homeTeam.badgeUrl, score: m.played ? (m.homeGoals ?? 0) : undefined }}
+        awayTeam={{ name: m.awayTeam.name, badgeUrl: m.awayTeam.badgeUrl, score: m.played ? (m.awayGoals ?? 0) : undefined }}
+        date={formatDate(m.date, i18n.language)}
+        time={m.time ? formatTime(m.time) : ''}
+        location={m.location ?? undefined}
+        status={m.played ? 'final' : 'upcoming'}
+        attendanceConfirmed={isUpcoming ? userConfirmed : undefined}
+        captainAction={isUpcoming && isCaptain && m.matchId ? {
+          label: hasRequest ? t('team.cancelPlayerRequest') : t('team.needPlayer'),
+          active: hasRequest,
+          onPress: () => handleTogglePlayerRequest(m.matchId!),
+        } : undefined}
+      />
+    );
+  };
+
   const renderMatch = ({ item }: { item: MatchWithTeams }) => {
     const hasRequest = requestMap.has(item.id);
     const isUpcoming = !item.result;
@@ -243,7 +283,7 @@ export default function MatchScheduleScreen() {
         captainAction={isUpcoming && !!team && !guestMatchIds.has(item.id) ? {
           label: hasRequest ? t('team.cancelPlayerRequest') : t('team.needPlayer'),
           active: hasRequest,
-          onPress: () => handleTogglePlayerRequest(item),
+          onPress: () => handleTogglePlayerRequest(item.id),
         } : undefined}
         onViewPlayers={guestMatchIds.has(item.id) ? () => navigation.navigate('DailyMatchPlayers', {
           matchId: item.id,
@@ -296,12 +336,20 @@ export default function MatchScheduleScreen() {
           data={filteredMatches}
           keyExtractor={(item) => item.id}
           contentContainerStyle={
-            filteredMatches.length === 0 && filteredSoloMatches.length === 0
+            filteredMatches.length === 0 && filteredSoloMatches.length === 0 && filteredLeagueMatches.length === 0
               ? styles.emptyContainer
               : styles.listContent
           }
           ListHeaderComponent={
             <>
+              {filteredLeagueMatches.length > 0 ? (
+                <View style={styles.soloSection}>
+                  <SectionHeader label={t('match.leagueMatches')} />
+                  <View style={styles.soloList}>
+                    {filteredLeagueMatches.map(renderLeagueMatch)}
+                  </View>
+                </View>
+              ) : null}
               {filteredSoloMatches.length > 0 ? (
                 <View style={styles.soloSection}>
                   <SectionHeader label={t('match.soloMatches')} />
@@ -316,7 +364,7 @@ export default function MatchScheduleScreen() {
             </>
           }
           ListEmptyComponent={
-            filteredSoloMatches.length === 0 ? (
+            filteredSoloMatches.length === 0 && filteredLeagueMatches.length === 0 ? (
               <View style={styles.centered}>
                 <Text style={styles.emptyTitle}>{t('match.noMatches')}</Text>
               </View>
