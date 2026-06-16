@@ -125,10 +125,13 @@ export default function MatchScheduleScreen() {
     [soloMatches, selectedDate]
   );
 
-  const filteredLeagueMatches = useMemo(() =>
-    selectedDate ? leagueMatches.filter(m => m.date === selectedDate) : leagueMatches,
-    [leagueMatches, selectedDate]
-  );
+  // Default view shows only upcoming league matches (today onward). Past matches
+  // are still on the calendar and appear when their day is selected.
+  const filteredLeagueMatches = useMemo(() => {
+    if (selectedDate) return leagueMatches.filter(m => m.date === selectedDate);
+    const today = new Date().toISOString().split('T')[0];
+    return leagueMatches.filter(m => m.date >= today);
+  }, [leagueMatches, selectedDate]);
 
   const handleTogglePlayerRequest = async (matchId: string) => {
     if (!team || !session) return;
@@ -245,6 +248,7 @@ export default function MatchScheduleScreen() {
     const isUpcoming = !m.played;
     const hasRequest = m.matchId ? requestMap.has(m.matchId) : false;
     const userConfirmed = session ? m.confirmedPlayerIds.includes(session.user.id) : undefined;
+    const hasPens = m.played && m.homePens != null && m.awayPens != null;
     return (
       <MatchRow
         key={m.id}
@@ -255,6 +259,7 @@ export default function MatchScheduleScreen() {
         time={m.time ? formatTime(m.time) : ''}
         location={m.location ?? undefined}
         status={m.played ? 'final' : 'upcoming'}
+        penaltyText={hasPens ? `${t('league.penalties')} ${m.homePens}-${m.awayPens}` : undefined}
         attendanceConfirmed={isUpcoming ? userConfirmed : undefined}
         captainAction={isUpcoming && isCaptain && m.matchId ? {
           label: hasRequest ? t('team.cancelPlayerRequest') : t('team.needPlayer'),

@@ -35,6 +35,10 @@ export interface LeagueState {
   status: LeagueStatus;
   maxClubs: number;
   estado: EstadoTorneo;
+  // league_matches.id -> scheduled date/time (null until the admin sets it)
+  schedule: Record<string, { date: string | null; time: string | null }>;
+  // playoff leg "<seriesId>:<leg>" -> scheduled date/time (leg 0 = single-game final)
+  playoffSchedule: Record<string, { date: string | null; time: string | null }>;
 }
 
 interface DBLeagueMatch {
@@ -43,6 +47,8 @@ interface DBLeagueMatch {
   matchday: number | null;
   seriesId: string | null;
   leg: number | null;
+  date: string | null;
+  time: string | null;
   homeTeamId: string;
   awayTeamId: string;
   homeGoals: number | null;
@@ -106,6 +112,22 @@ export async function getMyLeagueState(userId: string): Promise<LeagueState | nu
     .sort((a, b) => a.id.localeCompare(b.id));
   const final = series.find((s) => s.ronda === 'final') ?? null;
 
+  const schedule: Record<string, { date: string | null; time: string | null }> = {};
+  const playoffSchedule: Record<string, { date: string | null; time: string | null }> = {};
+  for (const m of rows) {
+    schedule[m.id] = { date: m.date ?? null, time: m.time ?? null };
+    if (m.phase === 'semifinal' && m.seriesId) {
+      playoffSchedule[`${m.seriesId}:${m.leg ?? 0}`] = { date: m.date ?? null, time: m.time ?? null };
+    }
+  }
+  // Final: schedule comes from the same single row buildSeries uses, so the
+  // date and the result never come from different legs.
+  const finalRows = rows.filter((m) => m.phase === 'final' && m.seriesId);
+  if (finalRows.length) {
+    const fr = pickFinalRow(finalRows);
+    playoffSchedule[`${fr.seriesId}:0`] = { date: fr.date ?? null, time: fr.time ?? null };
+  }
+
   const tabla = calcularTabla(partidosLiga, clubes);
   const estado: EstadoTorneo = {
     clubes,
@@ -124,7 +146,16 @@ export async function getMyLeagueState(userId: string): Promise<LeagueState | nu
     status: league.status,
     maxClubs: league.maxClubs,
     estado,
+    schedule,
+    playoffSchedule,
   };
+}
+
+// Single-match final: pick one row deterministically — the host's home leg
+// (leg null for current data, or the 2nd leg of a legacy two-legged final), so
+// the date and the result always come from the same match.
+function pickFinalRow(legs: DBLeagueMatch[]): DBLeagueMatch {
+  return legs.slice().sort((a, b) => (b.leg ?? 99) - (a.leg ?? 99))[0];
 }
 
 /** Group playoff leg rows into engine series. clubA hosts the 2nd leg. */
@@ -139,13 +170,41 @@ function buildSeries(rows: DBLeagueMatch[]): SerieEliminatoria[] {
 
   const series: SerieEliminatoria[] = [];
   for (const [seriesId, legs] of bySeries) {
+    // Final: single match (clubA hosts). Use one consistent row.
+    if (legs.some((l) => l.phase === 'final')) {
+      const row = pickFinalRow(legs);
+      const serie: SerieEliminatoria = {
+        id: seriesId,
+        ronda: 'final',
+        juegoUnico: true,
+        clubAId: row.homeTeamId, // host
+        clubBId: row.awayTeamId,
+        ida: { localId: row.awayTeamId, visitanteId: row.homeTeamId, golesLocal: null, golesVisitante: null }, // unused
+        vuelta: {
+          localId: row.homeTeamId,
+          visitanteId: row.awayTeamId,
+          golesLocal: row.homeGoals,
+          golesVisitante: row.awayGoals,
+        },
+        penales:
+          row.homePens != null && row.awayPens != null
+            ? { clubA: row.homePens, clubB: row.awayPens }
+            : undefined,
+        ganadorId: null,
+      };
+      serie.ganadorId = resolverSerie(serie);
+      series.push(serie);
+      continue;
+    }
+
+    // Semifinals: two legs.
     const ida = legs.find((l) => l.leg === 1);
     const vuelta = legs.find((l) => l.leg === 2);
     if (!ida || !vuelta) continue;
 
     const serie: SerieEliminatoria = {
       id: seriesId,
-      ronda: ida.phase === 'final' ? 'final' : 'semifinal',
+      ronda: 'semifinal',
       clubAId: vuelta.homeTeamId, // hosts the 2nd leg
       clubBId: ida.homeTeamId, // hosts the 1st leg
       ida: {
@@ -226,10 +285,13 @@ export async function ensureProgression(state: LeagueState): Promise<boolean> {
       resolverSerie(semifinales[1])!,
     ];
     const finalSerie = sembrarFinal(ganadores, paSeeding, tabla);
+    // Single-match final: one row, hosted by clubA (higher accumulated points).
     await rpc('persist_playoff_matches', {
       p_league_id: leagueId,
       p_phase: 'final',
-      p_matches: serieToPayload(finalSerie),
+      p_matches: [
+        { seriesId: finalSerie.id, leg: null, homeTeamId: finalSerie.clubAId, awayTeamId: finalSerie.clubBId },
+      ],
     });
     return true;
   }
@@ -268,6 +330,8 @@ export interface LeagueMatchView {
   awayTeam: { id: string; name: string; badgeUrl?: string };
   homeGoals: number | null;
   awayGoals: number | null;
+  homePens: number | null;
+  awayPens: number | null;
   played: boolean;
 }
 
@@ -283,7 +347,7 @@ export async function getMyLeagueMatches(userId: string): Promise<LeagueMatchVie
   const { data, error } = await supabase
     .from('league_matches')
     .select(
-      'id, phase, matchday, seriesId, leg, date, time, location, homeGoals, awayGoals, played, matchId, ' +
+      'id, phase, matchday, seriesId, leg, date, time, location, homeGoals, awayGoals, homePens, awayPens, played, matchId, ' +
         'mirror:matchId(confirmedPlayerIds), ' +
         'homeTeam:homeTeamId(id, name, badgeUrl), awayTeam:awayTeamId(id, name, badgeUrl)',
     )
@@ -308,6 +372,8 @@ export async function getMyLeagueMatches(userId: string): Promise<LeagueMatchVie
     awayTeam: { id: m.awayTeam.id, name: m.awayTeam.name, badgeUrl: m.awayTeam.badgeUrl ?? undefined },
     homeGoals: m.homeGoals,
     awayGoals: m.awayGoals,
+    homePens: m.homePens ?? null,
+    awayPens: m.awayPens ?? null,
     played: m.played,
   }));
 }

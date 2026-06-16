@@ -8,7 +8,7 @@ import { X, Trophy, Check } from 'lucide-react-native';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { getMyLeagueState, ensureProgression, clubMap, LeagueState } from '../services/league';
-import { actualizarPuntajeAcumulado, resumenSerie, PartidoLiga, SerieEliminatoria } from '../utils/league';
+import { resumenSerie, PartidoLiga, SerieEliminatoria } from '../utils/league';
 import Monogram from '../components/ui/Monogram';
 import SectionHeader from '../components/ui/SectionHeader';
 import { colors, font, space, radius } from '../theme/tokens';
@@ -19,7 +19,7 @@ type Tab = 'table' | 'fixtures' | 'playoffs';
 const QUALIFY = 4; // clubs that advance to playoffs
 
 export default function TournamentScreen({ navigation }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { session } = useAuth();
   const [tab, setTab] = useState<Tab>('table');
   const [state, setState] = useState<LeagueState | null>(null);
@@ -63,12 +63,6 @@ export default function TournamentScreen({ navigation }: Props) {
   const clubs = useMemo(() => (estado ? clubMap(estado) : new Map()), [estado]);
   const name = (id: string) => clubs.get(id)?.nombre ?? id;
   const badge = (id: string) => clubs.get(id)?.escudo;
-
-  // PA snapshot that decided the final's host (regular + semis, not the final).
-  const paSeeding = useMemo(
-    () => (estado ? actualizarPuntajeAcumulado({ ...estado, final: null }) : {}),
-    [estado],
-  );
 
   const fechas = useMemo(() => {
     if (!estado) return [] as [number, PartidoLiga[]][];
@@ -146,27 +140,42 @@ export default function TournamentScreen({ navigation }: Props) {
           <View key={fecha} style={{ gap: space.sm }}>
             <SectionHeader label={t('league.fecha', { n: fecha })} />
             <View style={styles.fixtureCard}>
-              {partidos.map((p, i) => (
-                <View key={p.id} style={[styles.fixtureRow, i > 0 && styles.fixtureDivider]}>
-                  <Text style={[styles.fixtureTeam, styles.fixtureHome]} numberOfLines={1}>
-                    {name(p.localId)}
-                  </Text>
-                  <View style={styles.scoreBox}>
-                    {p.jugado ? (
-                      <>
-                        <Text style={styles.scoreText}>{p.golesLocal}</Text>
-                        <Text style={styles.scoreDash}>-</Text>
-                        <Text style={styles.scoreText}>{p.golesVisitante}</Text>
-                      </>
-                    ) : (
-                      <Text style={styles.scoreDash}>vs</Text>
-                    )}
+              {partidos.map((p, i) => {
+                const sched = state?.schedule[p.id];
+                const dateLabel = sched?.date
+                  ? formatFixtureDate(sched.date, sched.time, i18n.language)
+                  : t('league.unscheduled');
+                return (
+                  <View key={p.id} style={[styles.fixtureRow, i > 0 && styles.fixtureDivider]}>
+                    <View style={styles.fixtureMain}>
+                      <View style={styles.fixtureSideHome}>
+                        <Text style={[styles.fixtureTeam, styles.fixtureHome]} numberOfLines={1}>
+                          {name(p.localId)}
+                        </Text>
+                        <Monogram name={name(p.localId)} size={24} shape="square" imageUri={badge(p.localId)} />
+                      </View>
+                      <View style={styles.scoreBox}>
+                        {p.jugado ? (
+                          <>
+                            <Text style={styles.scoreText}>{p.golesLocal}</Text>
+                            <Text style={styles.scoreDash}>-</Text>
+                            <Text style={styles.scoreText}>{p.golesVisitante}</Text>
+                          </>
+                        ) : (
+                          <Text style={styles.scoreDash}>vs</Text>
+                        )}
+                      </View>
+                      <View style={styles.fixtureSideAway}>
+                        <Monogram name={name(p.visitanteId)} size={24} shape="square" imageUri={badge(p.visitanteId)} />
+                        <Text style={[styles.fixtureTeam, styles.fixtureAway]} numberOfLines={1}>
+                          {name(p.visitanteId)}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.fixtureDate}>{dateLabel}</Text>
                   </View>
-                  <Text style={[styles.fixtureTeam, styles.fixtureAway]} numberOfLines={1}>
-                    {name(p.visitanteId)}
-                  </Text>
-                </View>
-              ))}
+                );
+              })}
             </View>
           </View>
         ))}
@@ -177,9 +186,12 @@ export default function TournamentScreen({ navigation }: Props) {
   // ── Playoffs ────────────────────────────────────────────────────────────
   const renderSerie = (serie: SerieEliminatoria, llave?: string) => {
     const r = resumenSerie(serie);
-    const isFinal = serie.ronda === 'final';
-    const paA = paSeeding[serie.clubAId] ?? 0;
-    const paB = paSeeding[serie.clubBId] ?? 0;
+    const single = !!serie.juegoUnico;
+
+    const legDate = (leg: number) => {
+      const s = state?.playoffSchedule[`${serie.id}:${leg}`];
+      return s?.date ? formatFixtureDate(s.date, s.time, i18n.language) : t('league.unscheduled');
+    };
 
     const teamRow = (clubId: string, global: number, penales?: number) => {
       const isWinner = r.ganadorId === clubId;
@@ -206,28 +218,31 @@ export default function TournamentScreen({ navigation }: Props) {
 
         <View style={styles.serieHairline} />
 
-        <View style={styles.legRow}>
-          <Text style={styles.legLabel}>{t('league.ida')}</Text>
-          <Text style={styles.legText} numberOfLines={1}>
-            {name(serie.ida.localId)} {legScore(serie.ida.golesLocal, serie.ida.golesVisitante)} {name(serie.ida.visitanteId)}
-          </Text>
-        </View>
-        <View style={styles.legRow}>
-          <Text style={styles.legLabel}>{t('league.vuelta')}</Text>
-          <Text style={styles.legText} numberOfLines={1}>
-            {name(serie.vuelta.localId)} {legScore(serie.vuelta.golesLocal, serie.vuelta.golesVisitante)} {name(serie.vuelta.visitanteId)}
-          </Text>
-        </View>
-        {r.porPenales && (
-          <Text style={styles.serieNote}>
-            {t('league.penalties')}: {name(serie.clubAId)} {serie.penales?.clubA}-{serie.penales?.clubB} {name(serie.clubBId)}
-          </Text>
+        {single ? (
+          <Text style={styles.legDateSingle}>{legDate(0)}</Text>
+        ) : (
+          <>
+            <View style={styles.legBlock}>
+              <View style={styles.legRow}>
+                <Text style={styles.legLabel}>{t('league.ida')}</Text>
+                <Text style={styles.legText} numberOfLines={1}>
+                  {name(serie.ida.localId)} {legScore(serie.ida.golesLocal, serie.ida.golesVisitante)} {name(serie.ida.visitanteId)}
+                </Text>
+              </View>
+              <Text style={styles.legDate}>{legDate(1)}</Text>
+            </View>
+            <View style={styles.legBlock}>
+              <View style={styles.legRow}>
+                <Text style={styles.legLabel}>{t('league.vuelta')}</Text>
+                <Text style={styles.legText} numberOfLines={1}>
+                  {name(serie.vuelta.localId)} {legScore(serie.vuelta.golesLocal, serie.vuelta.golesVisitante)} {name(serie.vuelta.visitanteId)}
+                </Text>
+              </View>
+              <Text style={styles.legDate}>{legDate(2)}</Text>
+            </View>
+          </>
         )}
 
-        <Text style={styles.serieNote}>
-          {t('league.closesHome', { club: name(serie.clubAId) })}
-          {isFinal ? `  ·  ${t('league.pa')} ${name(serie.clubAId)} ${paA} / ${name(serie.clubBId)} ${paB}` : ''}
-        </Text>
       </View>
     );
   };
@@ -321,6 +336,16 @@ function legScore(a: number | null, b: number | null): string {
   return a == null || b == null ? '–' : `${a}-${b}`;
 }
 
+function formatFixtureDate(dateStr: string, timeStr: string | null, locale: string): string {
+  const d = new Date(`${dateStr}T${timeStr ?? '00:00'}`);
+  const datePart = d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
+  if (!timeStr) return datePart;
+  const [h, m] = timeStr.split(':');
+  const hh = parseInt(h, 10);
+  const ampm = hh >= 12 ? 'PM' : 'AM';
+  return `${datePart} · ${hh % 12 || 12}:${m} ${ampm}`;
+}
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
@@ -405,9 +430,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
     paddingHorizontal: space.lg,
   },
-  fixtureRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.md },
+  fixtureRow: { paddingVertical: space.md, gap: 6 },
+  fixtureMain: { flexDirection: 'row', alignItems: 'center' },
+  fixtureSideHome: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm },
+  fixtureSideAway: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: space.sm },
+  fixtureDate: { fontFamily: font.sans, fontSize: 11, color: colors.cream45, textAlign: 'center' },
   fixtureDivider: { borderTopWidth: 1, borderTopColor: colors.hairline },
-  fixtureTeam: { flex: 1, fontFamily: font.sansBold, fontSize: 13, color: colors.cream70 },
+  fixtureTeam: { flexShrink: 1, fontFamily: font.sansBold, fontSize: 13, color: colors.cream70 },
   fixtureHome: { textAlign: 'right' },
   fixtureAway: { textAlign: 'left' },
   scoreBox: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: space.md, minWidth: 54, justifyContent: 'center' },
@@ -456,6 +485,7 @@ const styles = StyleSheet.create({
   serieGlobalWin: { color: colors.cream },
   penText: { fontFamily: font.sansBold, fontSize: 11, color: colors.cream45 },
   serieHairline: { height: 1, backgroundColor: colors.hairline, marginVertical: 2 },
+  legBlock: { gap: 2 },
   legRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   legLabel: {
     width: 48,
@@ -466,5 +496,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   legText: { flex: 1, fontFamily: font.sans, fontSize: 12, color: colors.cream70 },
+  legDate: { marginLeft: 48 + space.sm, fontFamily: font.sans, fontSize: 10.5, color: colors.cream45 },
+  legDateSingle: { fontFamily: font.sans, fontSize: 12, color: colors.cream70, textAlign: 'center' },
   serieNote: { fontFamily: font.sans, fontSize: 11, color: colors.cream45, marginTop: 2 },
 });

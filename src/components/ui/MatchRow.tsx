@@ -29,12 +29,13 @@ interface MatchRowProps {
   location?: string;
   status: MatchStatus;
   label?: string;
+  penaltyText?: string;
   attendanceConfirmed?: boolean;
   captainAction?: CaptainAction;
   onViewPlayers?: () => void;
 }
 
-export default function MatchRow({ homeTeam, awayTeam, date, time, location, status, label, attendanceConfirmed, captainAction, onViewPlayers }: MatchRowProps) {
+export default function MatchRow({ homeTeam, awayTeam, date, time, location, status, label, penaltyText, attendanceConfirmed, captainAction, onViewPlayers }: MatchRowProps) {
   const { t } = useTranslation();
   const chipVariant = status === 'live' ? 'live' : status === 'final' ? 'final' : 'default';
   const chipLabel = status === 'live' ? t('match.live') : status === 'final' ? t('match.final') : t('match.upcoming_chip');
@@ -57,9 +58,12 @@ export default function MatchRow({ homeTeam, awayTeam, date, time, location, sta
 
         <View style={styles.scoreCol}>
           {hasScore ? (
-            <Text style={[styles.score, { color: scoreColor }]}>
-              {homeTeam.score ?? 0} – {awayTeam.score ?? 0}
-            </Text>
+            <>
+              <Text style={[styles.score, { color: scoreColor }]}>
+                {homeTeam.score ?? 0} – {awayTeam.score ?? 0}
+              </Text>
+              {penaltyText ? <Text style={styles.penLine}>{penaltyText}</Text> : null}
+            </>
           ) : (
             <Text style={styles.vs}>vs</Text>
           )}
@@ -131,6 +135,7 @@ const styles = StyleSheet.create({
   teamName: { fontFamily: font.sansBold, fontSize: 12, color: colors.cream70, textAlign: 'center' },
   scoreCol: { alignItems: 'center', minWidth: 60 },
   score: { fontFamily: font.serifItalic, fontSize: 26 },
+  penLine: { fontFamily: font.sansBold, fontSize: 9.5, color: colors.cream45, marginTop: 1, textAlign: 'center' },
   vs: { fontFamily: font.serifItalic, fontSize: 18, color: colors.cream45 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   locationText: { fontFamily: font.sans, fontSize: 11.5, color: colors.gray500 },

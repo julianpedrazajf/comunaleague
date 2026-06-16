@@ -59,6 +59,9 @@ export type SerieEliminatoria = {
   clubBId: string; // local en la IDA
   ida: Leg; // ida.localId === clubBId
   vuelta: Leg; // vuelta.localId === clubAId
+  // La final se juega a partido único: juegoUnico = true y solo se usa `vuelta`
+  // como ese único partido (clubA de local). En ese caso `ida` se ignora.
+  juegoUnico?: boolean;
   penales?: { clubA: number; clubB: number };
   ganadorId: string | null;
 };
@@ -249,9 +252,24 @@ export function sembrarSemifinales(clasificados: string[]): SerieEliminatoria[] 
   ];
 }
 
+// Final a partido único: clubA (sede) juega de local. Solo se usa `vuelta`.
+function crearFinalUnica(clubA: string, clubB: string): SerieEliminatoria {
+  return {
+    id: 'FINAL',
+    ronda: 'final',
+    juegoUnico: true,
+    clubAId: clubA,
+    clubBId: clubB,
+    ida: { localId: clubB, visitanteId: clubA, golesLocal: null, golesVisitante: null }, // sin uso
+    vuelta: { localId: clubA, visitanteId: clubB, golesLocal: null, golesVisitante: null }, // el partido único
+    ganadorId: null,
+  };
+}
+
 /**
- * Final sembrada por puntaje acumulado: cierra de local el finalista con mayor
- * PA. Empate de PA → mejor posición en la fase regular; si persiste, mejor DG.
+ * Final a partido único, sembrada por puntaje acumulado: juega de local (sede)
+ * el finalista con mayor PA. Empate de PA → mejor posición en la fase regular;
+ * si persiste, mejor DG. Empate en el partido → penales.
  */
 export function sembrarFinal(
   ganadores: [string, string],
@@ -265,16 +283,14 @@ export function sembrarFinal(
   const pa1 = puntajeAcumulado[g1] ?? 0;
   const pa2 = puntajeAcumulado[g2] ?? 0;
 
-  let g2CierraLocal = false;
-  if (pa2 > pa1) g2CierraLocal = true;
+  let g2EsSede = false;
+  if (pa2 > pa1) g2EsSede = true;
   else if (pa2 === pa1) {
-    if (pos(g2) < pos(g1)) g2CierraLocal = true;
-    else if (pos(g2) === pos(g1) && dg(g2) > dg(g1)) g2CierraLocal = true;
+    if (pos(g2) < pos(g1)) g2EsSede = true;
+    else if (pos(g2) === pos(g1) && dg(g2) > dg(g1)) g2EsSede = true;
   }
 
-  return g2CierraLocal
-    ? crearSerie('FINAL', 'final', g2, g1)
-    : crearSerie('FINAL', 'final', g1, g2);
+  return g2EsSede ? crearFinalUnica(g2, g1) : crearFinalUnica(g1, g2);
 }
 
 // ─── 5. Puntaje acumulado (localía) ──────────────────────────────────────────
@@ -319,6 +335,24 @@ export interface ResumenSerie {
  */
 export function resumenSerie(serie: SerieEliminatoria, golVisitante = false): ResumenSerie {
   const { ida, vuelta, clubAId, clubBId } = serie;
+
+  // Final a partido único: solo cuenta `vuelta` (clubA de local); empate → penales.
+  if (serie.juegoUnico) {
+    if (vuelta.golesLocal == null || vuelta.golesVisitante == null) {
+      return { golesA: 0, golesB: 0, ganadorId: null, porPenales: false, completa: false };
+    }
+    const golesA = vuelta.golesLocal;
+    const golesB = vuelta.golesVisitante;
+    if (golesA > golesB) return { golesA, golesB, ganadorId: clubAId, porPenales: false, completa: true };
+    if (golesB > golesA) return { golesA, golesB, ganadorId: clubBId, porPenales: false, completa: true };
+    if (serie.penales) {
+      const { clubA, clubB } = serie.penales;
+      const ganadorId = clubA > clubB ? clubAId : clubB > clubA ? clubBId : null;
+      return { golesA, golesB, ganadorId, porPenales: true, completa: true };
+    }
+    return { golesA, golesB, ganadorId: null, porPenales: false, completa: true };
+  }
+
   const completa =
     ida.golesLocal != null &&
     ida.golesVisitante != null &&
