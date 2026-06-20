@@ -392,7 +392,16 @@ export default function TournamentScreen({ navigation }: Props) {
         </View>
       ) : !state ? (
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>{t('league.noTeam')}</Text>
+          <Text style={styles.emptyText}>
+            {myTeamId ? t('league.notInTournament') : t('league.noTeam')}
+          </Text>
+          <TouchableOpacity
+            style={styles.goTeamBtn}
+            onPress={() => navigation.navigate('AppTabs', { screen: 'MyTeam' })}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.goTeamBtnText}>{t('league.goToMyTeam')}</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <>
@@ -443,6 +452,14 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center' },
+  goTeamBtn: {
+    marginTop: space.lg,
+    paddingVertical: 12,
+    paddingHorizontal: space.xl,
+    borderRadius: radius.pill,
+    backgroundColor: colors.cream2,
+  },
+  goTeamBtnText: { fontFamily: font.sansBold, fontSize: 14, color: colors.black },
   notice: { fontFamily: font.sans, fontSize: 13.5, color: colors.cream45, textAlign: 'center', paddingVertical: space.xl, lineHeight: 20 },
 
   header: {

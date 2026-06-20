@@ -363,6 +363,14 @@ export default function MyTeamScreen() {
               );
             })}
           </View>
+          {members.length > 1 && (
+            <GhostButton
+              label={t('team.transferCoins')}
+              full
+              style={styles.transferBtn}
+              onPress={() => navigation.navigate('TransferCoins')}
+            />
+          )}
         </View>
 
         {session?.user.id === team.ownerId ? (
@@ -409,6 +417,7 @@ const styles = StyleSheet.create({
   tourHint: { fontFamily: font.sans, fontSize: 12.5, color: colors.cream45, textAlign: 'center' },
 
   section: {},
+  transferBtn: { marginTop: space.md },
   playerList: {
     backgroundColor: colors.surface1,
     borderRadius: radius.card,

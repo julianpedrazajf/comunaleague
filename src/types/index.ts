@@ -131,7 +131,8 @@ export type NotificationType =
   | 'join_team_request_info'
   | 'join_team_accepted'
   | 'join_team_rejected'
-  | 'new_daily_match';
+  | 'new_daily_match'
+  | 'coins_received';
 
 export interface AppNotification {
   id: string;
@@ -140,6 +141,7 @@ export interface AppNotification {
   relatedId?: string;
   fromUserId?: string;
   fromName?: string;
+  amount?: number; // coins_received: how many coins arrived
   read: boolean;
   response?: 'accepted' | 'rejected';
   createdAt: string;

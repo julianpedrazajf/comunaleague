@@ -1,5 +1,6 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { NavigatorScreenParams } from '@react-navigation/native';
 
 // Auth stack
 export type AuthStackParamList = {
@@ -33,12 +34,13 @@ export type PaymentParams = {
 export type RootStackParamList = {
   Auth: undefined;        // unauthenticated branch (AuthStack)
   ProfileSetup: undefined;
-  AppTabs: undefined;
+  AppTabs: NavigatorScreenParams<AppTabParamList> | undefined;
   JoinTeam: undefined;
   CreateTeam: undefined;
   OneGame: undefined;
   Tournaments: undefined;
   ChooseTournament: undefined;
+  TransferCoins: undefined;
   Chat: { peerId: string; peerName: string };
   Language: undefined;
   Notifications: undefined;

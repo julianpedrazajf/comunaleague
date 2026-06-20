@@ -13,3 +13,9 @@ export async function addCoins(amount: number): Promise<void> {
   const { error } = await supabase.rpc('add_coins', { p_amount: amount });
   if (error) throw error;
 }
+
+// Send coins to an official teammate (same team). Atomic on the server.
+export async function transferCoins(toUserId: string, amount: number): Promise<void> {
+  const { error } = await supabase.rpc('transfer_coins', { p_to_user_id: toUserId, p_amount: amount });
+  if (error) throw error;
+}

@@ -19,6 +19,7 @@ import { RootStackParamList } from '../navigation/types';
 import { getNotifications, markAllRead, respondToInterest, respondToJoinRequest, cleanupPastNotifications } from '../services/notifications';
 import { AppNotification } from '../types';
 import Monogram from '../components/ui/Monogram';
+import CoinIcon from '../components/ui/CoinIcon';
 import { colors, font, space, radius } from '../theme/tokens';
 
 const NOTIF_KEY = '@push_notifications';
@@ -97,6 +98,7 @@ export default function NotificationsScreen({ navigation }: Props) {
     const isJoinRequest = item.type === 'join_team_request';
     const isJoinInfo = item.type === 'join_team_request_info';
     const isNewMatch = item.type === 'new_daily_match';
+    const isCoins = item.type === 'coins_received';
     const isAccepted = item.type === 'player_request_accepted' || item.type === 'join_team_accepted';
     const showAvatar = isInterest || isJoinRequest || isJoinInfo;
     const showResolution = isInterest || isJoinRequest || isJoinInfo;
@@ -110,6 +112,8 @@ export default function NotificationsScreen({ navigation }: Props) {
           <View style={[styles.iconWrap, styles.iconAccepted]}>
             <Calendar size={18} color={colors.black} strokeWidth={2.5} />
           </View>
+        ) : isCoins ? (
+          <CoinIcon size={40} />
         ) : (
           <View style={[styles.iconWrap, isAccepted ? styles.iconAccepted : styles.iconRejected]}>
             {isAccepted
@@ -123,6 +127,8 @@ export default function NotificationsScreen({ navigation }: Props) {
           <Text style={styles.cardText}>
             {item.type === 'player_request_interest'
               ? t('notifications.playerInterest', { name: item.fromName ?? '' })
+              : isCoins
+              ? t('notifications.coinsReceived', { name: item.fromName ?? '', amount: item.amount ?? 0 })
               : item.type === 'player_request_accepted'
               ? t('notifications.playerAccepted')
               : item.type === 'player_request_rejected'
