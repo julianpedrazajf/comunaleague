@@ -384,9 +384,10 @@ export function leagueMatchLabel(
   t: (k: string, o?: Record<string, unknown>) => string,
 ): string {
   if (m.phase === 'regular') return `${t('match.leagueTag')} · ${t('league.fecha', { n: m.matchday })}`;
-  const round = m.phase === 'final' ? t('league.finalRound') : t('league.semifinalLabel');
+  // The final is a single match — no leg (ida/vuelta).
+  if (m.phase === 'final') return `${t('match.leagueTag')} · ${t('league.finalRound')}`;
   const leg = m.leg === 1 ? t('league.ida') : m.leg === 2 ? t('league.vuelta') : '';
-  return `${t('match.leagueTag')} · ${round}${leg ? ` · ${leg}` : ''}`;
+  return `${t('match.leagueTag')} · ${t('league.semifinalLabel')}${leg ? ` · ${leg}` : ''}`;
 }
 
 // ─── Result entry (admin / backend) ──────────────────────────────────────────
@@ -416,4 +417,43 @@ export async function setLeagueResult(
 /** Map clubId → Club for resolving names/badges in the UI. */
 export function clubMap(estado: EstadoTorneo): Map<string, Club> {
   return new Map(estado.clubes.map((c) => [c.id, c]));
+}
+
+export interface OpenTournament {
+  id: string;
+  name: string;
+  barrio: string | null; // neighborhood (location), set by the admin
+  teamCount: number;
+  maxClubs: number;
+}
+
+/** Tournaments still accepting teams (status 'filling' with room), oldest first. */
+export async function listOpenTournaments(): Promise<OpenTournament[]> {
+  const { data, error } = await supabase
+    .from('leagues')
+    .select('id, name, barrio, maxClubs, createdAt, league_teams(count)')
+    .eq('status', 'filling')
+    .order('createdAt', { ascending: true });
+  if (error) throw error;
+
+  return (data ?? [])
+    .map((l: any) => ({
+      id: l.id,
+      name: l.name,
+      barrio: l.barrio ?? null,
+      maxClubs: l.maxClubs,
+      teamCount: l.league_teams?.[0]?.count ?? 0,
+    }))
+    .filter((l: OpenTournament) => l.teamCount < l.maxClubs);
+}
+
+/** Whether a team has already entered a tournament (is in a league). */
+export async function isTeamInTournament(teamId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('league_teams')
+    .select('teamId')
+    .eq('teamId', teamId)
+    .limit(1);
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
 }

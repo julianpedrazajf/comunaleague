@@ -17,16 +17,19 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import { getMyTeam, getTeamMembers, leaveTeam, transferOwnership, deleteTeam, updateTeamBadge } from '../services/teams';
 import { getTeamStanding } from '../services/standings';
+import { isTeamInTournament } from '../services/league';
 import { getTeamMatches, MatchWithTeams } from '../services/matches';
 import { getAllTeamMatchInterests } from '../services/playerRequests';
 import { uploadTeamBadge } from '../services/storage';
 import { Team, User, Standing } from '../types';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
+import { COIN_COSTS } from '../utils/prices';
 import SectionHeader from '../components/ui/SectionHeader';
 import StatTriple from '../components/ui/StatTriple';
 import PlayerRow from '../components/ui/PlayerRow';
 import Monogram from '../components/ui/Monogram';
 import Chip from '../components/ui/Chip';
+import CoinIcon from '../components/ui/CoinIcon';
 import CreamButton from '../components/ui/CreamButton';
 import GhostButton from '../components/ui/GhostButton';
 import { colors, font, space, radius } from '../theme/tokens';
@@ -52,6 +55,7 @@ export default function MyTeamScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [inTournament, setInTournament] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -61,13 +65,15 @@ export default function MyTeamScreen() {
       const found = await getMyTeam(session.user.id);
       setTeam(found);
       if (found) {
-        const [m, s, matches] = await Promise.all([
+        const [m, s, matches, inTour] = await Promise.all([
           getTeamMembers(found.playerIds),
           getTeamStanding(found.id),
           getTeamMatches(found.id),
+          isTeamInTournament(found.id).catch(() => false),
         ]);
         setMembers(m);
         setStanding(s);
+        setInTournament(inTour);
         const now = new Date();
         const next = matches.find((m) => new Date(`${m.date}T${m.time}`) > now) ?? null;
         setNextMatch(next);
@@ -290,6 +296,21 @@ export default function MyTeamScreen() {
           ]}
         />
 
+        {/* Tournament entry */}
+        {inTournament ? (
+          <GhostButton label={t('team.viewTournament')} full onPress={() => navigation.navigate('Tournaments')} />
+        ) : session?.user.id === team.ownerId ? (
+          <View style={styles.tourSection}>
+            <CreamButton label={t('team.joinTournament')} full onPress={() => navigation.navigate('ChooseTournament')} />
+            <View style={styles.tourPriceNote}>
+              <CoinIcon size={15} />
+              <Text style={styles.tourPriceText}>{t('team.joinTournamentPrice', { coins: COIN_COSTS.joinTournament })}</Text>
+            </View>
+          </View>
+        ) : (
+          <Text style={styles.tourHint}>{t('team.captainJoinsTournament')}</Text>
+        )}
+
         {/* Squad */}
         <View style={styles.section}>
           <SectionHeader label={t('team.squad')} />
@@ -381,6 +402,11 @@ const styles = StyleSheet.create({
 
   teamHeader: { alignItems: 'center', gap: space.md },
   teamName: { fontFamily: font.sansXBold, fontSize: 22, color: colors.cream, textAlign: 'center' },
+
+  tourSection: { gap: space.sm },
+  tourPriceNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  tourPriceText: { fontFamily: font.sans, fontSize: 12.5, color: colors.cream45 },
+  tourHint: { fontFamily: font.sans, fontSize: 12.5, color: colors.cream45, textAlign: 'center' },
 
   section: {},
   playerList: {

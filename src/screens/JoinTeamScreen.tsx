@@ -18,8 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { getAvailableTeams, getMyTeam, getPendingJoinRequestTeamIds, requestJoinTeam } from '../services/teams';
 import { RootStackParamList } from '../navigation/types';
 import { Team } from '../types';
-import { COIN_COSTS, TEAM_CAPACITY } from '../utils/prices';
-import { showInsufficientCoins, isInsufficientCoinsError } from '../utils/coins';
+import { TEAM_CAPACITY } from '../utils/prices';
 import Monogram from '../components/ui/Monogram';
 import Chip from '../components/ui/Chip';
 import { colors, font, space, radius } from '../theme/tokens';
@@ -79,7 +78,7 @@ export default function JoinTeamScreen({ navigation }: Props) {
     }
     Alert.alert(
       t('team.requestConfirmTitle'),
-      t('team.joinFlowNotice', { name: team.name, coins: COIN_COSTS.joinTeam }),
+      t('team.joinNotice', { name: team.name }),
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -90,11 +89,7 @@ export default function JoinTeamScreen({ navigation }: Props) {
               setPendingIds((prev) => new Set(prev).add(team.id));
               Alert.alert(t('team.joinRequestSentTitle'), t('team.joinRequestSentMessage', { name: team.name }));
             } catch (e: any) {
-              if (isInsufficientCoinsError(e)) {
-                showInsufficientCoins(t, () => navigation.navigate('BuyCoins'));
-              } else {
-                Alert.alert(t('common.error'), e?.message ?? t('common.error'));
-              }
+              Alert.alert(t('common.error'), e?.message ?? t('common.error'));
             }
           },
         },

@@ -23,9 +23,23 @@ export async function getTeamMembers(playerIds: string[]): Promise<Member[]> {
   return (data ?? []) as Member[];
 }
 
-// Creates the team and spends the coin cost atomically (server-side).
+// Creates the team (free).
 export async function createTeam(name: string, format: TeamFormat): Promise<void> {
   const { error } = await supabase.rpc('create_team', { p_name: name, p_format: format });
+  if (error) throw error;
+}
+
+// Captain enters their team into the next available tournament (1,200 coins).
+// Captain enters their team into a tournament (1,200 coins). With a leagueId the
+// team joins that specific tournament; without one it joins the next open league.
+export async function joinTournament(leagueId?: string): Promise<void> {
+  const { error } = await supabase.rpc('join_tournament', { p_league_id: leagueId ?? null });
+  if (error) throw error;
+}
+
+// Captain takes their team out of its current tournament.
+export async function leaveTournament(): Promise<void> {
+  const { error } = await supabase.rpc('leave_tournament');
   if (error) throw error;
 }
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -8,6 +8,7 @@ import { X, Trophy, Check } from 'lucide-react-native';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { getMyLeagueState, ensureProgression, clubMap, LeagueState } from '../services/league';
+import { getMyTeam, leaveTournament } from '../services/teams';
 import { resumenSerie, PartidoLiga, SerieEliminatoria } from '../utils/league';
 import Monogram from '../components/ui/Monogram';
 import SectionHeader from '../components/ui/SectionHeader';
@@ -24,6 +25,8 @@ export default function TournamentScreen({ navigation }: Props) {
   const [tab, setTab] = useState<Tab>('table');
   const [state, setState] = useState<LeagueState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isCaptain, setIsCaptain] = useState(false);
+  const [myTeamId, setMyTeamId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!session) {
@@ -33,6 +36,12 @@ export default function TournamentScreen({ navigation }: Props) {
     }
     setLoading(true);
     try {
+      getMyTeam(session.user.id)
+        .then((tm) => {
+          setIsCaptain(!!tm && tm.ownerId === session.user.id);
+          setMyTeamId(tm?.id ?? null);
+        })
+        .catch(() => {});
       let s = await getMyLeagueState(session.user.id);
       // Advance the league lazily, one phase at a time (bounded).
       if (s) {
@@ -76,6 +85,84 @@ export default function TournamentScreen({ navigation }: Props) {
   }, [estado]);
 
   const statusLabel = (s: LeagueState['status']) => t(`league.status_${s}`);
+
+  const handleLeaveTournament = () => {
+    if (!isCaptain) {
+      Alert.alert(t('league.leaveCaptainOnlyTitle'), t('league.leaveCaptainOnlyMessage'));
+      return;
+    }
+
+    // Once the tournament is finished, anyone may leave — including the champion.
+    // (Earlier leavers delete their own fixtures, so the progress checks below
+    // would otherwise wrongly block whoever's left.) Until then, leaving opens up
+    // by progress: regular season done, then (with playoffs) the semifinals
+    // played — except finalists, who wait for the final.
+    const finished = state?.status === 'finished';
+    if (!finished) {
+      const est = state?.estado;
+      const regularComplete = !!est && est.partidosLiga.length > 0 && est.partidosLiga.every((p) => p.jugado);
+      if (!regularComplete) {
+        Alert.alert(t('league.leaveBlockedRegularTitle'), t('league.leaveBlockedRegularMsg'));
+        return;
+      }
+      const needsPlayoffs = !!est && est.clubes.length >= 4;
+      const semisComplete =
+        !needsPlayoffs ||
+        (!!est &&
+          est.semifinales.length > 0 &&
+          est.semifinales.every(
+            (s) =>
+              s.ida.golesLocal != null &&
+              s.ida.golesVisitante != null &&
+              s.vuelta.golesLocal != null &&
+              s.vuelta.golesVisitante != null,
+          ));
+      if (!semisComplete) {
+        Alert.alert(t('league.leaveBlockedSemisTitle'), t('league.leaveBlockedSemisMsg'));
+        return;
+      }
+      const inUnplayedFinal =
+        !!est &&
+        !!est.final &&
+        (est.final.clubAId === myTeamId || est.final.clubBId === myTeamId) &&
+        (est.final.vuelta.golesLocal == null || est.final.vuelta.golesVisitante == null);
+      if (inUnplayedFinal) {
+        Alert.alert(t('league.leaveBlockedFinalTitle'), t('league.leaveBlockedFinalMsg'));
+        return;
+      }
+    }
+
+    Alert.alert(
+      t('league.leaveTournamentTitle'),
+      t('league.leaveTournamentWarning'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('league.leaveTournamentConfirm'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await leaveTournament();
+              Alert.alert(t('league.leftTournamentTitle'), t('league.leftTournamentMessage'), [
+                { text: t('common.done'), onPress: () => navigation.goBack() },
+              ]);
+            } catch (e: any) {
+              const msg: string = e?.message ?? '';
+              if (msg.includes('Regular season not finished')) {
+                Alert.alert(t('league.leaveBlockedRegularTitle'), t('league.leaveBlockedRegularMsg'));
+              } else if (msg.includes('Semifinals not finished')) {
+                Alert.alert(t('league.leaveBlockedSemisTitle'), t('league.leaveBlockedSemisMsg'));
+              } else if (msg.includes('Final not finished')) {
+                Alert.alert(t('league.leaveBlockedFinalTitle'), t('league.leaveBlockedFinalMsg'));
+              } else {
+                Alert.alert(t('common.error'), msg || t('common.error'));
+              }
+            }
+          },
+        },
+      ],
+    );
+  };
 
   // ── Tabla de posiciones ─────────────────────────────────────────────────
   const renderTable = () => {
@@ -125,6 +212,12 @@ export default function TournamentScreen({ navigation }: Props) {
             );
           })}
         </View>
+
+        {state && (
+          <TouchableOpacity style={styles.leaveBtn} onPress={handleLeaveTournament} activeOpacity={0.75}>
+            <Text style={styles.leaveBtnText}>{t('league.leaveTournament')}</Text>
+          </TouchableOpacity>
+        )}
       </>
     );
   };
@@ -423,6 +516,8 @@ const styles = StyleSheet.create({
     color: colors.green,
     textTransform: 'uppercase',
   },
+  leaveBtn: { alignItems: 'center', paddingVertical: space.lg, marginTop: space.sm },
+  leaveBtnText: { fontFamily: font.sansBold, fontSize: 14, color: '#EF4444' },
 
   // Fechas
   fixtureCard: {

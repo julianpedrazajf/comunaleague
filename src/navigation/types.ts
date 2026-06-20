@@ -38,6 +38,7 @@ export type RootStackParamList = {
   CreateTeam: undefined;
   OneGame: undefined;
   Tournaments: undefined;
+  ChooseTournament: undefined;
   Chat: { peerId: string; peerName: string };
   Language: undefined;
   Notifications: undefined;

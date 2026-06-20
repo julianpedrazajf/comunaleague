@@ -20,9 +20,6 @@ import { useAuth } from '../context/AuthContext';
 import { createTeam } from '../services/teams';
 import { RootStackParamList } from '../navigation/types';
 import { TeamFormat } from '../types';
-import { COIN_COSTS } from '../utils/prices';
-import { showInsufficientCoins, isInsufficientCoinsError } from '../utils/coins';
-import CoinIcon from '../components/ui/CoinIcon';
 import CreamButton from '../components/ui/CreamButton';
 import { colors, font, space, radius } from '../theme/tokens';
 
@@ -41,8 +38,6 @@ export default function CreateTeamScreen({ navigation }: Props) {
     name: Yup.string().required(t('errors.required')),
     format: Yup.number().required(t('errors.required')).nullable(),
   });
-
-  const goToBuyCoins = () => navigation.navigate('BuyCoins');
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -71,11 +66,7 @@ export default function CreateTeamScreen({ navigation }: Props) {
                 await createTeam(values.name.trim(), values.format);
                 navigation.navigate('AppTabs');
               } catch (e: any) {
-                if (isInsufficientCoinsError(e)) {
-                  showInsufficientCoins(t, goToBuyCoins);
-                } else {
-                  setStatus(e?.message ?? t('common.error'));
-                }
+                setStatus(e?.message ?? t('common.error'));
               } finally {
                 setSubmitting(false);
               }
@@ -117,13 +108,6 @@ export default function CreateTeamScreen({ navigation }: Props) {
                     ))}
                   </View>
                   {touched.format && errors.format ? <Text style={styles.fieldError}>{errors.format as string}</Text> : null}
-                </View>
-
-                <View style={styles.priceNote}>
-                  <CoinIcon size={15} />
-                  <Text style={styles.priceNoteText}>
-                    {t('team.createPriceNote', { coins: COIN_COSTS.createTeam })}
-                  </Text>
                 </View>
 
                 <CreamButton

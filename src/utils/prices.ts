@@ -2,10 +2,12 @@
 // Users buy coins with one (simulated) payment, then spend coins on actions.
 // Adjust these placeholders when real pricing is defined.
 
-// Coin cost per action.
+// Coin cost per action. Creating and joining a team are free; entering a
+// tournament is the paid action.
 export const COIN_COSTS = {
-  createTeam: 50,
-  joinTeam: 200,
+  createTeam: 0,
+  joinTeam: 0,
+  joinTournament: 1200,
   dailyMatch: 20,
   oneMatch: 10,
 };
@@ -15,6 +17,7 @@ export const COIN_BUNDLES = [
   { coins: 50, price: 50000 },
   { coins: 100, price: 95000 },
   { coins: 200, price: 180000 },
+  { coins: 1200, price: 1000000 },
 ];
 
 export const TEAM_CAPACITY = 8;
