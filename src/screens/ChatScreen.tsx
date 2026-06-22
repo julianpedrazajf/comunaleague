@@ -63,8 +63,13 @@ export default function ChatScreen({ route, navigation }: Props) {
   useEffect(() => {
     if (!session) return;
     const myId = session.user.id;
+    // Unique topic per subscription so two ChatScreen instances (e.g. coming
+    // back to a chat from the peer's profile) never share a Realtime channel —
+    // re-using a subscribed topic throws "cannot add postgres_changes ... after
+    // subscribe()".
+    const topic = `chat_${myId}_${peerId}_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
     const channel = supabase
-      .channel(`chat_${myId}_${peerId}`)
+      .channel(topic)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `toId=eq.${myId}` },
         (payload) => {
           const incoming = payload.new as Message;

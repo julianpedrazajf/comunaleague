@@ -43,7 +43,14 @@ export default function RootNavigator() {
           <Root.Screen name="Tournaments" component={TournamentScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="ChooseTournament" component={ChooseTournamentScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="TransferCoins" component={TransferCoinsScreen} options={{ presentation: 'modal' }} />
-          <Root.Screen name="Chat" component={ChatScreen} />
+          {/* getId dedupes by peer: navigating to a chat that's already open
+              returns to it (e.g. from the peer's profile) instead of stacking a
+              second instance — which would clash on the same Realtime channel. */}
+          <Root.Screen
+            name="Chat"
+            component={ChatScreen}
+            getId={({ params }) => (params as RootStackParamList['Chat'])?.peerId}
+          />
           <Root.Screen name="Language" component={LanguageScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="Notifications" component={NotificationsScreen} options={{ presentation: 'modal' }} />
           <Root.Screen name="Preferences" component={PreferencesScreen} options={{ presentation: 'modal' }} />
