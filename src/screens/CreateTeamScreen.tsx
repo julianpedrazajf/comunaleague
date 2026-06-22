@@ -67,7 +67,14 @@ export default function CreateTeamScreen({ navigation }: Props) {
                 await createTeam(values.name.trim(), values.format);
                 navigation.navigate('AppTabs');
               } catch (e: any) {
-                setStatus(e?.message ?? t('common.error'));
+                const msg: string = e?.message ?? '';
+                if (msg.includes('Team name taken')) {
+                  setStatus(t('team.nameTaken'));
+                } else if (msg.includes('Team name required')) {
+                  setStatus(t('errors.required'));
+                } else {
+                  setStatus(msg || t('common.error'));
+                }
               } finally {
                 setSubmitting(false);
               }

@@ -245,6 +245,7 @@
     "createTeam": "Crear equipo",
     "joinTeam": "Unirse a un equipo",
     "teamName": "Nombre del equipo",
+    "nameTaken": "Ese nombre de equipo ya está en uso. Elige otro.",
     "badge": "Escudo del equipo",
     "format": "Formato de juego",
     "format5": "Futsal (5-7 jugadores)",

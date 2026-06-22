@@ -157,7 +157,7 @@ export default function JoinTeamScreen({ navigation }: Props) {
             const isFull = spotsLeft === 0;
             return (
               <View style={styles.teamCard}>
-                <Monogram name={item.name} size={46} shape="square" />
+                <Monogram name={item.name} size={46} shape="square" imageUri={item.badgeUrl} />
                 <View style={styles.teamInfo}>
                   <Text style={styles.teamName} numberOfLines={1}>{item.name}</Text>
                   <View style={styles.metaRow}>

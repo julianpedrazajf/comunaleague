@@ -16,12 +16,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import { getMyTeam, getTeamMembers, leaveTeam, transferOwnership, deleteTeam, updateTeamBadge } from '../services/teams';
-import { getTeamStanding } from '../services/standings';
-import { isTeamInTournament } from '../services/league';
+import { getMyLeagueState } from '../services/league';
 import { getTeamMatches, MatchWithTeams } from '../services/matches';
 import { getAllTeamMatchInterests } from '../services/playerRequests';
 import { uploadTeamBadge } from '../services/storage';
-import { Team, User, Standing } from '../types';
+import { Team, User } from '../types';
 import { AppTabParamList, RootStackParamList } from '../navigation/types';
 import { COIN_COSTS } from '../utils/prices';
 import SectionHeader from '../components/ui/SectionHeader';
@@ -43,6 +42,8 @@ type NavProp = CompositeNavigationProp<
 
 type Member = Pick<User, 'id' | 'name' | 'lastName' | 'position' | 'skillLevel' | 'avatarUrl'>;
 type GuestEntry = { member: Member; matchDate: string; matchTime: string };
+// Position / wins / points taken straight from the Comuna League table.
+type TeamStats = { position: number; wins: number; points: number };
 
 export default function MyTeamScreen() {
   const { t, i18n } = useTranslation();
@@ -51,7 +52,7 @@ export default function MyTeamScreen() {
 
   const [team, setTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
-  const [standing, setStanding] = useState<Standing | null>(null);
+  const [standing, setStanding] = useState<TeamStats | null>(null);
   const [nextMatch, setNextMatch] = useState<MatchWithTeams | null>(null);
   const [guestEntries, setGuestEntries] = useState<GuestEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,15 +68,22 @@ export default function MyTeamScreen() {
       const found = await getMyTeam(session.user.id);
       setTeam(found);
       if (found) {
-        const [m, s, matches, inTour] = await Promise.all([
+        const [m, matches, leagueState] = await Promise.all([
           getTeamMembers(found.playerIds),
-          getTeamStanding(found.id),
           getTeamMatches(found.id),
-          isTeamInTournament(found.id).catch(() => false),
+          getMyLeagueState(session.user.id).catch(() => null),
         ]);
         setMembers(m);
-        setStanding(s);
-        setInTournament(inTour);
+        setInTournament(!!leagueState);
+        // Position / wins / points come from the same Comuna League table the
+        // tournament screen shows, so they always match and refresh together.
+        if (leagueState) {
+          const tabla = leagueState.estado.tabla;
+          const idx = tabla.findIndex((f) => f.clubId === found.id);
+          setStanding(idx >= 0 ? { position: idx + 1, wins: tabla[idx].pg, points: tabla[idx].pts } : null);
+        } else {
+          setStanding(null);
+        }
         const now = new Date();
         const next = matches.find((m) => new Date(`${m.date}T${m.time}`) > now) ?? null;
         setNextMatch(next);
