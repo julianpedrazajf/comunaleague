@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center' },
-  guestArea: { flex: 1, justifyContent: 'flex-end' },
+  guestArea: { flex: 1, justifyContent: 'center' },
   goTeamBtn: {
     marginTop: space.lg,
     paddingVertical: 12,

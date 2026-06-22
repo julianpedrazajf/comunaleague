@@ -456,7 +456,7 @@ export default function OneGameScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  guestArea: { flex: 1, justifyContent: 'flex-end' },
+  guestArea: { flex: 1, justifyContent: 'center' },
   emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center', padding: 24 },
 
   header: {

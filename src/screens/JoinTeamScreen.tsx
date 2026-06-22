@@ -128,9 +128,7 @@ export default function JoinTeamScreen({ navigation }: Props) {
 
       {isGuest ? (
         <View style={styles.guestArea}>
-          <View style={styles.centered}>
-            <Text style={styles.emptyText}>{t('team.noTeamsAvailable')}</Text>
-          </View>
+          <Text style={styles.guestEmptyText}>{t('team.noTeamsAvailable')}</Text>
           <RegisterCta />
         </View>
       ) : loading ? (
@@ -198,7 +196,8 @@ export default function JoinTeamScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  guestArea: { flex: 1 },
+  guestArea: { flex: 1, justifyContent: 'center' },
+  guestEmptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center', paddingHorizontal: 24 },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center' },
 

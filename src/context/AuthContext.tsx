@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useReducer } from 'react';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../services/supabase';
 import { User } from '../types';
 
@@ -106,7 +107,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'SET_PROFILE_COMPLETE', payload: complete });
   }
 
-  function enterGuest() {
+  // Each time someone enters as a guest, replay every screen's intro — clear the
+  // guest "seen" flags first (awaited so the tabs' intros re-show, no race).
+  async function enterGuest() {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      const guestIntroKeys = keys.filter((k) => k.startsWith('@intro_') && k.endsWith('_guest'));
+      if (guestIntroKeys.length) await AsyncStorage.multiRemove(guestIntroKeys);
+    } catch {
+      // best-effort; if clearing fails the intro just won't replay
+    }
     dispatch({ type: 'ENTER_GUEST' });
   }
 

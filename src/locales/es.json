@@ -22,6 +22,7 @@
       "subtitle": "Tu punto de partida cada día.",
       "points": [
         { "title": "Tu próximo partido", "desc": "Mira la fecha, hora y rival de tu siguiente juego." },
+        { "title": "Confirma tu asistencia", "desc": "Aquí confirmas que jugarás tu próximo partido." },
         { "title": "Partidos de liga", "desc": "Sigue las fechas de tu torneo de barrio." },
         { "title": "Explora torneos", "desc": "Entra a la Liga Comuna desde el botón del trofeo." }
       ]
@@ -30,7 +31,7 @@
       "title": "Tu Equipo",
       "subtitle": "Arma tu equipo y compite.",
       "points": [
-        { "title": "Crea o únete a un equipo", "desc": "Es gratis: reúne a tus parceros." },
+        { "title": "Mira tu plantel", "desc": "Revisa quiénes son los integrantes de tu equipo." },
         { "title": "Inscríbete a un torneo", "desc": "El capitán paga la inscripción y elige el barrio." },
         { "title": "Transfiere coins", "desc": "Envía Comuna Coins a tus compañeros." }
       ]
@@ -41,15 +42,14 @@
       "points": [
         { "title": "Calendario", "desc": "Navega tus partidos por fecha." },
         { "title": "Fechas de liga", "desc": "Tus partidos del torneo también aparecen aquí." },
-        { "title": "Confirma asistencia", "desc": "Avísale a tu equipo si vas a jugar." }
+        { "title": "Pide jugadores", "desc": "¿Te faltan jugadores para una sola fecha? Pídelos desde aquí." }
       ]
     },
     "inbox": {
       "title": "Mensajes",
       "subtitle": "Habla con la comunidad.",
       "points": [
-        { "title": "Chatea", "desc": "Conversa directamente con jugadores y compañeros." },
-        { "title": "Coordina", "desc": "Consigue jugadores para tus partidos." }
+        { "title": "Chatea", "desc": "Conversa directamente con jugadores y compañeros." }
       ]
     },
     "profile": {
@@ -57,8 +57,7 @@
       "subtitle": "Tu información y ajustes.",
       "points": [
         { "title": "Tus estadísticas", "desc": "Mira tu posición, pie, nivel y más." },
-        { "title": "Comuna Coins", "desc": "Compra y administra tus coins." },
-        { "title": "Idioma y ajustes", "desc": "Cambia el idioma y tus preferencias." }
+        { "title": "Comuna Coins", "desc": "Compra y administra tus coins." }
       ]
     },
     "guest": {

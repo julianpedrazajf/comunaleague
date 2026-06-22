@@ -393,7 +393,7 @@ export default function MatchScheduleScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  guestArea: { flex: 1, justifyContent: 'flex-end' },
+  guestArea: { flex: 1, justifyContent: 'center' },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   navBar: { paddingHorizontal: 18, paddingVertical: space.md, gap: 4 },

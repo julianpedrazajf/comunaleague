@@ -74,7 +74,7 @@ export default function CreateTeamScreen({ navigation }: Props) {
             }}
           >
             {({ handleChange, handleBlur, handleSubmit, setFieldValue, values, errors, touched, isSubmitting, status }) => (
-              <View style={styles.form}>
+              <View style={[styles.form, isGuest && styles.formGuest]}>
                 {status ? <Text style={styles.apiError}>{status}</Text> : null}
 
                 <View style={styles.field}>
@@ -146,6 +146,7 @@ const styles = StyleSheet.create({
   closeBtn: { padding: 4, marginTop: 4 },
 
   form: { gap: space.lg },
+  formGuest: { flex: 1, justifyContent: 'center' },
   field: { gap: space.xs },
   label: { fontFamily: font.sansBold, fontSize: 10.5, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.cream70 },
 
