@@ -32,6 +32,8 @@ import Chip from '../components/ui/Chip';
 import CoinIcon from '../components/ui/CoinIcon';
 import CreamButton from '../components/ui/CreamButton';
 import GhostButton from '../components/ui/GhostButton';
+import ScreenIntro from '../components/ui/ScreenIntro';
+import RegisterCta from '../components/ui/RegisterCta';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type NavProp = CompositeNavigationProp<
@@ -44,7 +46,7 @@ type GuestEntry = { member: Member; matchDate: string; matchTime: string };
 
 export default function MyTeamScreen() {
   const { t, i18n } = useTranslation();
-  const { session } = useAuth();
+  const { session, isGuest } = useAuth();
   const navigation = useNavigation<NavProp>();
 
   const [team, setTeam] = useState<Team | null>(null);
@@ -213,6 +215,20 @@ export default function MyTeamScreen() {
     }
   };
 
+  if (isGuest) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+        <View style={styles.navBar}>
+          <Text style={styles.pageTitle}>{t('team.myTeam')}</Text>
+        </View>
+        <View style={styles.centered}>
+          <RegisterCta />
+        </View>
+        <ScreenIntro id="myTeam" />
+      </SafeAreaView>
+    );
+  }
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -258,6 +274,7 @@ export default function MyTeamScreen() {
             />
           </View>
         </View>
+        <ScreenIntro id="myTeam" />
       </SafeAreaView>
     );
   }
@@ -388,6 +405,8 @@ export default function MyTeamScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      <ScreenIntro id="myTeam" />
     </SafeAreaView>
   );
 }

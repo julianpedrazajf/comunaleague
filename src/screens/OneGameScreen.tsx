@@ -28,6 +28,7 @@ import CoinIcon from '../components/ui/CoinIcon';
 import Monogram from '../components/ui/Monogram';
 import SectionHeader from '../components/ui/SectionHeader';
 import MonthCalendar from '../components/ui/MonthCalendar';
+import RegisterCta from '../components/ui/RegisterCta';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OneGame'>;
@@ -46,7 +47,7 @@ function formatTime(timeStr: string): string {
 
 export default function OneGameScreen({ navigation }: Props) {
   const { t, i18n } = useTranslation();
-  const { session } = useAuth();
+  const { session, isGuest } = useAuth();
 
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [registeredIds, setRegisteredIds] = useState<Set<string>>(new Set());
@@ -412,7 +413,11 @@ export default function OneGameScreen({ navigation }: Props) {
         </View>
       </View>
 
-      {loading ? (
+      {isGuest ? (
+        <View style={styles.guestArea}>
+          <RegisterCta />
+        </View>
+      ) : loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.cream45} />
         </View>
@@ -451,6 +456,7 @@ export default function OneGameScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  guestArea: { flex: 1, justifyContent: 'flex-end' },
   emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center', padding: 24 },
 
   header: {

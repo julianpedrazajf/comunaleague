@@ -21,13 +21,14 @@ import { Team } from '../types';
 import { TEAM_CAPACITY } from '../utils/prices';
 import Monogram from '../components/ui/Monogram';
 import Chip from '../components/ui/Chip';
+import RegisterCta from '../components/ui/RegisterCta';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'JoinTeam'>;
 
 export default function JoinTeamScreen({ navigation }: Props) {
   const { t } = useTranslation();
-  const { session } = useAuth();
+  const { session, isGuest } = useAuth();
 
   const [teams, setTeams] = useState<Team[]>([]);
   const [myTeam, setMyTeam] = useState<Team | null>(null);
@@ -125,7 +126,14 @@ export default function JoinTeamScreen({ navigation }: Props) {
         />
       </View>
 
-      {loading ? (
+      {isGuest ? (
+        <View style={styles.guestArea}>
+          <View style={styles.centered}>
+            <Text style={styles.emptyText}>{t('team.noTeamsAvailable')}</Text>
+          </View>
+          <RegisterCta />
+        </View>
+      ) : loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.cream45} />
         </View>
@@ -190,6 +198,7 @@ export default function JoinTeamScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  guestArea: { flex: 1 },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center' },
 

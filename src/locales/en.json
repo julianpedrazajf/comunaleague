@@ -14,6 +14,64 @@
     "optional": "optional",
     "hello": "Hello"
   },
+  "intro": {
+    "gotIt": "Got it",
+    "guestCta": "Create an account",
+    "home": {
+      "title": "Welcome to Home",
+      "subtitle": "Your starting point every day.",
+      "points": [
+        { "title": "Your next match", "desc": "See the date, time and opponent of your upcoming game." },
+        { "title": "League matches", "desc": "Follow your neighborhood tournament fixtures." },
+        { "title": "Explore tournaments", "desc": "Open Comuna League from the trophy button." }
+      ]
+    },
+    "myTeam": {
+      "title": "Your Team",
+      "subtitle": "Build your squad and compete.",
+      "points": [
+        { "title": "Create or join a team", "desc": "It's free — bring your friends together." },
+        { "title": "Enter a tournament", "desc": "The captain pays the entry and picks the neighborhood." },
+        { "title": "Transfer coins", "desc": "Send Comuna Coins to your teammates." }
+      ]
+    },
+    "matches": {
+      "title": "Your Matches",
+      "subtitle": "Your game calendar.",
+      "points": [
+        { "title": "Calendar", "desc": "Browse your matches by date." },
+        { "title": "League fixtures", "desc": "Your tournament games show up here too." },
+        { "title": "Confirm attendance", "desc": "Let your team know if you're playing." }
+      ]
+    },
+    "inbox": {
+      "title": "Messages",
+      "subtitle": "Talk to the community.",
+      "points": [
+        { "title": "Chat", "desc": "Message players and teammates directly." },
+        { "title": "Coordinate", "desc": "Line up players for your matches." }
+      ]
+    },
+    "profile": {
+      "title": "Your Profile",
+      "subtitle": "Your info and settings.",
+      "points": [
+        { "title": "Your stats", "desc": "See your position, foot, skill level and more." },
+        { "title": "Comuna Coins", "desc": "Buy and manage your coins." },
+        { "title": "Language & settings", "desc": "Switch language and preferences." }
+      ]
+    },
+    "guest": {
+      "title": "Welcome to Comuna League",
+      "subtitle": "Here's what you can do in the app.",
+      "points": [
+        { "title": "Home", "desc": "Your next match and the league fixtures." },
+        { "title": "Your Team", "desc": "Create or join a team and enter tournaments." },
+        { "title": "Matches", "desc": "Your calendar and attendance confirmation." },
+        { "title": "Messages", "desc": "Chat with players and set up games." }
+      ]
+    }
+  },
   "auth": {
     "login": "Log In",
     "register": "Sign Up",
@@ -324,7 +382,9 @@
     "explore": "Explore",
     "signIn": "Sign In",
     "enter": "Sign In",
-    "continueAsGuest": "Continue as guest"
+    "continueAsGuest": "Continue as guest",
+    "register": "Register",
+    "registerPrompt": "Create an account to unlock this."
   },
   "onegame": {
     "title": "Play Solo",

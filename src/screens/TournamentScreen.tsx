@@ -12,6 +12,7 @@ import { getMyTeam, leaveTournament } from '../services/teams';
 import { resumenSerie, PartidoLiga, SerieEliminatoria } from '../utils/league';
 import Monogram from '../components/ui/Monogram';
 import SectionHeader from '../components/ui/SectionHeader';
+import RegisterCta from '../components/ui/RegisterCta';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Tournaments'>;
@@ -21,7 +22,7 @@ const QUALIFY = 4; // clubs that advance to playoffs
 
 export default function TournamentScreen({ navigation }: Props) {
   const { t, i18n } = useTranslation();
-  const { session } = useAuth();
+  const { session, isGuest } = useAuth();
   const [tab, setTab] = useState<Tab>('table');
   const [state, setState] = useState<LeagueState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -386,7 +387,11 @@ export default function TournamentScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      {loading ? (
+      {isGuest ? (
+        <View style={styles.guestArea}>
+          <RegisterCta />
+        </View>
+      ) : loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.cream45} />
         </View>
@@ -452,6 +457,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center' },
+  guestArea: { flex: 1, justifyContent: 'flex-end' },
   goTeamBtn: {
     marginTop: space.lg,
     paddingVertical: 12,

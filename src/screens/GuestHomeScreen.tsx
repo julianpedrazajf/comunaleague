@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { AuthStackParamList } from '../navigation/types';
 import CreamButton from '../components/ui/CreamButton';
 import GhostButton from '../components/ui/GhostButton';
+import { useAuth } from '../context/AuthContext';
 import { colors, font, space } from '../theme/tokens';
 
 const loginBg = require('../../assets/textures/Night_Pitch_Dew_Bokeh.png');
@@ -16,6 +17,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'GuestHome'>;
 
 export default function GuestHomeScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const { enterGuest } = useAuth();
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -49,7 +51,7 @@ export default function GuestHomeScreen({ navigation }: Props) {
           <GhostButton
             label={t('guest.continueAsGuest')}
             full
-            onPress={() => navigation.navigate('Login')}
+            onPress={() => enterGuest()}
           />
         </View>
       </View>

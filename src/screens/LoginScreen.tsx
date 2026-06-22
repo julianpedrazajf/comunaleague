@@ -12,7 +12,7 @@ import {
   ImageBackground,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const loginBg = require('../../assets/textures/login-bg.png');
 const grain   = require('../../assets/textures/grain.png');
@@ -20,6 +20,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
+import { X } from 'lucide-react-native';
 import { AuthStackParamList } from '../navigation/types';
 import { supabase } from '../services/supabase';
 import CreamButton from '../components/ui/CreamButton';
@@ -31,6 +32,7 @@ const initialValues = { email: '', password: '' };
 
 export default function LoginScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const schema = Yup.object({
     email: Yup.string().email(t('errors.emailInvalid')).required(t('errors.required')),
@@ -45,6 +47,14 @@ export default function LoginScreen({ navigation }: Props) {
           <Image source={grain} style={styles.grain} resizeMode="repeat" />
         </View>
       </ImageBackground>
+
+      <TouchableOpacity
+        style={[styles.closeBtn, { top: insets.top + space.sm }]}
+        onPress={() => navigation.navigate('GuestHome')}
+        hitSlop={12}
+      >
+        <X size={22} color={colors.cream70} strokeWidth={2} />
+      </TouchableOpacity>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -152,6 +162,8 @@ const styles = StyleSheet.create({
   scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.72)' },
   grainWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   grain: { width: '100%', height: '100%', opacity: 0.07 },
+
+  closeBtn: { position: 'absolute', right: 18, zIndex: 10, padding: 6 },
 
   content: { flexGrow: 1, padding: 24, justifyContent: 'center' },
 

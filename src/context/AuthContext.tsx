@@ -8,6 +8,10 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   profileComplete: boolean;
+  // Browsing the app without an account (read-only; actions prompt to register).
+  isGuest: boolean;
+  // When leaving guest mode to sign up, which auth screen to land on.
+  authIntent: 'register' | null;
 }
 
 type AuthAction =
@@ -15,6 +19,8 @@ type AuthAction =
   | { type: 'SET_USER'; payload: User | null }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_PROFILE_COMPLETE'; payload: boolean }
+  | { type: 'ENTER_GUEST' }
+  | { type: 'EXIT_GUEST'; intent: 'register' | null }
   | { type: 'SIGN_OUT' };
 
 const initialState: AuthState = {
@@ -22,18 +28,31 @@ const initialState: AuthState = {
   user: null,
   loading: true,
   profileComplete: false,
+  isGuest: false,
+  authIntent: null,
 };
 
 function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
     case 'SET_SESSION':
-      return { ...state, session: action.payload, loading: false };
+      // A real session always wins over guest mode.
+      return {
+        ...state,
+        session: action.payload,
+        isGuest: action.payload ? false : state.isGuest,
+        authIntent: action.payload ? null : state.authIntent,
+        loading: false,
+      };
     case 'SET_USER':
       return { ...state, user: action.payload };
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
     case 'SET_PROFILE_COMPLETE':
       return { ...state, profileComplete: action.payload };
+    case 'ENTER_GUEST':
+      return { ...state, isGuest: true };
+    case 'EXIT_GUEST':
+      return { ...state, isGuest: false, authIntent: action.intent };
     case 'SIGN_OUT':
       return { ...initialState, loading: false };
     default:
@@ -44,6 +63,8 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 interface AuthContextValue extends AuthState {
   signOut: () => Promise<void>;
   setProfileComplete: (complete: boolean) => void;
+  enterGuest: () => void;
+  registerFromGuest: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -85,8 +106,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'SET_PROFILE_COMPLETE', payload: complete });
   }
 
+  function enterGuest() {
+    dispatch({ type: 'ENTER_GUEST' });
+  }
+
+  // Leave guest mode and head to the Register screen to create an account.
+  function registerFromGuest() {
+    dispatch({ type: 'EXIT_GUEST', intent: 'register' });
+  }
+
   return (
-    <AuthContext.Provider value={{ ...state, signOut, setProfileComplete }}>
+    <AuthContext.Provider value={{ ...state, signOut, setProfileComplete, enterGuest, registerFromGuest }}>
       {children}
     </AuthContext.Provider>
   );

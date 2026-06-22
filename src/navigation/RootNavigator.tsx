@@ -25,15 +25,15 @@ import UserProfileScreen from '../screens/UserProfileScreen';
 const Root = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
-  const { session, loading, profileComplete } = useAuth();
+  const { session, loading, profileComplete, isGuest } = useAuth();
 
   if (loading) return null;
 
   const navigator = (
     <Root.Navigator screenOptions={{ headerShown: false }}>
-      {session ? (
+      {session || isGuest ? (
         <>
-          {!profileComplete && (
+          {session && !profileComplete && (
             <Root.Screen name="ProfileSetup" component={ProfileSetupScreen} />
           )}
           <Root.Screen name="AppTabs" component={AppTabs} />
@@ -66,5 +66,5 @@ export default function RootNavigator() {
     </Root.Navigator>
   );
 
-  return session ? <MessagesProvider>{navigator}</MessagesProvider> : navigator;
+  return session || isGuest ? <MessagesProvider>{navigator}</MessagesProvider> : navigator;
 }

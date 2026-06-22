@@ -22,6 +22,8 @@ import { getUpcomingAcceptedMatches } from '../services/notifications';
 import { getAllTeamMatchInterests } from '../services/playerRequests';
 import { Message, User } from '../types';
 import Monogram from '../components/ui/Monogram';
+import ScreenIntro from '../components/ui/ScreenIntro';
+import RegisterCta from '../components/ui/RegisterCta';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type NavProp = CompositeNavigationProp<
@@ -44,7 +46,7 @@ function formatTimestamp(ts: string, locale: string): string {
 export default function InboxScreen() {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<NavProp>();
-  const { session } = useAuth();
+  const { session, isGuest } = useAuth();
   const { refreshUnreadMessages } = useMessages();
 
   const [rows, setRows] = useState<TeammateRow[]>([]);
@@ -174,6 +176,20 @@ export default function InboxScreen() {
     );
   };
 
+  if (isGuest) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+        <View style={styles.navBar}>
+          <Text style={styles.pageTitle}>{t('inbox.title')}</Text>
+        </View>
+        <View style={styles.centered}>
+          <RegisterCta />
+        </View>
+        <ScreenIntro id="inbox" />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.navBar}>
@@ -205,6 +221,8 @@ export default function InboxScreen() {
           renderItem={renderItem}
         />
       )}
+
+      <ScreenIntro id="inbox" />
     </SafeAreaView>
   );
 }

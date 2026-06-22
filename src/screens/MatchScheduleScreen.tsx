@@ -28,6 +28,8 @@ import CreamButton from '../components/ui/CreamButton';
 import MonthCalendar from '../components/ui/MonthCalendar';
 import Chip from '../components/ui/Chip';
 import SectionHeader from '../components/ui/SectionHeader';
+import ScreenIntro from '../components/ui/ScreenIntro';
+import RegisterCta from '../components/ui/RegisterCta';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type NavProp = CompositeNavigationProp<
@@ -50,7 +52,7 @@ function formatTime(timeStr: string): string {
 
 export default function MatchScheduleScreen() {
   const { t, i18n } = useTranslation();
-  const { session } = useAuth();
+  const { session, isGuest } = useAuth();
   const navigation = useNavigation<NavProp>();
 
   const [team, setTeam] = useState<Team | null>(null);
@@ -315,7 +317,11 @@ export default function MatchScheduleScreen() {
       </View>
 
       {/* Content below calendar */}
-      {loading ? (
+      {isGuest ? (
+        <View style={styles.guestArea}>
+          <RegisterCta />
+        </View>
+      ) : loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.cream45} />
         </View>
@@ -378,6 +384,8 @@ export default function MatchScheduleScreen() {
           renderItem={renderMatch}
         />
       )}
+
+      <ScreenIntro id="matches" />
     </SafeAreaView>
   );
 }
@@ -385,6 +393,7 @@ export default function MatchScheduleScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  guestArea: { flex: 1, justifyContent: 'flex-end' },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   navBar: { paddingHorizontal: 18, paddingVertical: space.md, gap: 4 },

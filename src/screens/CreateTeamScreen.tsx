@@ -21,6 +21,7 @@ import { createTeam } from '../services/teams';
 import { RootStackParamList } from '../navigation/types';
 import { TeamFormat } from '../types';
 import CreamButton from '../components/ui/CreamButton';
+import RegisterCta from '../components/ui/RegisterCta';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateTeam'>;
@@ -32,7 +33,7 @@ const initialValues: FormValues = { name: '', format: 5 };
 
 export default function CreateTeamScreen({ navigation }: Props) {
   const { t } = useTranslation();
-  const { session } = useAuth();
+  const { session, isGuest } = useAuth();
 
   const schema = Yup.object({
     name: Yup.string().required(t('errors.required')),
@@ -110,12 +111,16 @@ export default function CreateTeamScreen({ navigation }: Props) {
                   {touched.format && errors.format ? <Text style={styles.fieldError}>{errors.format as string}</Text> : null}
                 </View>
 
-                <CreamButton
-                  label={t('team.createTeam')}
-                  full
-                  loading={isSubmitting}
-                  onPress={() => handleSubmit()}
-                />
+                {isGuest ? (
+                  <RegisterCta prompt={false} style={{ paddingHorizontal: 0, paddingVertical: 0 }} />
+                ) : (
+                  <CreamButton
+                    label={t('team.createTeam')}
+                    full
+                    loading={isSubmitting}
+                    onPress={() => handleSubmit()}
+                  />
+                )}
               </View>
             )}
           </Formik>

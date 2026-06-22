@@ -27,6 +27,7 @@ import { Team, Tournament } from '../types';
 import { useAuth } from '../context/AuthContext';
 import Monogram from '../components/ui/Monogram';
 import CreamButton from '../components/ui/CreamButton';
+import ScreenIntro from '../components/ui/ScreenIntro';
 import { colors, font, space, radius } from '../theme/tokens';
 
 // The next upcoming event can be a team/guest match, a registered daily match,
@@ -59,7 +60,7 @@ function formatMatchTime(timeStr: string): string {
 export default function HomeScreen() {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<NavProp>();
-  const { session } = useAuth();
+  const { session, isGuest } = useAuth();
   const [myTeam, setMyTeam] = useState<Team | null>(null);
   const [nextEvent, setNextEvent] = useState<NextEvent | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -198,9 +199,14 @@ export default function HomeScreen() {
           </View>
           <Text style={styles.wordmarkTagline}>pibes de barrio.</Text>
         </View>
-        <TouchableOpacity hitSlop={12} style={styles.bellWrap} onPress={() => navigation.navigate('Notifications')}>
-          <Bell size={20} color={colors.cream45} strokeWidth={2} />
-          {unreadCount > 0 && (
+        <TouchableOpacity
+          hitSlop={12}
+          style={styles.bellWrap}
+          onPress={() => navigation.navigate('Notifications')}
+          disabled={isGuest}
+        >
+          <Bell size={20} color={isGuest ? colors.cream25 : colors.cream45} strokeWidth={2} />
+          {!isGuest && unreadCount > 0 && (
             <View style={styles.bellBadge}>
               <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : String(unreadCount)}</Text>
             </View>
@@ -389,6 +395,8 @@ export default function HomeScreen() {
         {/* Spacer for floating tab bar */}
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      <ScreenIntro id="home" />
     </SafeAreaView>
   );
 }

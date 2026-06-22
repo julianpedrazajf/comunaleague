@@ -14,6 +14,64 @@
     "optional": "opcional",
     "hello": "Hola"
   },
+  "intro": {
+    "gotIt": "Entendido",
+    "guestCta": "Crear una cuenta",
+    "home": {
+      "title": "Bienvenido a Inicio",
+      "subtitle": "Tu punto de partida cada día.",
+      "points": [
+        { "title": "Tu próximo partido", "desc": "Mira la fecha, hora y rival de tu siguiente juego." },
+        { "title": "Partidos de liga", "desc": "Sigue las fechas de tu torneo de barrio." },
+        { "title": "Explora torneos", "desc": "Entra a la Liga Comuna desde el botón del trofeo." }
+      ]
+    },
+    "myTeam": {
+      "title": "Tu Equipo",
+      "subtitle": "Arma tu equipo y compite.",
+      "points": [
+        { "title": "Crea o únete a un equipo", "desc": "Es gratis: reúne a tus parceros." },
+        { "title": "Inscríbete a un torneo", "desc": "El capitán paga la inscripción y elige el barrio." },
+        { "title": "Transfiere coins", "desc": "Envía Comuna Coins a tus compañeros." }
+      ]
+    },
+    "matches": {
+      "title": "Tus Partidos",
+      "subtitle": "Tu calendario de juegos.",
+      "points": [
+        { "title": "Calendario", "desc": "Navega tus partidos por fecha." },
+        { "title": "Fechas de liga", "desc": "Tus partidos del torneo también aparecen aquí." },
+        { "title": "Confirma asistencia", "desc": "Avísale a tu equipo si vas a jugar." }
+      ]
+    },
+    "inbox": {
+      "title": "Mensajes",
+      "subtitle": "Habla con la comunidad.",
+      "points": [
+        { "title": "Chatea", "desc": "Conversa directamente con jugadores y compañeros." },
+        { "title": "Coordina", "desc": "Consigue jugadores para tus partidos." }
+      ]
+    },
+    "profile": {
+      "title": "Tu Perfil",
+      "subtitle": "Tu información y ajustes.",
+      "points": [
+        { "title": "Tus estadísticas", "desc": "Mira tu posición, pie, nivel y más." },
+        { "title": "Comuna Coins", "desc": "Compra y administra tus coins." },
+        { "title": "Idioma y ajustes", "desc": "Cambia el idioma y tus preferencias." }
+      ]
+    },
+    "guest": {
+      "title": "Bienvenido a Comuna League",
+      "subtitle": "Esto es lo que puedes hacer en la app.",
+      "points": [
+        { "title": "Inicio", "desc": "Tu próximo partido y las fechas de liga." },
+        { "title": "Tu Equipo", "desc": "Crea o únete a un equipo y entra a torneos." },
+        { "title": "Partidos", "desc": "Tu calendario y la confirmación de asistencia." },
+        { "title": "Mensajes", "desc": "Chatea con jugadores y organiza partidos." }
+      ]
+    }
+  },
   "auth": {
     "login": "Iniciar sesión",
     "register": "Registrarse",
@@ -324,7 +382,9 @@
     "explore": "Explorar",
     "signIn": "Iniciar sesión",
     "enter": "Entrar",
-    "continueAsGuest": "Continuar como invitado"
+    "continueAsGuest": "Continuar como invitado",
+    "register": "Registrarse",
+    "registerPrompt": "Crea una cuenta para desbloquear esto."
   },
   "onegame": {
     "title": "Jugar Solo",

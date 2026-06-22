@@ -26,6 +26,8 @@ import Monogram from '../components/ui/Monogram';
 import StatTriple from '../components/ui/StatTriple';
 import CoinIcon from '../components/ui/CoinIcon';
 import GhostButton from '../components/ui/GhostButton';
+import ScreenIntro from '../components/ui/ScreenIntro';
+import RegisterCta from '../components/ui/RegisterCta';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type NavProp = CompositeNavigationProp<
@@ -35,7 +37,7 @@ type NavProp = CompositeNavigationProp<
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
-  const { session, signOut } = useAuth();
+  const { session, signOut, isGuest } = useAuth();
   const navigation = useNavigation<NavProp>();
   const [profile, setProfile] = useState<User | null>(null);
   const [stats, setStats] = useState<PlayerStats | null>(null);
@@ -100,6 +102,20 @@ export default function ProfileScreen() {
     { label: t('profile.notifications'), icon: Bell, route: 'Notifications' },
     { label: t('profile.preferences'), icon: Settings, route: 'Preferences' },
   ];
+
+  if (isGuest) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+        <View style={styles.navBar}>
+          <Text style={styles.pageTitle}>{t('profile.title')}</Text>
+        </View>
+        <View style={styles.centered}>
+          <RegisterCta />
+        </View>
+        <ScreenIntro id="profile" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -205,6 +221,8 @@ export default function ProfileScreen() {
           <View style={{ height: 100 }} />
         </ScrollView>
       )}
+
+      <ScreenIntro id="profile" />
     </SafeAreaView>
   );
 }
