@@ -13,6 +13,7 @@ import { resumenSerie, PartidoLiga, SerieEliminatoria } from '../utils/league';
 import Monogram from '../components/ui/Monogram';
 import SectionHeader from '../components/ui/SectionHeader';
 import RegisterCta from '../components/ui/RegisterCta';
+import ScreenIntro from '../components/ui/ScreenIntro';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Tournaments'>;
@@ -435,6 +436,8 @@ export default function TournamentScreen({ navigation }: Props) {
           </ScrollView>
         </>
       )}
+
+      <ScreenIntro id="comunaLeague" />
     </SafeAreaView>
   );
 }

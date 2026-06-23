@@ -69,6 +69,23 @@
         { "title": "Partidos", "desc": "Tu calendario y la confirmación de asistencia." },
         { "title": "Mensajes", "desc": "Chatea con jugadores y organiza partidos." }
       ]
+    },
+    "playSolo": {
+      "title": "Jugar solo",
+      "subtitle": "Juega aunque no tengas equipo.",
+      "points": [
+        { "title": "Partidos diarios", "desc": "Inscríbete a un partido suelto organizado por Comuna League y juega como individual." },
+        { "title": "Equipos buscando jugadores", "desc": "Cuando un capitán necesita jugadores para una fecha, postúlate y juega ese partido con su equipo." }
+      ]
+    },
+    "comunaLeague": {
+      "title": "Liga Comuna",
+      "subtitle": "Así funciona el torneo.",
+      "points": [
+        { "title": "10 clubes", "desc": "Cada torneo se llena con 10 clubes y ahí arranca la temporada." },
+        { "title": "Temporada regular", "desc": "Todos contra todos a una sola vuelta (9 fechas)." },
+        { "title": "Playoffs", "desc": "Los 4 primeros avanzan: semifinales ida y vuelta y una final a un solo partido." }
+      ]
     }
   },
   "auth": {

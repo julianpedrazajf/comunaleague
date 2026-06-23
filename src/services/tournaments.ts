@@ -13,6 +13,34 @@ function isPastTournament(t: Pick<Tournament, 'startDate' | 'startTime'>): boole
   return now > matchTime;
 }
 
+/**
+ * Upcoming daily matches readable without an account (guest mode). Backed by a
+ * public SECURITY DEFINER RPC, so it works for the anon role. Returns the
+ * matches plus a registered-count map (same shape the screen already uses).
+ */
+export async function getPublicDailyMatches(): Promise<{ tournaments: Tournament[]; counts: Map<string, number> }> {
+  const { data, error } = await supabase.rpc('get_public_daily_matches');
+  if (error) throw error;
+  const tournaments: Tournament[] = [];
+  const counts = new Map<string, number>();
+  for (const r of (data ?? []) as any[]) {
+    tournaments.push({
+      id: r.id,
+      name: r.name,
+      type: 'daily',
+      format: r.format,
+      startDate: r.startDate,
+      startTime: r.startTime ?? undefined,
+      location: r.location ?? '',
+      registrationDeadline: '',
+      price: 0,
+      coinCost: r.coinCost ?? undefined,
+    });
+    counts.set(r.id, Number(r.registeredCount));
+  }
+  return { tournaments, counts };
+}
+
 export async function getDailyTournaments(): Promise<Tournament[]> {
   const today = new Date().toISOString().split('T')[0];
   const { data, error } = await supabase

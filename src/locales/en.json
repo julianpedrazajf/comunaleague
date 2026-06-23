@@ -69,6 +69,23 @@
         { "title": "Matches", "desc": "Your calendar and attendance confirmation." },
         { "title": "Messages", "desc": "Chat with players and set up games." }
       ]
+    },
+    "playSolo": {
+      "title": "Play Solo",
+      "subtitle": "Play even without a team.",
+      "points": [
+        { "title": "Daily matches", "desc": "Join a one-off match organized by Comuna League and play as an individual." },
+        { "title": "Teams looking for players", "desc": "When a captain needs players for a matchday, apply and play that game with their team." }
+      ]
+    },
+    "comunaLeague": {
+      "title": "Comuna League",
+      "subtitle": "How the tournament works.",
+      "points": [
+        { "title": "10 clubs", "desc": "Each tournament fills up to 10 clubs, then the season begins." },
+        { "title": "Regular season", "desc": "A single round-robin — every club plays each other once (9 matchdays)." },
+        { "title": "Playoffs", "desc": "The top 4 advance: two-legged semifinals and a single-match final." }
+      ]
     }
   },
   "auth": {

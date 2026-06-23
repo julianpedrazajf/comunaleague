@@ -14,7 +14,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { X, MapPin, Calendar, Clock, Check, Users, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { getDailyTournaments, getUserRegistrations, registerForDaily, getRegistrationCounts } from '../services/tournaments';
+import { getDailyTournaments, getUserRegistrations, registerForDaily, getRegistrationCounts, getPublicDailyMatches } from '../services/tournaments';
 import { getOpenPlayerRequests, getMyInterests, expressInterest } from '../services/playerRequests';
 import { getMyTeam } from '../services/teams';
 import { getTeamMatches } from '../services/matches';
@@ -28,7 +28,7 @@ import CoinIcon from '../components/ui/CoinIcon';
 import Monogram from '../components/ui/Monogram';
 import SectionHeader from '../components/ui/SectionHeader';
 import MonthCalendar from '../components/ui/MonthCalendar';
-import RegisterCta from '../components/ui/RegisterCta';
+import ScreenIntro from '../components/ui/ScreenIntro';
 import { colors, font, space, radius } from '../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OneGame'>;
@@ -47,7 +47,7 @@ function formatTime(timeStr: string): string {
 
 export default function OneGameScreen({ navigation }: Props) {
   const { t, i18n } = useTranslation();
-  const { session, isGuest } = useAuth();
+  const { session, isGuest, registerFromGuest } = useAuth();
 
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [registeredIds, setRegisteredIds] = useState<Set<string>>(new Set());
@@ -106,6 +106,21 @@ export default function OneGameScreen({ navigation }: Props) {
   }, [tournaments, playerRequests]);
 
   const load = useCallback(async () => {
+    // Guests can browse the daily matches (public read), but registering sends
+    // them to sign up.
+    if (isGuest) {
+      setLoading(true);
+      try {
+        const { tournaments: daily, counts } = await getPublicDailyMatches();
+        setTournaments(daily);
+        setRegistrationCounts(counts);
+      } catch {
+        // silently fail
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
     if (!session) return;
     setLoading(true);
     try {
@@ -146,11 +161,16 @@ export default function OneGameScreen({ navigation }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [session]);
+  }, [session, isGuest]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   function handleRegister(tournament: Tournament) {
+    // Guests can't register — send them to sign up instead.
+    if (isGuest) {
+      registerFromGuest();
+      return;
+    }
     const cost = tournament.coinCost ?? COIN_COSTS.dailyMatch;
     Alert.alert(
       t('onegame.confirmTitle'),
@@ -413,11 +433,7 @@ export default function OneGameScreen({ navigation }: Props) {
         </View>
       </View>
 
-      {isGuest ? (
-        <View style={styles.guestArea}>
-          <RegisterCta />
-        </View>
-      ) : loading ? (
+      {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.cream45} />
         </View>
@@ -428,16 +444,18 @@ export default function OneGameScreen({ navigation }: Props) {
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
             <>
-              <View style={styles.requestsSection}>
-                <SectionHeader label={t('onegame.teamsLooking')} />
-                {filteredRequests.length > 0 ? (
-                  <View style={styles.requestsList}>
-                    {filteredRequests.map(renderRequestCard)}
-                  </View>
-                ) : (
-                  <Text style={styles.emptyText}>{t('onegame.noRequests')}</Text>
-                )}
-              </View>
+              {!isGuest && (
+                <View style={styles.requestsSection}>
+                  <SectionHeader label={t('onegame.teamsLooking')} />
+                  {filteredRequests.length > 0 ? (
+                    <View style={styles.requestsList}>
+                      {filteredRequests.map(renderRequestCard)}
+                    </View>
+                  ) : (
+                    <Text style={styles.emptyText}>{t('onegame.noRequests')}</Text>
+                  )}
+                </View>
+              )}
               <SectionHeader label={t('onegame.dailyMatchHeader')} />
             </>
           }
@@ -449,6 +467,8 @@ export default function OneGameScreen({ navigation }: Props) {
           renderItem={renderItem}
         />
       )}
+
+      <ScreenIntro id="playSolo" />
     </SafeAreaView>
   );
 }
@@ -456,7 +476,6 @@ export default function OneGameScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  guestArea: { flex: 1, justifyContent: 'center' },
   emptyText: { fontFamily: font.sans, fontSize: 15, color: colors.cream70, textAlign: 'center', padding: 24 },
 
   header: {
