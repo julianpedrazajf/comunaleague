@@ -28,6 +28,7 @@
     "expo-image-picker": "~16.1.4",
     "expo-localization": "~16.1.6",
     "expo-status-bar": "~2.2.3",
+    "expo-web-browser": "~14.2.0",
     "formik": "^2.4.6",
     "i18next": "^24.2.3",
     "lucide-react-native": "^1.17.0",
