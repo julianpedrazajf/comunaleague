@@ -62,7 +62,7 @@ export default function GuestHomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
 
-  bg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  bg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' },
   scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.55)' },
   grainWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   grain: { width: '100%', height: '100%', opacity: 0.07 },

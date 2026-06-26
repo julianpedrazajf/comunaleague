@@ -17,10 +17,10 @@ import { useTranslation } from 'react-i18next';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { X } from 'lucide-react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { AuthStackParamList } from '../navigation/types';
 import { supabase } from '../services/supabase';
 import CreamButton from '../components/ui/CreamButton';
+import DateField from '../components/ui/DateField';
 import { colors, font, space } from '../theme/tokens';
 
 const MIN_AGE = 13;
@@ -46,7 +46,6 @@ const initialValues = { email: '', password: '', confirmPassword: '', birthDate:
 export default function RegisterScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const [showDatePicker, setShowDatePicker] = React.useState(false);
 
   const schema = Yup.object({
     email: Yup.string().email(t('errors.emailInvalid')).required(t('errors.required')),
@@ -96,7 +95,7 @@ export default function RegisterScreen({ navigation }: Props) {
             initialValues={initialValues}
             validationSchema={schema}
             onSubmit={async (values, { setSubmitting, setStatus }) => {
-              const { error } = await supabase.auth.signUp({
+              const { data, error } = await supabase.auth.signUp({
                 email: values.email,
                 password: values.password,
                 options: {
@@ -104,14 +103,27 @@ export default function RegisterScreen({ navigation }: Props) {
                 },
               });
               if (error) {
-                setStatus(error.message);
+                setStatus({ type: 'error', text: error.message });
+                setSubmitting(false);
+                return;
+              }
+              // When email confirmation is enabled, signUp returns no session and
+              // AuthContext never sees SIGNED_IN — show feedback instead of an
+              // infinite spinner. (With confirmation off, a session arrives and
+              // AuthContext navigates away on its own.)
+              if (!data.session) {
+                setStatus({ type: 'info', text: t('auth.checkEmail') });
                 setSubmitting(false);
               }
             }}
           >
             {({ handleChange, handleBlur, handleSubmit, setFieldValue, setFieldTouched, values, errors, touched, isSubmitting, status }) => (
               <View style={styles.form}>
-                {status ? <Text style={styles.apiError}>{status}</Text> : null}
+                {status ? (
+                  <Text style={status.type === 'info' ? styles.apiInfo : styles.apiError}>
+                    {status.text}
+                  </Text>
+                ) : null}
 
                 <View style={styles.field}>
                   <Text style={styles.label}>{t('auth.email')}</Text>
@@ -133,30 +145,15 @@ export default function RegisterScreen({ navigation }: Props) {
 
                 <View style={styles.field}>
                   <Text style={styles.label}>{t('auth.birthDate')}</Text>
-                  <TouchableOpacity
-                    style={[styles.input, touched.birthDate && errors.birthDate && styles.inputError]}
-                    onPress={() => setShowDatePicker(true)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={values.birthDate ? styles.dateText : styles.dateTextPlaceholder}>
-                      {values.birthDate ? values.birthDate.toLocaleDateString() : t('auth.birthDatePlaceholder')}
-                    </Text>
-                  </TouchableOpacity>
-                  {showDatePicker && (
-                    <DateTimePicker
-                      value={values.birthDate ?? new Date(2000, 0, 1)}
-                      mode="date"
-                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                      themeVariant="dark"
-                      textColor={colors.cream}
-                      maximumDate={new Date()}
-                      onChange={(_event, date) => {
-                        setShowDatePicker(Platform.OS === 'ios');
-                        setFieldTouched('birthDate', true);
-                        if (date) setFieldValue('birthDate', date);
-                      }}
-                    />
-                  )}
+                  <DateField
+                    value={values.birthDate}
+                    placeholder={t('auth.birthDatePlaceholder')}
+                    hasError={!!(touched.birthDate && errors.birthDate)}
+                    onChange={(date) => {
+                      setFieldTouched('birthDate', true);
+                      setFieldValue('birthDate', date);
+                    }}
+                  />
                   {touched.birthDate && errors.birthDate ? (
                     <Text style={styles.fieldError}>{errors.birthDate as string}</Text>
                   ) : null}
@@ -221,7 +218,7 @@ export default function RegisterScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.black },
 
-  bg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  bg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' },
   scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.72)' },
   grainWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   grain: { width: '100%', height: '100%', opacity: 0.07 },
@@ -250,9 +247,8 @@ const styles = StyleSheet.create({
   },
   inputError: { borderColor: 'rgba(239,68,68,0.6)' },
   fieldError: { fontFamily: font.sans, fontSize: 12, color: '#EF4444' },
-  dateText: { fontFamily: font.sans, fontSize: 15, color: colors.cream },
-  dateTextPlaceholder: { fontFamily: font.sans, fontSize: 15, color: colors.cream45 },
   apiError: { fontFamily: font.sans, fontSize: 13, color: '#EF4444', textAlign: 'center' },
+  apiInfo: { fontFamily: font.sans, fontSize: 13, color: '#4ADE80', textAlign: 'center' },
 
   loginRow: { alignItems: 'center', marginTop: space.sm },
   loginText: { fontFamily: font.sans, fontSize: 13.5, color: colors.cream70 },

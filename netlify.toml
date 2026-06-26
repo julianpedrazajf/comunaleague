@@ -1,0 +1,12 @@
+# Netlify config for the Expo web (static) build.
+# Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in
+# Site settings -> Environment variables so they get baked into the build.
+[build]
+  command = "npx expo export --platform web"
+  publish = "dist"
+
+# SPA fallback: React Navigation routes in-memory, so serve index.html for any path.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

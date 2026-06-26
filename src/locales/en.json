@@ -107,7 +107,8 @@
     "createAccountTitle": "Create account",
     "joinLeague": "Join the league",
     "birthDate": "Date of Birth",
-    "birthDatePlaceholder": "Select your date of birth"
+    "birthDatePlaceholder": "Select your date of birth",
+    "checkEmail": "Account created — check your email to confirm, then log in."
   },
   "errors": {
     "required": "Field required",

@@ -15,6 +15,7 @@ import {
 import { InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif';
 import { AuthProvider } from './src/context/AuthContext';
 import RootNavigator from './src/navigation/RootNavigator';
+import WebFrame from './src/components/WebFrame';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -33,10 +34,12 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AuthProvider>
-          <NavigationContainer>
-            <RootNavigator />
-            <StatusBar style="light" />
-          </NavigationContainer>
+          <WebFrame>
+            <NavigationContainer>
+              <RootNavigator />
+              <StatusBar style="light" />
+            </NavigationContainer>
+          </WebFrame>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
