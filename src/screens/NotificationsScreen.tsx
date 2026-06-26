@@ -217,6 +217,15 @@ export default function NotificationsScreen({ navigation }: Props) {
       <View style={styles.handle} />
       <View style={styles.navBar}>
         <Text style={styles.pageTitle}>{t('notifications.title')}</Text>
+        <TouchableOpacity
+          style={styles.closeBtn}
+          onPress={() => navigation.goBack()}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.close')}
+        >
+          <X size={20} color={colors.cream} strokeWidth={2.5} />
+        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -266,8 +275,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.hairline,
     alignSelf: 'center', marginTop: space.sm,
   },
-  navBar: { paddingHorizontal: 18, paddingTop: space.md, paddingBottom: space.lg },
+  navBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingTop: space.md,
+    paddingBottom: space.lg,
+  },
   pageTitle: { fontFamily: font.sansXBold, fontSize: 27, letterSpacing: -0.5, color: colors.cream },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface2,
+  },
 
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
   emptyText: { fontFamily: font.sans, fontSize: 14, color: colors.cream45, textAlign: 'center' },
