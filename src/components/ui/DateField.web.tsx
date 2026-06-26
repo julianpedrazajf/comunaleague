@@ -20,10 +20,26 @@ export default function DateField({ value, onChange, hasError }: DateFieldProps)
     <input
       type="date"
       max={new Date().toISOString().slice(0, 10)}
-      value={toInputValue(value)}
+      // Uncontrolled (defaultValue, not value): a controlled date input gets
+      // wiped while the user fills it segment by segment, because its .value
+      // stays "" until all of day/month/year are entered and React keeps
+      // resetting it. defaultValue lets the browser own the in-progress entry.
+      defaultValue={toInputValue(value)}
+      onClick={(e) => {
+        // On desktop, clicking the field doesn't open the calendar (only the
+        // small icon does), so it feels broken. Match the native app: tapping
+        // anywhere on the field opens the picker. Guarded for older browsers
+        // and the "already open" case (e.g. clicking the icon itself).
+        try {
+          e.currentTarget.showPicker();
+        } catch {
+          /* showPicker unsupported or already showing — fall back to default */
+        }
+      }}
       onChange={(e) => {
         const v = e.target.value;
         // Parse at local midnight so getAge() doesn't drift a day from UTC.
+        // Empty while the date is incomplete — only report once it's valid.
         if (v) onChange(new Date(v + 'T00:00:00'));
       }}
       style={{
