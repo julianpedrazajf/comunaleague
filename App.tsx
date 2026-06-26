@@ -1,4 +1,5 @@
 import './src/services/i18n';
+import './src/utils/webAlert';
 import React from 'react';
 import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
