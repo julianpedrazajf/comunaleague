@@ -552,8 +552,11 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     gap: space.sm,
-    paddingVertical: 14,
+    // Match the two quick cards' height (~60px). minHeight beats flex-shrink,
+    // which was collapsing this row button to ~31px.
+    minHeight: 60,
     borderWidth: 1.5,
     borderColor: colors.green,
   },
